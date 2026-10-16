@@ -1,0 +1,111 @@
+<?php
+
+namespace App\EventSubscriber;
+
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+
+class RateLimitSubscriber implements EventSubscriberInterface
+{
+    public function __construct(
+        #[Autowire(service: 'login_limiter')]
+        private RateLimiterFactory $loginLimiterFactory,
+        #[Autowire(service: 'register_limiter')]
+        private RateLimiterFactory $registerLimiterFactory,
+        #[Autowire(service: 'api_limiter')]
+        private RateLimiterFactory $apiLimiterFactory,
+    ) {}
+
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            KernelEvents::REQUEST => ['onRequest', 10],
+        ];
+    }
+
+    public function onRequest(RequestEvent $event): void
+    {
+        if (!$event->isMainRequest()) return;
+
+        $request = $event->getRequest();
+        $path    = $request->getPathInfo();
+        $ip      = $request->getClientIp() ?? 'unknown';
+        $method  = $request->getMethod();
+
+        // ── Login web + API ──────────────────────────────────────────────
+        if (($path === '/login' || $path === '/api/login_check') && $method === 'POST') {
+            $limiter = $this->loginLimiterFactory->create('login_' . $ip);
+            $limit   = $limiter->consume(1);
+
+            if (!$limit->isAccepted()) {
+                $retryAfter = $limit->getRetryAfter()->getTimestamp() - time();
+                $event->setResponse($this->tooManyResponse(
+                    'Trop de tentatives de connexion. Réessayez dans ' . ceil($retryAfter / 60) . ' min.',
+                    $retryAfter,
+                    $path
+                ));
+                return;
+            }
+        }
+
+        // ── Inscription ───────────────────────────────────────────────────
+        if (($path === '/register' || $path === '/api/register') && $method === 'POST') {
+            $limiter = $this->registerLimiterFactory->create('register_' . $ip);
+            $limit   = $limiter->consume(1);
+
+            if (!$limit->isAccepted()) {
+                $retryAfter = $limit->getRetryAfter()->getTimestamp() - time();
+                $event->setResponse($this->tooManyResponse(
+                    'Trop de tentatives d\'inscription. Réessayez dans 1 heure.',
+                    $retryAfter,
+                    $path
+                ));
+                return;
+            }
+        }
+
+        // ── API générale (authentifiée) ───────────────────────────────────
+        if (str_starts_with($path, '/api/') && $method !== 'GET') {
+            $token   = $request->headers->get('Authorization', '');
+            $key     = 'api_' . ($token ? substr(md5($token), 0, 16) : $ip);
+            $limiter = $this->apiLimiterFactory->create($key);
+            $limit   = $limiter->consume(1);
+
+            if (!$limit->isAccepted()) {
+                $retryAfter = $limit->getRetryAfter()->getTimestamp() - time();
+                $event->setResponse($this->tooManyResponse(
+                    'Limite de requêtes atteinte. Réessayez dans ' . $retryAfter . ' secondes.',
+                    $retryAfter,
+                    $path
+                ));
+            }
+        }
+    }
+
+    private function tooManyResponse(string $message, int $retryAfter, string $path): Response
+    {
+        $isApi = str_starts_with($path, '/api/');
+
+        if ($isApi) {
+            return new JsonResponse(
+                ['error' => $message, 'retry_after' => $retryAfter],
+                Response::HTTP_TOO_MANY_REQUESTS,
+                ['Retry-After' => $retryAfter]
+            );
+        }
+
+        // Web → flash + redirect
+        $response = new Response(
+            '<html><body><h2>Trop de tentatives</h2><p>' . htmlspecialchars($message) . '</p>'
+            . '<a href="/login">Retour</a></body></html>',
+            Response::HTTP_TOO_MANY_REQUESTS,
+            ['Retry-After' => $retryAfter, 'Content-Type' => 'text/html']
+        );
+        return $response;
+    }
+}

@@ -1,0 +1,70 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.thumbs
+build/
+pubspec.lock
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/pubspec.lock
+
+# Android related
+android/.gradle
+android/app/build.gradle
+android/gradle.properties
+android/gradle/wrapper/gradle-wrapper.properties
+android/local.properties
+android/.gradle/
+android/app/gradle.properties
+
+# iOS related
+**/Pods/
+**/Podfile.lock
+**/Pods/
+*.xcworkspace
+*.xcuserstate
+*.xcconfig
+*.xcodeproj
+
+# Flutter build artifacts
+*.apk
+*.ipa
+*.flutter-debug
+*.flutter-test-syntax
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Firebase config
+google-services.json
+GoogleService-Info.plist
+
+# Keystore files
+*.jks
+*.keystore
+*.p12
+
+# Log files
+*.log

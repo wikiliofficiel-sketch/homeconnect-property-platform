@@ -1,0 +1,139 @@
+{% extends 'tenant/base.html.twig' %}
+
+{% block tenant_content %}
+<div class="subscription-container">
+    <div class="page-header mb-5 text-center">
+        <h1 class="display-5 fw-bold" style="color: #2c3e50;"><i class="fa-solid fa-crown text-warning me-2"></i> Abonnement Premium+</h1>
+        <p class="text-muted fs-5">Boostez votre recherche et devenez le locataire idéal.</p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        <!-- Statut Actuel -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-5 p-4 h-100 text-center">
+                <h4 class="fw-bold mb-4">Statut Actuel</h4>
+                <div class="status-widget mb-4 p-4 rounded-4 {% if app.user.isPremium|default(false) %}bg-warning-subtle{% else %}bg-light{% endif %}">
+                    {% if app.user.isPremium|default(false) %}
+                        <i class="fa-solid fa-crown text-warning display-4 mb-3"></i>
+                        <h2 class="fw-bold text-dark mb-1">Premium+</h2>
+                        <p class="text-muted small mb-0">Valide jusqu'au 01/05/2027</p>
+                    {% else %}
+                        <i class="fa-solid fa-user text-muted display-4 mb-3"></i>
+                        <h2 class="fw-bold text-dark mb-1">Gratuit</h2>
+                        <p class="text-muted small mb-0">Version standard</p>
+                    {% endif %}
+                </div>
+                
+                {% if not app.user.isPremium|default(false) %}
+                    <button class="btn btn-warning btn-lg rounded-pill w-100 fw-bold py-3 shadow" data-bs-toggle="modal" data-bs-target="#upgradeModal">
+                        Passer en Premium+
+                    </button>
+                {% else %}
+                    <div class="alert alert-success rounded-pill fw-bold small">
+                        <i class="fa-solid fa-check-circle me-1"></i> Abonnement Actif
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Avantages Premium -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-5 p-5 h-100">
+                <h4 class="fw-bold mb-4 text-primary">Pourquoi choisir Premium+ ?</h4>
+                <ul class="list-unstyled mb-0">
+                    <li class="d-flex align-items-start mb-4">
+                        <div class="bg-primary-subtle text-primary rounded-circle p-2 me-3">
+                            <i class="fa-solid fa-bolt fs-5"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Dossier Prioritaire</h6>
+                            <p class="text-muted small mb-0">Vos candidatures apparaissent en haut de la liste pour les propriétaires.</p>
+                        </div>
+                    </li>
+                    <li class="d-flex align-items-start mb-4">
+                        <div class="bg-success-subtle text-success rounded-circle p-2 me-3">
+                            <i class="fa-solid fa-bell fs-5"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Alertes Exclusives</h6>
+                            <p class="text-muted small mb-0">Soyez notifié 2 heures avant tout le monde pour les nouveaux biens.</p>
+                        </div>
+                    </li>
+                    <li class="d-flex align-items-start mb-4">
+                        <div class="bg-info-subtle text-info rounded-circle p-2 me-3">
+                            <i class="fa-solid fa-headset fs-5"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Support VIP 24/7</h6>
+                            <p class="text-muted small mb-0">Une ligne directe avec nos conseillers pour vous aider dans vos visites.</p>
+                        </div>
+                    </li>
+                    <li class="d-flex align-items-start">
+                        <div class="bg-warning-subtle text-warning rounded-circle p-2 me-3">
+                            <i class="fa-solid fa-certificate fs-5"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Badge de Confiance Or</h6>
+                            <p class="text-muted small mb-0">Un badge distinctif sur votre profil pour rassurer les bailleurs.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Upgrade -->
+<div class="modal fade" id="upgradeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="modal-header border-0 p-4 pb-0">
+                <h4 class="modal-title fw-bold">Upgrade Premium+</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="price-badge bg-light rounded-4 p-4 mb-4">
+                    <span class="text-muted d-block small mb-1">Abonnement Annuel</span>
+                    <h1 class="fw-bold text-primary mb-0">25 000 <small class="fs-6 fw-normal">FCFA / an</small></h1>
+                </div>
+                
+                <p class="text-muted mb-4">Paiement sécurisé via FedaPay (Mobile Money, Carte Bancaire).</p>
+                
+                <div class="payment-methods d-flex justify-content-center gap-3 mb-4">
+                    <img src="https://fedapay.com/assets/img/logos/mtn.png" height="30" alt="MTN">
+                    <img src="https://fedapay.com/assets/img/logos/moov.png" height="30" alt="Moov">
+                    <img src="https://fedapay.com/assets/img/logos/visa.png" height="30" alt="Visa">
+                </div>
+
+                <button class="btn btn-primary btn-lg rounded-pill w-100 fw-bold py-3 shadow" onclick="simulatePayment(this)">
+                    Confirmer le paiement
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function simulatePayment(btn) {
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Traitement...';
+    
+    setTimeout(() => {
+        btn.classList.replace('btn-primary', 'btn-success');
+        btn.innerHTML = '<i class="fa-solid fa-check-circle me-2"></i> Paiement accepté !';
+        
+        setTimeout(() => {
+            alert('Félicitations ! Vous êtes maintenant membre Premium+. Votre profil a été mis à jour.');
+            location.reload();
+        }, 1000);
+    }, 2000);
+}
+</script>
+
+<style>
+.status-widget { border: 2px solid transparent; transition: all 0.3s; }
+.bg-warning-subtle { border-color: #f1c40f !important; }
+.price-badge { border: 1px solid #eee; }
+</style>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nos Biens Immobiliers — HomeConnect{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="{{ path('app_home') }}" class="btn btn-outline-light rounded-pill px-4">
+            <i class="fa-solid fa-arrow-left me-2"></i> Retour à l'accueil
+        </a>
+    </div>
+    
+    <div class="d-flex justify-content-between align-items-end mb-5">
+        <div>
+            <span class="eyebrow">Catalogue</span>
+            <h1 class="display-5 fw-bold">Découvrez nos <span class="text-primary">propriétés</span></h1>
+        </div>
+        <div class="text-white-50 small">
+            {{ properties|length }} biens disponibles
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for property in properties %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-premium h-100 overflow-hidden shadow-hover border-0">
+                    <div class="position-relative" style="height: 240px;">
+                        {% set firstImage = property.images|first %}
+                        {% if firstImage %}
+                            <img src="{{ firstImage starts with 'http' ? firstImage : asset('uploads/properties/' ~ firstImage) }}" 
+                                 class="w-100 h-100 object-fit-cover"
+                                 alt="{{ property.title }}">
+                        {% else %}
+                            <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-25" style="height: 240px;">
+                                <i class="fa-solid fa-house text-white-50 fs-1"></i>
+                            </div>
+                        {% endif %}
+                        <div class="position-absolute top-0 end-0 m-3">
+                            <span class="badge bg-primary rounded-pill px-3 py-2 shadow-sm">{{ property.pricePerMonth|number_format(0, ',', ' ') }} CFA</span>
+                        </div>
+                    </div>
+                    <div class="card-body p-4 d-flex flex-column">
+                        <h5 class="fw-bold mb-2">{{ property.title }}</h5>
+                        <p class="text-white-50 small mb-3">
+                            <i class="fa-solid fa-location-dot text-primary me-1"></i> {{ property.city }}, {{ property.address }}
+                        </p>
+                        <div class="d-flex gap-3 text-white-50 small mb-4 border-bottom border-white-10 pb-3">
+                            <span><i class="fa-solid fa-door-open me-1"></i>{{ property.rooms }} pièces</span>
+                            <span><i class="fa-solid fa-bed me-1"></i>{{ property.bedrooms }} ch.</span>
+                            <span><i class="fa-solid fa-ruler-combined me-1"></i>{{ property.surface }} m²</span>
+                        </div>
+                        <a href="{{ path('app_property_show', {id: property.id}) }}" class="btn btn-primary mt-auto w-100 rounded-pill fw-bold shadow-sm py-2">
+                            Voir le bien <i class="fa-solid fa-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <div class="opacity-25 mb-4">
+                    <i class="fa-solid fa-house-circle-exclamation fs-1"></i>
+                </div>
+                <h3 class="fw-bold">Aucun bien disponible</h3>
+                <p class="text-white-50">Revenez plus tard ou modifiez vos critères de recherche.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.shadow-hover { transition: all 0.3s ease; }
+.shadow-hover:hover { transform: translateY(-10px); box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important; }
+.object-fit-cover { object-fit: cover; }
+</style>
+{% endblock %}

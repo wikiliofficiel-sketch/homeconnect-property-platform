@@ -1,0 +1,415 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Détail utilisateur - {{ user.fullName }}{% endblock %}
+
+{% block admin_body %}
+<div class="user-detail-container">
+    <div class="user-header">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+            <h2>{{ user.fullName }}</h2>
+            <p>{{ user.email }}</p>
+        </div>
+    </div>
+
+    <div class="user-sections">
+        <div class="section">
+            <h3>📋 Informations personnelles</h3>
+            <div class="info-grid">
+                <div><strong>Email:</strong> {{ user.email }}</div>
+                <div><strong>Téléphone:</strong> {{ user.telephone or 'Non fourni' }}</div>
+                <div><strong>Ville:</strong> {{ user.ville or 'Non fourni' }}</div>
+                <div><strong>Inscrit le:</strong> {{ user.createdAt|date('d/m/Y H:i') }}</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🔐 Sécurité et rôles</h3>
+            <div class="roles-container">
+                <p><strong>Rôles actuels:</strong></p>
+                {% for role in user.roles %}
+                    <span class="badge badge-{{ role == 'ROLE_ADMIN' ? 'danger' : (role == 'ROLE_PROPRIETAIRE' ? 'success' : 'info') }}">
+                        {{ role }}
+                    </span>
+                {% endfor %}
+            </div>
+
+            <form method="post" action="{{ path('admin_users_toggle_verify', {'id': user.id}) }}" style="margin-top: 15px;">
+                <button type="submit" class="btn {% if user.isVerified %}btn-warning{% else %}btn-success{% endif %}">
+                    {% if user.isVerified %}
+                        ✅ Vérifié - Révoquer
+                    {% else %}
+                        ⏳ Non vérifié - Approuver
+                    {% endif %}
+                </button>
+            </form>
+
+            {% if not user.isProprietaire %}
+            <form method="post" action="{{ path('admin_users_add_role', {'id': user.id}) }}" style="margin-top: 15px;">
+                <input type="hidden" name="role" value="ROLE_PROPRIETAIRE">
+                <button type="submit" class="btn btn-info">Ajouter rôle Propriétaire</button>
+            </form>
+            {% endif %}
+        </div>
+
+        {% if user.isProprietaire %}
+        <div class="section">
+            <h3>🆔 KYC — Vérification d'identité</h3>
+
+            {# Statut global #}
+            <div style="margin-bottom:16px;">
+                {% if user.isKycApproved %}
+                    <span class="badge badge-success">✅ Certifié</span>
+                    {% if user.kycApprovedAt %}<small class="text-muted"> — le {{ user.kycApprovedAt|date('d/m/Y H:i') }}</small>{% endif %}
+                {% elseif user.isKycPending %}
+                    <span class="badge badge-warning">⏳ En attente</span>
+                    {% if user.kycSubmittedAt %}<small class="text-muted"> — soumis le {{ user.kycSubmittedAt|date('d/m/Y H:i') }}</small>{% endif %}
+                {% elseif user.isKycRejected %}
+                    <span class="badge badge-danger">❌ Rejeté</span>
+                    {% if user.kycRejectionReason %}<div class="text-muted small mt-1">Motif : {{ user.kycRejectionReason }}</div>{% endif %}
+                {% else %}
+                    <span class="badge badge-secondary">— Aucun document soumis</span>
+                {% endif %}
+            </div>
+
+            {# Documents soumis #}
+            <div class="kyc-docs-grid">
+                {% set docs = [
+                    {label: '🪪 Pièce d\'identité',         url: user.kycIdentiteUrl,  type: user.kycIdentiteType,  required: true},
+                    {label: '🏠 Justificatif de domicile',  url: user.kycDomicileUrl,  type: user.kycDomicileType,  required: true},
+                    {label: '📄 Justificatif de propriété', url: user.kycProprieteUrl, type: user.kycProprieteType, required: true},
+                    {label: '🏦 RIB bancaire',              url: user.kycRibUrl,        type: null,                  required: false},
+                    {label: '🛡️ Assurance PNO',             url: user.kycAssuranceUrl, type: null,                  required: false},
+                    {label: '🏢 Copropriété / SCI',         url: user.kycCasParticulierUrl, type: user.kycCasParticulier, required: false},
+                ] %}
+
+                {% for doc in docs %}
+                    <div class="kyc-doc-card {% if doc.url %}has-doc{% elseif doc.required %}missing{% else %}optional-empty{% endif %}">
+                        <div class="kyc-doc-label">{{ doc.label }}{% if doc.required %} <span style="color:#e53e3e">*</span>{% endif %}</div>
+                        {% if doc.type %}<div class="kyc-doc-type text-muted small">{{ doc.type|replace({'_': ' '})|capitalize }}</div>{% endif %}
+                        {% if doc.url %}
+                            <a href="{{ doc.url }}" target="_blank" class="btn btn-sm btn-info mt-2">
+                                📎 Voir le document
+                            </a>
+                            {# Afficher image si c'est une image #}
+                            {% if doc.url|lower ends with '.jpg' or doc.url|lower ends with '.jpeg' or doc.url|lower ends with '.png' %}
+                                <div class="mt-2"><img src="{{ doc.url }}" alt="Document" style="max-width:200px;max-height:140px;border-radius:6px;border:1px solid #e2e8f0;object-fit:cover;"></div>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-muted small mt-1">{% if doc.required %}⚠️ Non fourni{% else %}Non fourni (facultatif){% endif %}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            {# Actions KYC #}
+            {% if user.isKycPending %}
+            <div class="kyc-actions mt-4">
+                <button onclick="document.getElementById('approveForm').style.display='block';this.closest('.kyc-actions').style.display='none'" class="btn btn-success">
+                    ✅ Certifier le compte
+                </button>
+                <button onclick="document.getElementById('rejectForm').style.display='block';this.closest('.kyc-actions').style.display='none'" class="btn btn-danger">
+                    ❌ Rejeter le dossier
+                </button>
+            </div>
+
+            <form id="approveForm" method="post" action="{{ path('admin_users_kyc_approve', {id: user.id}) }}"
+                  style="display:none;margin-top:15px;padding:16px;background:#c6f6d5;border-radius:8px;border:1px solid #9ae6b4;">
+                <p><strong>Confirmer la certification du compte de {{ user.getFullName() }} ?</strong></p>
+                <p class="small text-muted">Le propriétaire recevra l'accès complet à la plateforme.</p>
+                <button type="submit" class="btn btn-success">✅ Confirmer la certification</button>
+                <button type="button" onclick="this.closest('form').style.display='none';document.querySelector('.kyc-actions').style.display='flex'" class="btn btn-outline">Annuler</button>
+            </form>
+
+            <form id="rejectForm" method="post" action="{{ path('admin_users_kyc_reject', {id: user.id}) }}"
+                  style="display:none;margin-top:15px;padding:16px;background:#fed7d7;border-radius:8px;border:1px solid #fc8181;">
+                <p><strong>Motif du rejet :</strong></p>
+                <textarea name="reason" required placeholder="Ex: Document illisible, pièce d'identité expirée..." style="width:100%;padding:8px;border:1px solid #fc8181;border-radius:6px;margin:8px 0;font-family:inherit;"></textarea>
+                <button type="submit" class="btn btn-danger">❌ Confirmer le rejet</button>
+                <button type="button" onclick="this.closest('form').style.display='none';document.querySelector('.kyc-actions').style.display='flex'" class="btn btn-outline">Annuler</button>
+            </form>
+            {% elseif user.isKycApproved %}
+            <div class="mt-3">
+                <form method="post" action="{{ path('admin_users_kyc_reject', {id: user.id}) }}"
+                      onsubmit="return confirm('Révoquer la certification ?')" style="display:inline;">
+                    <input type="hidden" name="reason" value="Certification révoquée par l'administrateur.">
+                    <button type="submit" class="btn btn-warning btn-sm">🔄 Révoquer la certification</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <h3>🏠 Propriétés publiées</h3>
+            <p>Total: <strong>{{ user.properties|length }}</strong></p>
+            {% if user.properties %}
+                <ul class="properties-list">
+                {% for property in user.properties %}
+                    <li>
+                        <a href="{{ path('admin_properties_show', {'id': property.id}) }}">{{ property.title }}</a>
+                        <span class="badge badge-{{ property.statut == 'active' ? 'success' : 'warning' }}">{{ property.statut }}</span>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">Aucune propriété</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {# ── Sanctions ── #}
+        <div class="section" style="border-left: 4px solid #ed8936;">
+            <h3>🛡️ Sanctions & Communication</h3>
+
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <a href="{{ path('admin_messages_new_chat', {userId: user.id}) }}" class="btn btn-info">
+                    <i class="fa-solid fa-message me-1"></i> Envoyer un message
+                </a>
+                <a href="{{ path('admin_messages_chat', {receiverId: user.id}) }}" class="btn btn-outline" style="border-color:#4299e1;color:#4299e1;">
+                    <i class="fa-solid fa-eye me-1"></i> Voir la conversation
+                </a>
+            </div>
+
+            {# Statut actuel #}
+            <div class="mb-3" style="padding:12px;background:#f7fafc;border-radius:8px;">
+                <div class="d-flex flex-wrap gap-2 mb-1">
+                    {% if user.isBanned %}
+                        <span class="badge badge-danger">🚫 Banni définitivement</span>
+                    {% elseif user.isActivelySuspended %}
+                        <span class="badge badge-warning">⏸ Suspendu
+                            {% if user.suspendedUntil %} jusqu'au {{ user.suspendedUntil|date('d/m/Y') }}{% endif %}
+                        </span>
+                    {% else %}
+                        <span class="badge badge-success">✅ Compte actif</span>
+                    {% endif %}
+                    {% if user.warningsCount > 0 %}
+                        <span class="badge badge-warning">⚠️ {{ user.warningsCount }} avertissement(s)</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Actions #}
+            <div class="d-flex flex-wrap gap-2">
+                {# Avertissement #}
+                <button onclick="toggleForm('warnForm')" class="btn btn-warning btn-sm">⚠️ Avertir</button>
+
+                {# Suspension #}
+                {% if not user.isActivelySuspended and not user.isBanned %}
+                    <button onclick="toggleForm('suspendForm')" class="btn btn-warning btn-sm">⏸ Suspendre</button>
+                {% elseif user.isActivelySuspended %}
+                    <form method="post" action="{{ path('admin_users_unsuspend', {id: user.id}) }}" style="display:inline">
+                        <button type="submit" class="btn btn-success btn-sm">▶ Lever la suspension</button>
+                    </form>
+                {% endif %}
+
+                {# Bannissement #}
+                {% if not user.isBanned %}
+                    <button onclick="toggleForm('banForm')" class="btn btn-danger btn-sm">🚫 Bannir</button>
+                {% else %}
+                    <form method="post" action="{{ path('admin_users_unban', {id: user.id}) }}" style="display:inline" onsubmit="return confirm('Lever le bannissement ?')">
+                        <button type="submit" class="btn btn-success btn-sm">✅ Lever le bannissement</button>
+                    </form>
+                {% endif %}
+            </div>
+
+            {# Formulaires cachés #}
+            <form id="warnForm" method="post" action="{{ path('admin_users_warn', {id: user.id}) }}"
+                  style="display:none;margin-top:15px;padding:16px;background:#fffaf0;border-radius:8px;border:1px solid #f6ad55;">
+                <p><strong>Motif de l'avertissement :</strong></p>
+                <textarea name="motif" placeholder="Ex: Comportement irrespectueux dans les messages…" style="width:100%;padding:8px;border:1px solid #f6ad55;border-radius:6px;margin:8px 0;font-family:inherit;"></textarea>
+                <button type="submit" class="btn btn-warning btn-sm">Envoyer l'avertissement</button>
+                <button type="button" onclick="toggleForm('warnForm')" class="btn btn-outline btn-sm">Annuler</button>
+            </form>
+
+            <form id="suspendForm" method="post" action="{{ path('admin_users_suspend', {id: user.id}) }}"
+                  style="display:none;margin-top:15px;padding:16px;background:#fffaf0;border-radius:8px;border:1px solid #f6ad55;">
+                <p><strong>Durée de suspension :</strong></p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0;">
+                    <label><input type="radio" name="days" value="1"> 1 jour</label>
+                    <label><input type="radio" name="days" value="3"> 3 jours</label>
+                    <label><input type="radio" name="days" value="7" checked> 7 jours</label>
+                    <label><input type="radio" name="days" value="30"> 30 jours</label>
+                </div>
+                <textarea name="motif" placeholder="Motif de la suspension…" style="width:100%;padding:8px;border:1px solid #f6ad55;border-radius:6px;margin:8px 0;font-family:inherit;"></textarea>
+                <button type="submit" class="btn btn-warning btn-sm">Confirmer la suspension</button>
+                <button type="button" onclick="toggleForm('suspendForm')" class="btn btn-outline btn-sm">Annuler</button>
+            </form>
+
+            <form id="banForm" method="post" action="{{ path('admin_users_ban', {id: user.id}) }}"
+                  style="display:none;margin-top:15px;padding:16px;background:#fff5f5;border-radius:8px;border:1px solid #fc8181;"
+                  onsubmit="return confirm('Bannir définitivement cet utilisateur ? Cette action est sévère.')">
+                <p><strong>Motif du bannissement :</strong></p>
+                <textarea name="motif" required placeholder="Ex: Fraude confirmée, harcèlement répété…" style="width:100%;padding:8px;border:1px solid #fc8181;border-radius:6px;margin:8px 0;font-family:inherit;"></textarea>
+                <button type="submit" class="btn btn-danger btn-sm">🚫 Bannir définitivement</button>
+                <button type="button" onclick="toggleForm('banForm')" class="btn btn-outline btn-sm">Annuler</button>
+            </form>
+        </div>
+
+        <div class="section danger">
+            <h3>⚠️ Zone de danger</h3>
+            <p>Supprimer cet utilisateur est définitif</p>
+            <form method="post" action="{{ path('admin_users_delete', {'id': user.id}) }}" onsubmit="return confirm('Êtes-vous sûr? Cette action est irréversible.')">
+                <button type="submit" class="btn btn-danger">🗑️ Supprimer cet utilisateur</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleForm(id) {
+    const el = document.getElementById(id);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+
+<style>
+.user-detail-container {
+    max-width: 1000px;
+}
+
+.user-header {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.user-avatar {
+    font-size: 4em;
+}
+
+.user-info h2 {
+    margin: 0 0 5px 0;
+    font-size: 2em;
+}
+
+.user-info p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.user-sections {
+    display: grid;
+    gap: 20px;
+}
+
+.section {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.section.danger {
+    border-left: 4px solid #f56565;
+    background-color: #fff5f5;
+}
+
+.section h3 {
+    margin: 0 0 15px 0;
+    color: #1a202c;
+}
+
+.info-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.info-grid div {
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.info-grid div:last-child {
+    border-bottom: none;
+}
+
+.roles-container {
+    margin: 15px 0;
+}
+
+.kyc-info {
+    margin: 15px 0;
+}
+
+.kyc-info div {
+    padding: 10px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.kyc-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.properties-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.properties-list li {
+    padding: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.properties-list a {
+    color: #4299e1;
+    text-decoration: none;
+}
+
+.properties-list a:hover {
+    text-decoration: underline;
+}
+
+.text-muted {
+    color: #718096;
+}
+
+textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    margin: 10px 0;
+    font-family: inherit;
+}
+
+.btn {
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.btn-success { background-color: #48bb78; color: white; }
+.btn-danger { background-color: #f56565; color: white; }
+.btn-warning { background-color: #ed8936; color: white; }
+.btn-info { background-color: #4299e1; color: white; }
+.btn-outline { background-color: white; color: #2d3748; border: 1px solid #cbd5e0; }
+.btn-sm { padding: 6px 10px; font-size: .8rem; }
+
+.kyc-docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 12px 0; }
+.kyc-doc-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #f7fafc; }
+.kyc-doc-card.has-doc { border-color: #9ae6b4; background: #f0fff4; }
+.kyc-doc-card.missing { border-color: #fc8181; background: #fff5f5; }
+.kyc-doc-card.optional-empty { opacity: .7; }
+.kyc-doc-label { font-weight: 600; font-size: .9rem; }
+.kyc-doc-type { font-size: .75rem; margin-top: 2px; }
+.kyc-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+</style>
+{% endblock %}

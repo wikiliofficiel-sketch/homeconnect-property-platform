@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CONTRAT DE BAIL À USAGE D'HABITATION</title>
+    <style>
+        body { font-family: 'Helvetica', sans-serif; font-size: 12pt; line-height: 1.6; color: #333; margin: 40px; }
+        .header { text-align: center; margin-bottom: 50px; border-bottom: 2px solid #FF6B35; padding-bottom: 20px; }
+        .header h1 { color: #FF6B35; text-transform: uppercase; margin: 0; font-size: 24px; }
+        .section { margin-bottom: 25px; }
+        .section-title { font-weight: bold; text-decoration: underline; text-transform: uppercase; margin-bottom: 10px; color: #0A0F1D; }
+        .parties { display: table; width: 100%; margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; background: #f9f9f9; }
+        .signature-area { margin-top: 60px; width: 100%; }
+        .signature-box { display: inline-block; width: 45%; vertical-align: top; }
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 10px; color: #888; border-top: 1px solid #eee; padding-top: 10px; }
+        .highlight { color: #FF6B35; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Contrat de Bail à Usage d'Habitation</h1>
+        <p>Référence : #{{ property.id }}-{{ "now"|date("Y") }}</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">ENTRE LES SOUSSIGNÉS :</div>
+        <div class="parties">
+            <strong>LE BAILLEUR :</strong><br>
+            M./Mme {{ owner.fullName }}<br>
+            Demeurant à : {{ owner.address|default('Cotonou, Bénin') }}<br>
+            Téléphone : {{ owner.phone|default('N/A') }}
+        </div>
+        
+        <div class="parties">
+            <strong>LE PRENEUR (LOCATAIRE) :</strong><br>
+            M./Mme {{ tenant.fullName }}<br>
+            Demeurant à : {{ tenant.address|default('N/A') }}<br>
+            Téléphone : {{ tenant.phone|default('N/A') }}
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">ARTICLE 1 : OBJET DU CONTRAT</div>
+        <p>Le Bailleur donne en location au Preneur, qui l'accepte, les locaux désignés ci-après :</p>
+        <p><strong>Désignation :</strong> {{ property.title }}<br>
+           <strong>Localisation :</strong> {{ property.address }}, {{ property.city }}<br>
+           <strong>Description :</strong> {{ property.description|slice(0, 150) }}...<br>
+           <strong>Surface :</strong> {{ property.surface }} m²</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">ARTICLE 2 : DURÉE DU CONTRAT</div>
+        <p>Le présent bail est consenti pour une durée de <strong>12 mois</strong> renouvelable par tacite reconduction, commençant à courir le <span class="highlight">{{ "now"|date("d/m/Y") }}</span>.</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">ARTICLE 3 : CONDITIONS FINANCIÈRES</div>
+        <p>La présente location est consentie et acceptée moyennant un loyer mensuel de :<br>
+        <span class="highlight">{{ property.pricePerMonth|number_format(0, ',', ' ') }} CFA</span> (Hors charges).</p>
+        
+        <p>Le locataire a versé ce jour une caution de :<br>
+        <span class="highlight">{{ (property.pricePerMonth * 3)|number_format(0, ',', ' ') }} CFA</span> (Correspondant à 3 mois de loyer).</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">ARTICLE 4 : OBLIGATIONS DU PRENEUR</div>
+        <p>Le Preneur s'oblige à :<br>
+        - User des locaux en "bon père de famille".<br>
+        - Payer le loyer à terme échu au plus tard le 5 de chaque mois.<br>
+        - Ne faire aucun changement de distribution ou transformation sans l'accord écrit du Bailleur.</p>
+    </div>
+
+    <div class="signature-area">
+        <div class="signature-box">
+            <p><strong>Lu et Approuvé</strong></p>
+            <p>Le Bailleur :</p>
+            <div style="height: 80px;"></div>
+            <p>__________________________</p>
+        </div>
+        <div class="signature-box" style="float: right; text-align: right;">
+            <p><strong>Lu et Approuvé</strong></p>
+            <p>Le Locataire :</p>
+            <div style="height: 80px;"></div>
+            <p>__________________________</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        Document généré par HomeConnect - Plateforme Immobilière Digitale - {{ "now"|date("d/m/Y H:i") }}
+    </div>
+</body>
+</html>

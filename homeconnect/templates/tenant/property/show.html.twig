@@ -1,0 +1,921 @@
+{% extends 'tenant/base.html.twig' %}
+
+{% block tenant_content %}
+<div class="pd-wrap">
+
+{# ══════════════════ GALERIE ══════════════════════════════════════════ #}
+<div class="pd-gallery mb-4">
+    <div class="row g-2" style="border-radius: 20px; overflow: hidden; max-height: 520px;">
+        <div class="col-md-8">
+            <div class="pd-main-img" id="mainImgWrapper">
+                {% if property.images and property.images|length > 0 %}
+                    {% set img0 = property.images[0] %}
+                    <img id="mainGalleryImg"
+                         src="{{ img0 starts with 'http' or img0 starts with 'data:' or img0 starts with '/' ? img0 : asset('uploads/properties/' ~ img0) }}"
+                         alt="{{ property.title }}"
+                         onclick="openLightbox(currentMainIdx)">
+                {% else %}
+                    <div class="pd-no-img"><i class="fa-solid fa-house"></i></div>
+                {% endif %}
+                {# Flèches navigation #}
+                {% if property.images|length > 1 %}
+                <button class="pd-nav-btn pd-nav-prev" onclick="navigateMain(-1)" title="Photo précédente">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button class="pd-nav-btn pd-nav-next" onclick="navigateMain(1)" title="Photo suivante">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+                {% endif %}
+                <div class="pd-gallery-badges">
+                    <span class="pd-badge-white" id="photoCounter"><i class="fa-solid fa-camera me-1"></i>1 / {{ property.images ? property.images|length : 0 }}</span>
+                    {% if property.videoUrl %}<span class="pd-badge-white"><i class="fa-solid fa-video me-1"></i>Vidéo</span>{% endif %}
+                </div>
+                <form method="POST" action="{{ path('app_tenant_favorite_toggle', {propertyId: property.id}) }}" class="pd-fav-btn">
+                    <button type="submit" title="{% if isFavorite %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}">
+                        <i class="fa-{{ isFavorite ? 'solid' : 'regular' }} fa-heart" style="color: {{ isFavorite ? '#e74c3c' : '#666' }};"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-4 d-flex flex-column gap-2">
+            {% for i in 1..2 %}
+            <div class="pd-side-img {{ i == 2 and property.images|length > 3 ? 'has-more' : '' }}" onclick="setMainImage({{ i }})">
+                {% if property.images and property.images[i] is defined %}
+                    {% set imgN = property.images[i] %}
+                    <img src="{{ imgN starts with 'http' or imgN starts with 'data:' or imgN starts with '/' ? imgN : asset('uploads/properties/' ~ imgN) }}" alt="Photo {{ i+1 }}">
+                {% else %}
+                    <div class="pd-no-img" style="min-height: 0; height: 100%;"><i class="fa-solid fa-image opacity-25"></i></div>
+                {% endif %}
+                {% if i == 2 and property.images|length > 3 %}
+                <div class="pd-more-overlay" onclick="openLightbox(2)">+{{ property.images|length - 3 }} photos</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# Bande de miniatures #}
+    {% if property.images|length > 1 %}
+    <div class="pd-thumbs" id="galleryThumbs">
+        {% for i, img in property.images %}
+        <div class="pd-thumb {{ i == 0 ? 'pd-thumb-active' : '' }}" id="thumb-{{ i }}" onclick="setMainImage({{ i }})">
+            <img src="{{ img starts with 'http' or img starts with 'data:' or img starts with '/' ? img : asset('uploads/properties/' ~ img) }}" alt="Miniature {{ i+1 }}">
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+{# ══════════════════ CONTENU PRINCIPAL ════════════════════════════════ #}
+<div class="row g-5">
+
+{# ─────────── COLONNE GAUCHE ─────────── #}
+<div class="col-lg-8">
+
+    {# TITRE + PRIX #}
+    <div class="pd-card mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                    {% if property.type %}<span class="pd-type-chip">{{ property.type|capitalize }}</span>{% endif %}
+                    {% if property.statutAnnonce %}<span class="pd-annonce-chip">{{ property.statutAnnonce }}</span>{% endif %}
+                </div>
+                <h1 class="pd-title">{{ property.title }}</h1>
+                <p class="pd-location"><i class="fa-solid fa-location-dot me-2" style="color:#667eea;"></i>{{ property.getFullAddress() }}</p>
+            </div>
+            <div class="text-end">
+                {% if property.statutAnnonce != 'À vendre' %}
+                <div class="pd-price">{{ property.pricePerMonth|number_format(0, ',', ' ') }} <span class="pd-price-unit">FCFA/mois</span></div>
+                {% endif %}
+                {% if property.prixVente and property.statutAnnonce != 'À louer' %}
+                <div style="font-size: 1.2rem; font-weight: 700; color: #2980b9; margin-top: 4px;">{{ property.prixVente|number_format(0, ',', ' ') }} FCFA <small style="font-size:12px; color:#666;">(vente)</small></div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Amenities rapides #}
+        <div class="pd-amenities-row">
+            {% if property.rooms %}<div class="pd-amenity"><i class="fa-solid fa-door-open"></i><span>{{ property.rooms }} pièces</span></div>{% endif %}
+            {% if property.bedrooms %}<div class="pd-amenity"><i class="fa-solid fa-bed"></i><span>{{ property.bedrooms }} chambres</span></div>{% endif %}
+            {% if property.nbSallesDeBain %}<div class="pd-amenity"><i class="fa-solid fa-bath"></i><span>{{ property.nbSallesDeBain }} SDB</span></div>{% endif %}
+            {% if property.surface %}<div class="pd-amenity"><i class="fa-solid fa-ruler-combined"></i><span>{{ property.surface }} m²</span></div>{% endif %}
+            {% if property.etage is not null %}<div class="pd-amenity"><i class="fa-solid fa-building"></i><span>{{ property.etage == 0 ? 'RDC' : 'Étage '~property.etage }}</span></div>{% endif %}
+            {% if property.typeCuisine %}<div class="pd-amenity"><i class="fa-solid fa-kitchen-set"></i><span>{{ property.typeCuisine }}</span></div>{% endif %}
+        </div>
+    </div>
+
+    {# DESCRIPTION #}
+    <div class="pd-card mb-4">
+        <div class="pd-section-title">Description</div>
+        <p style="color: #555; line-height: 1.85; font-size: 15px; white-space: pre-line; margin: 0;">{{ property.description }}</p>
+    </div>
+
+    {# VIDÉO #}
+    {% if property.videoUrl %}
+    <div class="pd-card mb-4">
+        <div class="pd-section-title"><i class="fa-solid fa-video text-primary me-2"></i>Vidéo de présentation</div>
+        {% set videoId = '' %}
+        {% if 'youtube.com/watch?v=' in property.videoUrl %}
+            {% set videoId = property.videoUrl|split('v=')[1]|split('&')[0] %}
+        {% elseif 'youtu.be/' in property.videoUrl %}
+            {% set videoId = property.videoUrl|split('youtu.be/')[1]|split('?')[0] %}
+        {% endif %}
+        {% if videoId %}
+        <div style="position:relative; padding-bottom:56.25%; height:0; border-radius:12px; overflow:hidden;">
+            <iframe src="https://www.youtube.com/embed/{{ videoId }}" frameborder="0" allowfullscreen
+                style="position:absolute; top:0; left:0; width:100%; height:100%;"></iframe>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {# ÉQUIPEMENTS #}
+    {% if property.equipements and property.equipements|length > 0 %}
+    <div class="pd-card mb-4">
+        <div class="pd-section-title">Équipements inclus</div>
+        {% set equipIcons = {
+            'wifi': 'fa-wifi', 'climatisation': 'fa-snowflake', 'ventilateur': 'fa-fan',
+            'chauffage': 'fa-fire', 'eau_courante': 'fa-droplet', 'groupe_electrogene': 'fa-bolt',
+            'panneaux_solaires': 'fa-solar-panel', 'gardiennage': 'fa-user-shield',
+            'interphone': 'fa-phone', 'alarme': 'fa-bell', 'piscine': 'fa-water-ladder',
+            'salle_sport': 'fa-dumbbell', 'buanderie': 'fa-shirt', 'meuble': 'fa-couch'
+        } %}
+        <div class="pd-equip-grid">
+            {% for eq in property.equipements %}
+            <div class="pd-equip-item">
+                <i class="fa-solid {{ equipIcons[eq] ?? 'fa-check-circle' }}" style="color:#667eea;"></i>
+                <span>{{ eq|replace({'_': ' '})|capitalize }}</span>
+            </div>
+            {% endfor %}
+            {% if property.hasParking %}<div class="pd-equip-item"><i class="fa-solid fa-square-parking" style="color:#667eea;"></i><span>Parking</span></div>{% endif %}
+            {% if property.hasJardin %}<div class="pd-equip-item"><i class="fa-solid fa-tree" style="color:#667eea;"></i><span>Jardin</span></div>{% endif %}
+            {% if property.hasBalcon %}<div class="pd-equip-item"><i class="fa-solid fa-door-open" style="color:#667eea;"></i><span>Balcon</span></div>{% endif %}
+            {% if property.hasAscenseur %}<div class="pd-equip-item"><i class="fa-solid fa-elevator" style="color:#667eea;"></i><span>Ascenseur</span></div>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# INFOS COMPLÉMENTAIRES #}
+    <div class="pd-card mb-4">
+        <div class="pd-section-title">Informations complémentaires</div>
+        <div class="pd-info-grid">
+            {% if property.disponibilite %}
+            <div class="pd-info-item"><i class="fa-solid fa-calendar-check" style="color:#27ae60;"></i><div><span class="pd-info-label">Disponible dès</span><strong>{{ property.disponibilite }}</strong></div></div>
+            {% endif %}
+            {% if property.dureeMinLocation %}
+            <div class="pd-info-item"><i class="fa-solid fa-clock" style="color:#f39c12;"></i><div><span class="pd-info-label">Durée min. location</span><strong>{{ property.dureeMinLocation }} mois</strong></div></div>
+            {% endif %}
+            {% if property.preavis %}
+            <div class="pd-info-item"><i class="fa-solid fa-bell" style="color:#e67e22;"></i><div><span class="pd-info-label">Préavis</span><strong>{{ property.preavis }} mois</strong></div></div>
+            {% endif %}
+            {% if property.deposit %}
+            <div class="pd-info-item"><i class="fa-solid fa-lock" style="color:#3498db;"></i><div><span class="pd-info-label">Dépôt de garantie</span><strong>{{ property.deposit|number_format(0, ',', ' ') }} FCFA</strong></div></div>
+            {% endif %}
+            {% if property.chargesComprises %}
+            <div class="pd-info-item"><i class="fa-solid fa-circle-check" style="color:#27ae60;"></i><div><span class="pd-info-label">Charges</span><strong>Comprises</strong></div></div>
+            {% elseif property.montantCharges %}
+            <div class="pd-info-item"><i class="fa-solid fa-receipt" style="color:#e74c3c;"></i><div><span class="pd-info-label">Charges</span><strong>{{ property.montantCharges|number_format(0, ',', ' ') }} FCFA/mois</strong></div></div>
+            {% endif %}
+            {% if property.fraisAgence %}
+            <div class="pd-info-item"><i class="fa-solid fa-handshake" style="color:#9b59b6;"></i><div><span class="pd-info-label">Frais d'agence</span><strong>{{ property.fraisAgence|number_format(0, ',', ' ') }} FCFA</strong></div></div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# RÈGLES #}
+    {% if property.animauxAcceptes is not null or property.fumeursAcceptes is not null %}
+    <div class="pd-card mb-4">
+        <div class="pd-section-title">Règles du bien</div>
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="pd-rule {{ property.animauxAcceptes ? 'rule-ok' : 'rule-no' }}">
+                <i class="fa-solid fa-dog"></i>
+                <span>Animaux {% if property.animauxAcceptes %}acceptés{% else %}non acceptés{% endif %}</span>
+            </div>
+            <div class="pd-rule {{ property.fumeursAcceptes ? 'rule-ok' : 'rule-no' }}">
+                <i class="fa-solid fa-smoking{% if not property.fumeursAcceptes %}-ban{% endif %}"></i>
+                <span>Fumeurs {% if property.fumeursAcceptes %}acceptés{% else %}non acceptés{% endif %}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# STATISTIQUES PUBLIQUES #}
+    <div class="pd-card mb-4">
+        <div class="pd-section-title">Statistiques du bien</div>
+        <div class="d-flex gap-4 flex-wrap">
+            <div class="pd-public-stat"><i class="fa-solid fa-eye" style="color:#667eea;"></i><div><strong>{{ property.views }}</strong><span>vues</span></div></div>
+            <div class="pd-public-stat"><i class="fa-solid fa-calendar" style="color:#667eea;"></i><div><strong>{{ property.createdAt|date('d/m/Y') }}</strong><span>publié le</span></div></div>
+            {% if property.views > 50 %}<div class="pd-public-stat"><i class="fa-solid fa-fire" style="color:#e74c3c;"></i><div><strong>Populaire</strong><span>bien demandé</span></div></div>{% endif %}
+        </div>
+    </div>
+
+    {# AVIS SUR LE PROPRIÉTAIRE #}
+    <div class="pd-card mb-4">
+        <div class="pd-section-title">Avis sur le propriétaire</div>
+        {% if reviews|length > 0 %}
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div style="font-size: 2.5rem; font-weight: 800; color: #f39c12;">{{ avgRating|number_format(1) }}</div>
+            <div>
+                <div class="pd-stars">
+                    {% for i in 1..5 %}
+                        <i class="fa-{{ i <= avgRating|round ? 'solid' : 'regular' }} fa-star" style="color: #f39c12;"></i>
+                    {% endfor %}
+                </div>
+                <div style="font-size: 13px; color: #888;">{{ reviews|length }} évaluation{% if reviews|length > 1 %}s{% endif %}</div>
+            </div>
+        </div>
+        {% for review in reviews|slice(0, 3) %}
+        <div class="pd-review">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="pd-review-avatar">{{ review.author.prenom|slice(0,1)|upper }}</div>
+                <div>
+                    <strong style="color:#2c3e50;">{{ review.author.fullName }}</strong>
+                    <div class="pd-stars" style="font-size: 12px;">
+                        {% for i in 1..5 %}<i class="fa-{{ i <= review.rating ? 'solid' : 'regular' }} fa-star" style="color:#f39c12;"></i>{% endfor %}
+                    </div>
+                </div>
+                <span style="margin-left:auto; font-size:12px; color:#aaa;">{{ review.createdAt is defined ? review.createdAt|date('d/m/Y') : '' }}</span>
+            </div>
+            <p style="color:#666; font-size: 14px; margin:0; font-style: italic;">"{{ review.comment }}"</p>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p style="color:#aaa; font-style:italic; font-size:14px; margin:0;">Aucun avis pour ce propriétaire encore.</p>
+        {% endif %}
+    </div>
+
+    {# ── RÉACTIONS SOCIALES ─────────────────────────────────────── #}
+    <div class="pd-card mb-4">
+        <div class="pd-card-title mb-3"><i class="fa-solid fa-heart-pulse me-2"></i>Réactions</div>
+        <div class="react-bar">
+            {# J'aime #}
+            <form method="POST" action="{{ path('app_tenant_property_react', {id: property.id}) }}" style="display:inline;">
+                <input type="hidden" name="type" value="like">
+                <button type="submit" class="react-btn {{ userInteraction and userInteraction.type == 'like' ? 'react-active-like' : '' }}">
+                    <i class="fa-{{ userInteraction and userInteraction.type == 'like' ? 'solid' : 'regular' }} fa-thumbs-up"></i>
+                    <span>{{ likesCount }}</span>
+                </button>
+            </form>
+
+            {# Je n'aime pas #}
+            <form method="POST" action="{{ path('app_tenant_property_react', {id: property.id}) }}" style="display:inline;">
+                <input type="hidden" name="type" value="dislike">
+                <button type="submit" class="react-btn {{ userInteraction and userInteraction.type == 'dislike' ? 'react-active-dislike' : '' }}">
+                    <i class="fa-{{ userInteraction and userInteraction.type == 'dislike' ? 'solid' : 'regular' }} fa-thumbs-down"></i>
+                    <span>{{ dislikesCount }}</span>
+                </button>
+            </form>
+
+            {# Commenter #}
+            <button type="button" class="react-btn" onclick="document.getElementById('commentSection').scrollIntoView({behavior:'smooth'})">
+                <i class="fa-regular fa-comment"></i>
+                <span>{{ propertyComments|length }}</span>
+            </button>
+
+            {# Partager #}
+            <button type="button" class="react-btn" onclick="shareProperty()">
+                <i class="fa-solid fa-share-nodes"></i>
+                <span>Partager</span>
+            </button>
+
+            {# Signaler #}
+            <button type="button" class="react-btn react-report" onclick="document.getElementById('reportModal').style.display='flex'">
+                <i class="fa-solid fa-flag"></i>
+                <span>Signaler</span>
+            </button>
+        </div>
+    </div>
+
+    {# ── COMMENTAIRES ────────────────────────────────────────────── #}
+    <div class="pd-card mb-4" id="commentSection">
+        <div class="pd-card-title mb-3">
+            <i class="fa-regular fa-comments me-2"></i>Commentaires
+            <span class="comment-count-badge">{{ propertyComments|length }}</span>
+        </div>
+
+        {# Formulaire nouveau commentaire #}
+        <form method="POST" action="{{ path('app_tenant_property_comment', {id: property.id}) }}" class="mb-4">
+            <div class="comment-form-wrap">
+                <div class="comment-self-av">{{ app.user.prenom|slice(0,1)|upper }}</div>
+                <div class="comment-input-area">
+                    <textarea name="content" id="commentInput" maxlength="500" rows="2"
+                        placeholder="Partagez votre avis sur ce bien…"
+                        oninput="updateCharCount(this)"></textarea>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <small id="charCount" style="color:#aaa; font-size:11px;">0 / 500</small>
+                        <button type="submit" class="comment-submit-btn">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Publier
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        {# Liste des commentaires #}
+        {% if propertyComments|length > 0 %}
+            {% for comment in propertyComments %}
+            <div class="comment-item">
+                <div class="comment-av">{{ comment.author.prenom|slice(0,1)|upper }}</div>
+                <div class="comment-body">
+                    <div class="comment-header">
+                        <strong>{{ comment.author.fullName }}</strong>
+                        <span class="comment-date">{{ comment.createdAt|date('d/m/Y à H:i') }}</span>
+                        {% if comment.author.id == app.user.id %}
+                        <form method="POST" action="{{ path('app_tenant_property_comment_delete', {id: comment.id}) }}" style="margin-left:auto;"
+                              onsubmit="return confirm('Supprimer ce commentaire ?')">
+                            <button type="submit" class="comment-delete-btn" title="Supprimer">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    <p class="comment-text">{{ comment.content }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="comment-empty">
+            <i class="fa-regular fa-comment-dots"></i>
+            <p>Aucun commentaire pour l'instant. Soyez le premier !</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── SIGNALER (compact) ──────────────────────────────────────── #}
+    <div class="pd-card mb-4">
+        <div class="d-flex align-items-center justify-content-between">
+            <p style="color:#999; font-size:13px; margin:0;">Ce bien vous semble incorrect ou abusif ?</p>
+            <button onclick="document.getElementById('reportModal').style.display='flex'" class="pd-report-btn">
+                <i class="fa-solid fa-flag me-2"></i> Signaler
+            </button>
+        </div>
+    </div>
+
+</div>
+
+{# ─────────── COLONNE DROITE (STICKY) ─────────── #}
+<div class="col-lg-4">
+    <div class="pd-sidebar">
+
+        {# Postuler #}
+        <div class="pd-sidebar-card mb-3">
+            <div style="text-align:center; padding: 1.5rem 1.5rem 0;">
+                <div class="pd-sidebar-price">{{ property.pricePerMonth|number_format(0, ',', ' ') }}<span>/mois</span></div>
+                <p style="color:#aaa; font-size:12px; margin: 4px 0 0;">FCFA · Hors charges de caution</p>
+            </div>
+            <div style="padding: 1rem 1.5rem 1.5rem;">
+                {% if existingApplication is defined and existingApplication %}
+                    {% if existingApplication.statut == 'pending' %}
+                    <div style="background:#fff9e6; border:1px solid #f6c84a; border-radius:12px; padding:14px; text-align:center; margin-bottom:10px;">
+                        <i class="fa-solid fa-clock" style="color:#f6c84a; font-size:1.5rem; display:block; margin-bottom:6px;"></i>
+                        <strong style="color:#856404;">Candidature en attente</strong>
+                        <p style="color:#856404; font-size:12px; margin:4px 0 0;">Envoyée le {{ existingApplication.createdAt|date('d/m/Y') }}</p>
+                    </div>
+                    <a href="{{ path('app_tenant_application_show', {id: existingApplication.id}) }}"
+                       class="pd-btn-apply" style="background:linear-gradient(135deg,#f6c84a,#e0a800); text-decoration:none; display:flex; justify-content:center;">
+                        <i class="fa-solid fa-eye me-2"></i> Voir ma candidature
+                    </a>
+                    {% elseif existingApplication.statut == 'accepted' %}
+                    <div style="background:#e6f9f0; border:1px solid #28a745; border-radius:12px; padding:14px; text-align:center; margin-bottom:10px;">
+                        <i class="fa-solid fa-circle-check" style="color:#28a745; font-size:1.5rem; display:block; margin-bottom:6px;"></i>
+                        <strong style="color:#155724;">Candidature acceptée !</strong>
+                    </div>
+                    <a href="{{ path('app_tenant_application_show', {id: existingApplication.id}) }}"
+                       class="pd-btn-apply" style="background:linear-gradient(135deg,#28a745,#1e7e34); text-decoration:none; display:flex; justify-content:center;">
+                        <i class="fa-solid fa-calendar-check me-2"></i> Voir les détails
+                    </a>
+                    {% else %}
+                    <button type="button" class="pd-btn-apply" data-bs-toggle="modal" data-bs-target="#applyModal">
+                        <i class="fa-solid fa-paper-plane me-2"></i> Postuler à ce bien
+                    </button>
+                    {% endif %}
+                {% else %}
+                <button type="button" class="pd-btn-apply" data-bs-toggle="modal" data-bs-target="#applyModal">
+                    <i class="fa-solid fa-paper-plane me-2"></i> Postuler à ce bien
+                </button>
+                {% endif %}
+                <p style="text-align:center; font-size:11px; color:#999; margin-top:10px;">
+                    <i class="fa-solid fa-shield-check" style="color:#27ae60;"></i> Réponse sous 24/48h garantie
+                </p>
+
+                <div class="d-flex gap-2 mt-2">
+                    <form method="POST" action="{{ path('app_tenant_favorite_toggle', {propertyId: property.id}) }}" style="flex:1;">
+                        <button type="submit" class="pd-btn-secondary w-100">
+                            <i class="fa-{{ isFavorite ? 'solid' : 'regular' }} fa-heart" style="color:{{ isFavorite ? '#e74c3c' : 'inherit' }};"></i>
+                            {{ isFavorite ? 'Favori' : 'Favoris' }}
+                        </button>
+                    </form>
+                    <button onclick="shareProperty()" class="pd-btn-secondary" style="flex:1;">
+                        <i class="fa-solid fa-share-nodes"></i> Partager
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# Résumé infos clés #}
+        <div class="pd-sidebar-card mb-3">
+            <div style="padding: 1.2rem;">
+                <div class="pd-sidebar-section-title">Infos clés</div>
+                <div class="pd-kv-list">
+                    {% if property.deposit %}<div class="pd-kv"><span>Caution</span><strong>{{ property.deposit|number_format(0, ',', ' ') }} F</strong></div>{% endif %}
+                    {% if property.disponibilite %}<div class="pd-kv"><span>Disponible</span><strong>{{ property.disponibilite }}</strong></div>{% endif %}
+                    {% if property.dureeMinLocation %}<div class="pd-kv"><span>Durée min.</span><strong>{{ property.dureeMinLocation }} mois</strong></div>{% endif %}
+                    {% if property.preavis %}<div class="pd-kv"><span>Préavis</span><strong>{{ property.preavis }} mois</strong></div>{% endif %}
+                    <div class="pd-kv"><span>Vues</span><strong>{{ property.views }}</strong></div>
+                    <div class="pd-kv"><span>Publié le</span><strong>{{ property.createdAt|date('d/m/Y') }}</strong></div>
+                </div>
+            </div>
+        </div>
+
+        {# Propriétaire #}
+        <div class="pd-sidebar-card mb-3">
+            <div style="padding: 1.2rem;">
+                <div class="pd-sidebar-section-title">Propriétaire</div>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="pd-owner-avatar">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; color: #2c3e50; font-size: 15px;">{{ proprietaire.fullName }}</div>
+                        {% if proprietaire.verificationStatus == 'certifie' %}
+                        <span class="pd-certified"><i class="fa-solid fa-circle-check me-1"></i>Certifié</span>
+                        {% endif %}
+                        <div class="pd-stars mt-1" style="font-size:13px;">
+                            {% for i in 1..5 %}<i class="fa-{{ i <= (avgRating|round) ? 'solid' : 'regular' }} fa-star" style="color:#f39c12;"></i>{% endfor %}
+                            <span style="color:#888; font-size:12px; margin-left:4px;">{{ avgRating|number_format(1) }} ({{ reviews|length }})</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ path('app_tenant_messages') }}" class="pd-btn-secondary w-100" style="display:block; text-align:center;">
+                    <i class="fa-solid fa-headset me-2"></i> Contacter l'Admin
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+</div>
+
+{# ══════════════════ BIENS SIMILAIRES ═════════════════════════════════ #}
+{% if similarProperties is defined and similarProperties|length > 0 %}
+<div class="pd-similar mt-5">
+    <h3 class="pd-similar-title">Biens similaires</h3>
+    <div class="row g-4">
+        {% for sim in similarProperties %}
+        <div class="col-md-6 col-lg-3">
+            <a href="{{ path('app_tenant_property_show', {id: sim.id}) }}" class="pd-sim-card text-decoration-none">
+                <div class="pd-sim-img">
+                    {% if sim.images and sim.images|length > 0 %}
+                        {% set s0 = sim.images[0] %}
+                        <img src="{{ s0 starts with 'http' or s0 starts with 'data:' ? s0 : asset('uploads/properties/' ~ s0) }}" alt="{{ sim.title }}">
+                    {% else %}
+                        <div class="pd-sim-no-img"><i class="fa-solid fa-house"></i></div>
+                    {% endif %}
+                    {% if sim.type %}<span class="pd-sim-type">{{ sim.type|capitalize }}</span>{% endif %}
+                </div>
+                <div class="pd-sim-body">
+                    <div class="pd-sim-price">{{ sim.pricePerMonth|number_format(0, ',', ' ') }} <small>FCFA/mois</small></div>
+                    <div class="pd-sim-name">{{ sim.title|slice(0, 40) }}{% if sim.title|length > 40 %}…{% endif %}</div>
+                    <div class="pd-sim-loc"><i class="fa-solid fa-location-dot me-1"></i>{{ sim.city }}</div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+</div>{# .pd-wrap #}
+
+{# Lightbox et modaux déplacés dans body_end #}
+
+<style>
+.pd-wrap { max-width: 1280px; margin: 0 auto; }
+
+/* Galerie */
+.pd-main-img { height: 420px; position: relative; overflow: hidden; border-radius: 16px 0 0 16px; }
+.pd-main-img img { width:100%; height:100%; object-fit:cover; transition: transform 0.4s; cursor: pointer; }
+.pd-main-img:hover img { transform: scale(1.02); }
+.pd-side-img { flex:1; min-height: 205px; position: relative; cursor: pointer; overflow: hidden; }
+.pd-side-img:first-child { border-radius: 0 16px 0 0; }
+.pd-side-img:last-child { border-radius: 0 0 16px 0; }
+.pd-side-img img { width:100%; height:100%; object-fit:cover; transition: transform 0.4s; }
+.pd-side-img:hover img { transform: scale(1.03); }
+.pd-no-img { width:100%; height:100%; min-height:420px; display:flex; align-items:center; justify-content:center; background:#f0f0f0; color:#ccc; font-size:3rem; }
+.pd-gallery-badges { position:absolute; bottom:16px; left:16px; display:flex; gap:8px; }
+.pd-badge-white { background:rgba(255,255,255,0.92); color:#333; font-size:12px; font-weight:600; padding:5px 12px; border-radius:50px; backdrop-filter:blur(6px); }
+.pd-fav-btn { position:absolute; bottom:16px; right:16px; }
+.pd-fav-btn button { width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,0.92); border:none; cursor:pointer; font-size:1.25rem; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.15); transition: transform 0.2s; }
+.pd-fav-btn button:hover { transform: scale(1.1); }
+.pd-more-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.2rem; font-weight:700; cursor:pointer; }
+/* Flèches navigation galerie */
+.pd-nav-btn { position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.9); border:none; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; color:#333; box-shadow:0 2px 8px rgba(0,0,0,0.2); transition:all .2s; z-index:5; }
+.pd-nav-btn:hover { background:#fff; transform:translateY(-50%) scale(1.08); }
+.pd-nav-prev { left:12px; }
+.pd-nav-next { right:12px; }
+/* Bande de miniatures */
+.pd-thumbs { display:flex; gap:8px; margin-top:10px; overflow-x:auto; padding:4px 2px; scrollbar-width:thin; }
+.pd-thumbs::-webkit-scrollbar { height:4px; }
+.pd-thumbs::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.15); border-radius:2px; }
+.pd-thumb { width:68px; height:52px; border-radius:10px; overflow:hidden; cursor:pointer; flex-shrink:0; border:2px solid transparent; transition:all .2s; }
+.pd-thumb img { width:100%; height:100%; object-fit:cover; }
+.pd-thumb:hover { border-color: #667eea; transform:scale(1.04); }
+.pd-thumb-active { border-color: #667eea !important; box-shadow: 0 0 0 2px rgba(102,126,234,0.35); }
+
+/* Cards */
+.pd-card { background:#fff; border:1px solid #eee; border-radius:16px; padding:1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+.pd-section-title { font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#667eea; margin-bottom:1rem; }
+
+/* Titre */
+.pd-title { font-size: 1.8rem; font-weight: 800; color: #1a1a2e; margin: 0 0 6px; line-height: 1.25; }
+.pd-location { color: #888; font-size: 14px; margin: 0; }
+.pd-price { font-size: 2rem; font-weight: 800; color: #667eea; }
+.pd-price-unit { font-size: 14px; font-weight: 500; color: #aaa; }
+.pd-type-chip { background:#eef2ff; color:#667eea; font-size:12px; font-weight:600; padding:4px 12px; border-radius:50px; }
+.pd-annonce-chip { background:#e8f5e9; color:#27ae60; font-size:12px; font-weight:600; padding:4px 12px; border-radius:50px; }
+
+/* Amenities */
+.pd-amenities-row { display:flex; flex-wrap:wrap; gap:10px; margin-top:1rem; padding-top:1rem; border-top:1px solid #f0f0f0; }
+.pd-amenity { display:flex; align-items:center; gap:8px; background:#f8f9ff; border:1px solid #e8ecff; border-radius:50px; padding:6px 14px; font-size:13px; font-weight:500; color:#555; }
+.pd-amenity i { color:#667eea; }
+
+/* Équipements */
+.pd-equip-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:10px; }
+.pd-equip-item { display:flex; align-items:center; gap:10px; padding:10px; background:#f8f9ff; border-radius:10px; font-size:13px; color:#444; }
+
+/* Infos complémentaires */
+.pd-info-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:12px; }
+.pd-info-item { display:flex; align-items:center; gap:12px; padding:12px; background:#fafafa; border:1px solid #eee; border-radius:12px; }
+.pd-info-item > div { display:flex; flex-direction:column; }
+.pd-info-label { font-size:11px; color:#aaa; text-transform:uppercase; letter-spacing:.06em; margin-bottom:2px; }
+.pd-info-item strong { font-size:14px; color:#2c3e50; font-weight:700; }
+.pd-info-item i { font-size:1.2rem; flex-shrink:0; }
+
+/* Règles */
+.pd-rule { display:flex; align-items:center; gap:8px; padding:8px 16px; border-radius:50px; font-size:13px; font-weight:600; }
+.rule-ok { background:#e8f8f0; color:#27ae60; border:1px solid #b2dfdb; }
+.rule-no { background:#fdecea; color:#e74c3c; border:1px solid #f5c6cb; }
+
+/* Stats publiques */
+.pd-public-stat { display:flex; align-items:center; gap:12px; }
+.pd-public-stat i { font-size:1.4rem; }
+.pd-public-stat div { display:flex; flex-direction:column; }
+.pd-public-stat strong { font-size:16px; color:#2c3e50; font-weight:700; }
+.pd-public-stat span { font-size:11px; color:#aaa; text-transform:uppercase; letter-spacing:.05em; }
+
+/* Avis */
+.pd-stars i { font-size:14px; }
+.pd-review { background:#f9f9f9; border-radius:12px; padding:1rem; margin-bottom:10px; border:1px solid #eee; }
+.pd-review-avatar { width:40px; height:40px; border-radius:50%; background:#667eea; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; }
+
+/* Signaler */
+.pd-report-btn { background:none; border:1px solid #f5c6cb; color:#e74c3c; font-size:12px; font-weight:600; padding:6px 14px; border-radius:50px; cursor:pointer; transition:all .2s; }
+.pd-report-btn:hover { background:#fdecea; }
+
+/* Sidebar */
+.pd-sidebar { position:sticky; top:20px; }
+.pd-sidebar-card { background:#fff; border:1px solid #eee; border-radius:16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow:hidden; }
+.pd-sidebar-price { font-size: 2rem; font-weight: 800; color: #667eea; }
+.pd-sidebar-price span { font-size: 14px; font-weight: 500; color: #aaa; }
+.pd-btn-apply { width:100%; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border:none; border-radius:50px; padding:14px; font-size:15px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 16px rgba(102,126,234,0.4); transition:all .2s; }
+.pd-btn-apply:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(102,126,234,0.5); }
+.pd-btn-secondary { background:#f8f8f8; border:1px solid #e5e5e5; color:#555; border-radius:50px; padding:9px 16px; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:all .2s; text-decoration:none; }
+.pd-btn-secondary:hover { background:#eff2ff; color:#667eea; border-color:#667eea; }
+.pd-sidebar-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#667eea; margin-bottom:10px; }
+.pd-kv-list { display:flex; flex-direction:column; gap:8px; }
+.pd-kv { display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:6px 0; border-bottom:1px solid #f5f5f5; }
+.pd-kv span { color:#888; }
+.pd-kv strong { color:#2c3e50; }
+.pd-owner-avatar { width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+.pd-certified { background:#e8f5e9; color:#27ae60; font-size:11px; font-weight:700; padding:3px 10px; border-radius:50px; display:inline-flex; align-items:center; }
+
+/* Biens similaires */
+.pd-similar-title { font-size:1.5rem; font-weight:800; color:#1a1a2e; margin-bottom:1.5rem; }
+.pd-sim-card { display:block; background:#fff; border:1px solid #eee; border-radius:16px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.05); transition:transform .25s, box-shadow .25s; }
+.pd-sim-card:hover { transform:translateY(-5px); box-shadow:0 10px 30px rgba(0,0,0,0.1); }
+.pd-sim-img { height:180px; position:relative; overflow:hidden; }
+.pd-sim-img img { width:100%; height:100%; object-fit:cover; transition:transform .4s; }
+.pd-sim-card:hover .pd-sim-img img { transform:scale(1.04); }
+.pd-sim-no-img { width:100%; height:100%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:2rem; }
+.pd-sim-type { position:absolute; top:10px; left:10px; background:rgba(255,255,255,.9); color:#667eea; font-size:11px; font-weight:700; padding:3px 10px; border-radius:50px; }
+.pd-sim-body { padding:1rem; }
+.pd-sim-price { font-size:1.1rem; font-weight:800; color:#667eea; }
+.pd-sim-price small { font-size:11px; font-weight:500; color:#aaa; }
+.pd-sim-name { font-weight:600; color:#2c3e50; font-size:14px; margin:4px 0; }
+.pd-sim-loc { font-size:12px; color:#aaa; }
+
+@media(max-width:768px) {
+    .pd-main-img { height: 280px; }
+    .pd-side-img { min-height: 135px; }
+    .pd-title { font-size: 1.4rem; }
+}
+</style>
+
+<script>
+const allPhotos = {{ property.images|json_encode|raw }};
+let currentLightbox = 0;
+let currentMainIdx = 0;
+
+function resolveUrl(src) {
+    return (!src || src.startsWith('http') || src.startsWith('data:') || src.startsWith('/'))
+        ? src : '/uploads/properties/' + src;
+}
+
+function setMainImage(idx) {
+    if (!allPhotos.length) return;
+    currentMainIdx = (idx + allPhotos.length) % allPhotos.length;
+    const src = resolveUrl(allPhotos[currentMainIdx]);
+    const img = document.getElementById('mainGalleryImg');
+    if (img) img.src = src;
+    const counter = document.getElementById('photoCounter');
+    if (counter) counter.innerHTML = '<i class="fa-solid fa-camera me-1"></i>' + (currentMainIdx + 1) + ' / ' + allPhotos.length;
+    document.querySelectorAll('.pd-thumb').forEach((t, i) => {
+        t.classList.toggle('pd-thumb-active', i === currentMainIdx);
+    });
+    const thumb = document.getElementById('thumb-' + currentMainIdx);
+    if (thumb) thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+}
+
+function navigateMain(dir) { setMainImage(currentMainIdx + dir); }
+
+function openLightbox(idx) {
+    currentLightbox = Math.min(Math.max(idx, 0), allPhotos.length - 1);
+    const src = resolveUrl(allPhotos[currentLightbox]);
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('lightbox').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+    document.getElementById('lightbox').style.display = 'none';
+    document.body.style.overflow = '';
+}
+function lightboxNav(dir) {
+    currentLightbox = (currentLightbox + dir + allPhotos.length) % allPhotos.length;
+    openLightbox(currentLightbox);
+}
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'ArrowLeft') lightboxNav(-1);
+    else if (e.key === 'ArrowRight') lightboxNav(1);
+});
+
+function shareProperty() {
+    const data = { title: '{{ property.title|escape("js") }}', url: window.location.href };
+    if (navigator.share && navigator.canShare(data)) {
+        navigator.share(data).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(window.location.href)
+            .then(() => alert('Lien copié !'))
+            .catch(() => prompt('Copiez ce lien :', window.location.href));
+    }
+}
+</script>
+{% endblock %}
+
+{% block body_end %}
+{# ══ Lightbox ════════════════════════════════════════════════════════ #}
+<div id="lightbox" onclick="if(event.target===this)closeLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10050;align-items:center;justify-content:center;">
+    <button onclick="closeLightbox()" style="position:absolute;top:20px;right:24px;background:none;border:none;color:#fff;font-size:2rem;cursor:pointer;z-index:10051;">✕</button>
+    <button onclick="lightboxNav(-1)" style="position:absolute;left:20px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.15);border:none;color:#fff;width:48px;height:48px;border-radius:50%;font-size:1.2rem;cursor:pointer;z-index:10051;"><i class="fa-solid fa-chevron-left"></i></button>
+    <img id="lightboxImg" src="" alt="" style="max-width:90vw;max-height:85vh;object-fit:contain;border-radius:12px;">
+    <button onclick="lightboxNav(1)" style="position:absolute;right:20px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.15);border:none;color:#fff;width:48px;height:48px;border-radius:50%;font-size:1.2rem;cursor:pointer;z-index:10051;"><i class="fa-solid fa-chevron-right"></i></button>
+</div>
+
+{# ══ Modal Postuler ══════════════════════════════════════════════════ #}
+<div class="modal fade" id="applyModal" tabindex="-1" style="z-index:10060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+            <div class="modal-header border-0 p-4" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0">Postuler à ce bien</h5>
+                    <p class="small opacity-75 mb-0">{{ property.title }}</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" style="background:#fff;">
+                <form method="POST" action="{{ path('app_tenant_apply', {id: property.id}) }}">
+                    <div class="mb-3">
+                        <label class="d-block mb-1" style="font-size:11px; font-weight:700; color:#666; text-transform:uppercase; letter-spacing:.06em;">Date d'entrée souhaitée <span style="color:#e74c3c;">*</span></label>
+                        <input type="date" class="form-control rounded-3" name="dateDebut" required min="{{ 'now'|date('Y-m-d') }}"
+                               style="color:#333; background:#f8f9fa; border:1px solid #dee2e6; font-size:14px;">
+                    </div>
+                    <div class="mb-3 p-3 rounded-3 d-flex align-items-center gap-3" style="background:#f0faf4; border:1px solid #b2dfdb;">
+                        <i class="fa-solid fa-file-circle-check fs-4" style="color:#27ae60;"></i>
+                        <div class="small">
+                            <strong style="color:#1a5c37; display:block;">Votre dossier sera joint automatiquement</strong>
+                            <span style="color:#4a7c5e;">Complétez votre profil pour augmenter vos chances</span>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="d-block mb-1" style="font-size:11px; font-weight:700; color:#666; text-transform:uppercase; letter-spacing:.06em;">Message (facultatif)</label>
+                        <textarea class="form-control rounded-3" name="message" rows="3"
+                                  placeholder="Présentez-vous et expliquez pourquoi ce bien vous intéresse…"
+                                  style="color:#333; background:#f8f9fa; border:1px solid #dee2e6; font-size:14px; resize:none;"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-lg w-100 rounded-pill fw-bold py-3 shadow"
+                        style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;font-size:15px;">
+                        <i class="fa-solid fa-paper-plane me-2"></i> Envoyer ma candidature
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ══ Modal Signaler ══════════════════════════════════════════════════ #}
+<div id="reportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:10070;align-items:center;justify-content:center;padding:1rem;"
+     onclick="if(event.target===this)this.style.display='none'">
+    <div class="report-modal-box">
+        <div class="report-modal-head">
+            <i class="fa-solid fa-flag" style="color:#e74c3c;"></i>
+            <h5 style="margin:0;">Signaler ce bien</h5>
+            <button onclick="document.getElementById('reportModal').style.display='none'"
+                style="background:none;border:none;color:#999;font-size:1.2rem;cursor:pointer;margin-left:auto;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ path('app_tenant_report_create') }}" class="report-modal-body">
+            <input type="hidden" name="propertyId" value="{{ property.id }}">
+
+            {# Motif #}
+            <div class="mb-3">
+                <label class="report-label">Motif *</label>
+                <select name="reason" class="report-select" required>
+                    <option value="">Choisir un motif…</option>
+                    <option value="Fausse annonce / photos trompeuses">Fausse annonce / photos trompeuses</option>
+                    <option value="Prix abusif ou anormal">Prix abusif ou anormal</option>
+                    <option value="Arnaque / Escroquerie">Arnaque / Escroquerie</option>
+                    <option value="Contenu inapproprié">Contenu inapproprié</option>
+                    <option value="Bien déjà loué ou indisponible">Bien déjà loué ou indisponible</option>
+                    <option value="Harcèlement du propriétaire">Harcèlement du propriétaire</option>
+                    <option value="Autre">Autre</option>
+                </select>
+            </div>
+
+            {# Priorité #}
+            <div class="mb-3">
+                <label class="report-label">Niveau de priorité *</label>
+                <div class="priority-grid">
+                    <label class="priority-option prio-low">
+                        <input type="radio" name="priority" value="low" required>
+                        <i class="fa-solid fa-circle-dot"></i> Basse
+                    </label>
+                    <label class="priority-option prio-medium">
+                        <input type="radio" name="priority" value="medium" checked>
+                        <i class="fa-solid fa-circle-exclamation"></i> Moyenne
+                    </label>
+                    <label class="priority-option prio-high">
+                        <input type="radio" name="priority" value="high">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Haute
+                    </label>
+                    <label class="priority-option prio-critical">
+                        <input type="radio" name="priority" value="critical">
+                        <i class="fa-solid fa-skull-crossbones"></i> Critique
+                    </label>
+                </div>
+            </div>
+
+            {# Description #}
+            <div class="mb-4">
+                <label class="report-label">Description détaillée</label>
+                <textarea name="description" rows="3" class="report-textarea"
+                    placeholder="Décrivez le problème en détail pour aider notre équipe…"></textarea>
+            </div>
+
+            <button type="submit" class="report-submit-btn">
+                <i class="fa-solid fa-paper-plane me-2"></i> Envoyer le signalement
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+/* ══ Réactions ═══════════════════════════════════════════════════ */
+.react-bar {
+    display: flex; flex-wrap: wrap; gap: 10px;
+}
+.react-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #f4f4f6; border: 1px solid #e0e0e4;
+    color: #555; border-radius: 50px; padding: 8px 18px; font-size: 13px;
+    font-weight: 600; cursor: pointer; transition: all .2s;
+}
+.react-btn:hover { background: #eef2ff; color: #667eea; border-color: #c5cff5; }
+.react-active-like  { background: rgba(37,211,102,0.12) !important; color: #1a9e4c !important; border-color: rgba(37,211,102,0.4) !important; }
+.react-active-dislike { background: rgba(231,76,60,0.12) !important; color: #c0392b !important; border-color: rgba(231,76,60,0.4) !important; }
+.react-report { color: #e67e22 !important; border-color: rgba(230,126,34,0.35) !important; }
+.react-report:hover { background: rgba(230,126,34,0.1) !important; color: #c96d0f !important; }
+
+/* ══ Commentaires ════════════════════════════════════════════════ */
+.comment-count-badge {
+    background: #667eea; color: #fff; border-radius: 50px;
+    font-size: 10px; padding: 1px 8px; font-weight: 700; margin-left: 6px;
+}
+.comment-form-wrap { display: flex; gap: 12px; align-items: flex-start; }
+.comment-self-av {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #667eea, #FF4B5C);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 14px;
+}
+.comment-input-area { flex: 1; }
+.comment-input-area textarea {
+    width: 100%; background: #f8f9fa;
+    border: 1px solid #dee2e6; border-radius: 12px;
+    color: #333; padding: 10px 14px; font-size: 13px; resize: none;
+    font-family: inherit; transition: border-color .2s; outline: none;
+}
+.comment-input-area textarea:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.12); }
+.comment-input-area textarea::placeholder { color: #b0b0b8; }
+.comment-submit-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; border: none; border-radius: 50px;
+    padding: 7px 20px; font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: all .2s;
+}
+.comment-submit-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+
+.comment-item { display: flex; gap: 12px; margin-bottom: 16px; }
+.comment-av {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #0652DD, #00D2FF);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 13px;
+}
+.comment-body { flex: 1; }
+.comment-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap;
+}
+.comment-header strong { color: #2c3e50; font-size: 13px; }
+.comment-date { font-size: 11px; color: #aaa; }
+.comment-delete-btn {
+    background: none; border: none; color: #e74c3c; cursor: pointer;
+    font-size: 12px; padding: 2px 6px; border-radius: 6px; transition: background .2s;
+}
+.comment-delete-btn:hover { background: rgba(231,76,60,0.1); }
+.comment-text { color: #555; font-size: 13px; line-height: 1.55; margin: 0; }
+.comment-empty { text-align: center; padding: 2rem; color: #bbb; }
+.comment-empty i { font-size: 2rem; display: block; margin-bottom: 8px; color: #ddd; }
+.comment-empty p { font-size: 13px; margin: 0; }
+
+/* ══ Modal Signalement ═══════════════════════════════════════════ */
+.report-modal-box {
+    background: #1C1C2E; border: 1px solid rgba(231,76,60,0.25);
+    border-radius: 20px; width: 100%; max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    animation: modalFadeIn .25s ease;
+}
+@keyframes modalFadeIn { from{transform:scale(.92);opacity:0;} to{transform:scale(1);opacity:1;} }
+.report-modal-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 1.2rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.report-modal-head h5 { color: #fff; font-size: 1rem; }
+.report-modal-body { padding: 1.5rem; }
+.report-label {
+    display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: rgba(255,255,255,0.5); margin-bottom: 8px;
+}
+.report-select, .report-textarea {
+    width: 100%; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+    color: #fff; padding: 10px 14px; font-size: 13px; font-family: inherit;
+    outline: none; transition: border-color .2s;
+}
+.report-select:focus, .report-textarea:focus { border-color: rgba(231,76,60,0.5); }
+.report-select option { background: #1C1C2E; color: #fff; }
+.report-textarea { resize: none; }
+.priority-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.priority-option {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-radius: 10px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.1); font-size: 13px; font-weight: 600;
+    transition: all .2s; color: rgba(255,255,255,0.6);
+}
+.priority-option input[type="radio"] { display: none; }
+.prio-low:has(input:checked)      { background:rgba(148,163,184,0.15); color:#94a3b8; border-color:rgba(148,163,184,0.4); }
+.prio-medium:has(input:checked)   { background:rgba(255,193,7,0.15);   color:#ffc107; border-color:rgba(255,193,7,0.4); }
+.prio-high:has(input:checked)     { background:rgba(230,126,34,0.15);  color:#e67e22; border-color:rgba(230,126,34,0.4); }
+.prio-critical:has(input:checked) { background:rgba(231,76,60,0.15);   color:#e74c3c; border-color:rgba(231,76,60,0.4); }
+.priority-option:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.report-submit-btn {
+    width: 100%; background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: #fff; border: none; border-radius: 50px; padding: 13px;
+    font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s;
+    box-shadow: 0 4px 14px rgba(231,76,60,0.4);
+}
+.report-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(231,76,60,0.6); }
+</style>
+
+<script>
+function updateCharCount(el) {
+    document.getElementById('charCount').textContent = el.value.length + ' / 500';
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.getElementById('reportModal').style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

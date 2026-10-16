@@ -1,0 +1,229 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Espace Propriétaire - HomeConnect{% endblock %}
+
+{% block body %}
+<link rel="stylesheet" href="{{ asset('css/premium_global.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+
+<div class="premium-dashboard-wrapper">
+    <!-- Sidebar Premium -->
+    <aside class="premium-sidebar">
+        <div class="premium-logo">
+            <i class="fa-solid fa-house-chimney-user me-2"></i>HomeConnect
+        </div>
+
+        <ul class="premium-nav-list">
+            <li class="premium-nav-item">
+                <a href="{{ path('app_owner_dashboard') }}" class="premium-nav-link {{ 'dashboard' in app.request.attributes.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-chart-pie"></i> <span>Tableau de bord</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_owner_messages') }}" class="premium-nav-link {{ 'messages' in app.request.attributes.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-comments"></i> <span>Messages</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_owner_properties') }}" class="premium-nav-link {{ 'properties' in app.request.attributes.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-building-user"></i> <span>Mes Biens</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_owner_applications') }}" class="premium-nav-link {{ 'applications' in app.request.attributes.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-clipboard-list"></i> <span>Candidatures</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_owner_contracts') }}" class="premium-nav-link {{ 'contracts' in app.request.attributes.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-file-contract"></i> <span>Contrats</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_owner_subscription') }}" class="premium-nav-link {{ 'subscription' in app.request.attributes.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-crown"></i> <span>Abonnement</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                {% set kycSt = app.user.verificationStatus %}
+                <a href="{{ path('app_owner_kyc') }}" class="premium-nav-link {{ 'kyc' in app.request.attributes.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-shield-check {{ kycSt == 'certifie' ? 'text-success' : (kycSt == 'en_attente' ? 'text-warning' : 'text-danger') }}"></i>
+                    <span>KYC
+                        {% if kycSt == 'certifie' %}<span class="badge bg-success rounded-pill ms-1" style="font-size:.55rem;">OK</span>
+                        {% elseif kycSt == 'en_attente' %}<span class="badge bg-warning text-dark rounded-pill ms-1" style="font-size:.55rem;">...</span>
+                        {% else %}<span class="badge bg-danger rounded-pill ms-1" style="font-size:.55rem;">!</span>{% endif %}
+                    </span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_owner_statistics') }}" class="premium-nav-link {{ 'statistics' in app.request.attributes.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-chart-line"></i> <span>Statistiques</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_owner_partners') }}" class="premium-nav-link {{ 'partners' in app.request.attributes.get('_route') or 'partner' in app.request.attributes.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-handshake"></i> <span>Partenaires</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_owner_support') }}" class="premium-nav-link {{ 'support' in app.request.attributes.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-headset"></i> <span>Aide</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_owner_profile') }}" class="premium-nav-link {{ 'profile' in app.request.attributes.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-user-gear"></i> <span>Mon profil</span>
+                </a>
+            </li>
+            <li class="premium-nav-item sidebar-logout-item">
+                <a href="{{ path('app_logout') }}" class="premium-nav-link" onclick="logoutConfirm(event)">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Déconnexion</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <style>
+    .premium-nav-list { padding: 8px 0 !important; }
+    .premium-nav-item { margin-bottom: 3px !important; }
+    .premium-nav-link { padding: 11px 18px !important; font-size: 0.97rem !important; gap: 13px !important; }
+    .premium-nav-link i { font-size: 1.05rem !important; width: 22px; text-align: center; flex-shrink: 0; }
+    .premium-nav-link span { font-size: 0.97rem; }
+    .premium-logo { padding: 18px 20px !important; font-size: 1.15rem !important; }
+    .sidebar-logout-item { margin-top: 8px !important; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px; }
+    .sidebar-logout-item .premium-nav-link { color: #ff4b5c !important; }
+    .sidebar-logout-item .premium-nav-link:hover { background: rgba(255,75,92,0.12) !important; }
+    .premium-sidebar { overflow-y: auto !important; overflow-x: hidden !important; }
+    .premium-sidebar::-webkit-scrollbar { width: 3px; }
+    .premium-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+    </style>
+
+    <div class="premium-main">
+        <!-- Header riche uniforme -->
+        <header class="owner-header d-flex justify-content-between align-items-center py-3 px-4 mb-5 shadow-sm sticky-top" style="background: var(--c-surface); border-bottom: 1px solid var(--c-border); z-index: 100;">
+
+            {# Breadcrumb gauche #}
+            <div class="d-flex align-items-center gap-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0" style="font-size: 13px;">
+                        <li class="breadcrumb-item">
+                            <a href="{{ path('app_owner_dashboard') }}" style="color: var(--c-text-muted); text-decoration:none;">
+                                <i class="fa-solid fa-house-chimney-user me-1"></i>Accueil
+                            </a>
+                        </li>
+                        {% block breadcrumb %}{% endblock %}
+                    </ol>
+                </nav>
+            </div>
+
+            {# Actions droite #}
+            <div class="d-flex align-items-center gap-3">
+
+                {# Barre de recherche #}
+                <div class="d-none d-md-flex align-items-center rounded-pill px-3 py-1 gap-2" style="background: rgba(255,255,255,0.05); border: 1px solid var(--c-border);">
+                    <i class="fa-solid fa-magnifying-glass small" style="color: var(--c-text-muted);"></i>
+                    <input type="text" class="bg-transparent border-0 small" placeholder="Rechercher…" style="outline:none; color: var(--c-text); width: 130px;">
+                </div>
+
+                {# Langue #}
+                <div class="dropdown">
+                    <button class="btn btn-link text-decoration-none p-0 d-flex align-items-center gap-1" type="button" data-bs-toggle="dropdown" style="color: var(--c-text-muted);">
+                        <i class="fa-solid fa-globe"></i>
+                        <span class="small fw-bold text-uppercase d-none d-lg-inline">{{ app.request.locale|default('fr') }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg rounded-4 border-0 mt-2" style="background: var(--c-surface);">
+                        <li><a class="dropdown-item py-2 px-3" href="{{ path('app_change_locale', {locale:'fr'}) }}" style="color: var(--c-text);">🇧🇯 Français</a></li>
+                        <li><a class="dropdown-item py-2 px-3" href="{{ path('app_change_locale', {locale:'en'}) }}" style="color: var(--c-text);">🇺🇸 English</a></li>
+                        <li><a class="dropdown-item py-2 px-3" href="{{ path('app_change_locale', {locale:'fon'}) }}" style="color: var(--c-text);">🇧🇯 Fon</a></li>
+                    </ul>
+                </div>
+
+                {# Thème #}
+                <div class="d-flex align-items-center px-3 py-1 rounded-3" style="background: rgba(255,255,255,0.05); cursor:pointer; gap:8px;" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon" style="color:#f1c40f;"></i>
+                </div>
+
+                {# Notifications #}
+                <div class="dropdown">
+                    {% set unreadNotifCount = app.user.notifications|filter(n => not n.lue)|length %}
+                    <div class="position-relative cursor-pointer" style="color: var(--c-text-muted);" data-bs-toggle="dropdown">
+                        <i class="fa-solid fa-bell fs-5"></i>
+                        {% if unreadNotifCount > 0 %}
+                            <span class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle" style="font-size:0.6rem;">{{ unreadNotifCount }}</span>
+                        {% endif %}
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg rounded-4 border-0 mt-3 p-0 overflow-hidden" style="width:300px; background: var(--c-surface);">
+                        <li class="p-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: var(--c-border) !important; background: var(--c-bg);">
+                            <h6 class="mb-0 fw-bold" style="color: var(--c-text);">Notifications</h6>
+                            {% if unreadNotifCount > 0 %}<span class="badge bg-danger rounded-pill">{{ unreadNotifCount }}</span>{% endif %}
+                        </li>
+                        <div style="max-height:280px; overflow-y:auto;">
+                            {% for notif in app.user.notifications|slice(0,5) %}
+                            <li class="p-3 border-bottom" style="border-color: var(--c-border) !important;">
+                                <div class="d-flex gap-3 align-items-start">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px;background:rgba(255,140,0,0.15);">
+                                        <i class="fa-solid fa-info-circle" style="color: var(--c-primary); font-size:13px;"></i>
+                                    </div>
+                                    <div>
+                                        <p class="mb-0 small fw-semibold" style="color: var(--c-text);">{{ notif.message|slice(0,50) }}{% if notif.message|length > 50 %}…{% endif %}</p>
+                                        <p class="mb-0" style="font-size:11px; color: var(--c-text-muted);">{{ notif.createdAt|date('d/m/Y H:i') }}</p>
+                                    </div>
+                                </div>
+                            </li>
+                            {% else %}
+                            <li class="p-4 text-center small" style="color: var(--c-text-muted);">Aucune notification</li>
+                            {% endfor %}
+                        </div>
+                        <li><a class="d-block text-center py-2 small fw-bold" href="{{ path('app_owner_notifications') }}" style="color: var(--c-primary);">Voir tout</a></li>
+                    </ul>
+                </div>
+
+                {# Profil utilisateur #}
+                <div class="dropdown">
+                    <div class="d-flex align-items-center gap-2 cursor-pointer" data-bs-toggle="dropdown">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center border" style="width:36px;height:36px;background:rgba(255,140,0,0.15);border-color:var(--c-primary) !important;">
+                            <i class="fa-solid fa-user small" style="color: var(--c-primary);"></i>
+                        </div>
+                        <div class="d-none d-sm-block text-end">
+                            <div class="fw-bold small" style="color: var(--c-text); line-height:1.2;">{{ app.user.fullName }}</div>
+                            <div style="font-size:11px; color: var(--c-text-muted);">Propriétaire</div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down small" style="color: var(--c-text-muted);"></i>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg rounded-4 border-0 mt-2 p-2" style="background: var(--c-surface); min-width:220px;">
+                        <li class="px-3 py-2 mb-1 border-bottom" style="border-color: var(--c-border) !important;">
+                            <div class="fw-bold small" style="color: var(--c-text);">{{ app.user.fullName }}</div>
+                            <div style="font-size:11px; color: var(--c-text-muted);">{{ app.user.email }}</div>
+                        </li>
+                        <li><a class="dropdown-item rounded-3 py-2 d-flex align-items-center gap-2" href="{{ path('app_owner_profile') }}" style="color: var(--c-text-muted);"><i class="fa-solid fa-user-gear"></i> Mon profil</a></li>
+                        <li><a class="dropdown-item rounded-3 py-2 d-flex align-items-center gap-2" href="{{ path('app_owner_subscription') }}" style="color: var(--c-text-muted);"><i class="fa-solid fa-crown"></i> Abonnement</a></li>
+                        <li><hr class="dropdown-divider my-1" style="border-color: var(--c-border);"></li>
+                        <li><a class="dropdown-item rounded-3 py-2 d-flex align-items-center gap-2 text-danger" href="{{ path('app_logout') }}" onclick="logoutConfirm(event)"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        <div class="flash-container">
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show premium-card py-3 mb-4" role="alert" style="border-left: 5px solid var(--c-primary);">
+                        <div class="d-flex align-items-center">
+                            <i class="fa-solid {{ label == 'success' ? 'fa-circle-check' : 'fa-circle-exclamation' }} me-3 text-primary fs-4"></i>
+                            <div class="text-white small">{{ message }}</div>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-fade-in">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

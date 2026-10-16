@@ -1,0 +1,292 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Annuaire des Partenaires - Espace Propriétaire{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active" style="color: var(--c-text);">Partenaires</li>
+{% endblock %}
+
+{% block content %}
+
+{# ── En-tête ──────────────────────────────────────────────────── #}
+<div class="d-flex justify-content-between align-items-start mb-5 flex-wrap gap-3">
+    <div>
+        <h1 style="font-family:var(--f-serif); font-size:2rem; color:var(--c-text); margin:0 0 4px;">
+            <i class="fa-solid fa-handshake me-2" style="color:var(--c-primary);"></i>Partenaires
+        </h1>
+        <p style="color:var(--c-text-muted); font-size:14px; margin:0;">
+            Trouvez des prestataires de confiance pour vos biens
+        </p>
+    </div>
+</div>
+
+{% for label, msgs in app.flashes %}
+    {% for msg in msgs %}
+    <div class="alert alert-{{ label == 'success' ? 'success' : 'danger' }} alert-dismissible fade show rounded-3 mb-4">
+        {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+{% endfor %}
+
+{% if partners|length == 0 %}
+    <div class="partner-empty">
+        <i class="fa-solid fa-handshake-slash partner-empty-icon"></i>
+        <h3>Aucun partenaire disponible</h3>
+        <p>Revenez bientôt pour découvrir nos partenaires de confiance.</p>
+    </div>
+{% else %}
+    <div class="partners-grid">
+        {% for partner in partners %}
+        <div class="partner-card">
+            {# En-tête catégorie #}
+            <div class="partner-cat-bar">
+                <span class="partner-cat-chip">
+                    <i class="fa-solid fa-tag me-1"></i>{{ partner.categorie|upper }}
+                </span>
+                <span class="partner-active-dot">
+                    <i class="fa-solid fa-circle me-1" style="font-size:7px;"></i>Actif
+                </span>
+            </div>
+
+            {# Corps #}
+            <div class="partner-body">
+                <div class="partner-avatar">
+                    {{ partner.nom|slice(0,1)|upper }}
+                </div>
+                <h4 class="partner-name">{{ partner.nom }}</h4>
+                {% if partner.description %}
+                    <p class="partner-desc">{{ partner.description }}</p>
+                {% endif %}
+            </div>
+
+            {# Coordonnées #}
+            <div class="partner-contacts">
+                {% if partner.telephone %}
+                <a href="tel:{{ partner.telephone }}" class="partner-contact-row">
+                    <i class="fa-solid fa-phone partner-contact-icon"></i>
+                    <span>{{ partner.telephone }}</span>
+                </a>
+                {% endif %}
+                {% if partner.email %}
+                <a href="mailto:{{ partner.email }}" class="partner-contact-row">
+                    <i class="fa-solid fa-envelope partner-contact-icon"></i>
+                    <span>{{ partner.email }}</span>
+                </a>
+                {% endif %}
+                {% if partner.site %}
+                <a href="https://{{ partner.site }}" target="_blank" rel="noopener" class="partner-contact-row">
+                    <i class="fa-solid fa-globe partner-contact-icon"></i>
+                    <span>{{ partner.site }}</span>
+                </a>
+                {% endif %}
+            </div>
+
+            {# Action #}
+            <div class="partner-footer">
+                <button class="partner-btn-contact"
+                        onclick="openContact('{{ partner.id }}', '{{ partner.nom|escape('js') }}')">
+                    <i class="fa-solid fa-paper-plane me-2"></i>Contacter
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{# ── Modal contact ───────────────────────────────────────────── #}
+<div id="contactModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:10050; align-items:center; justify-content:center; padding:1rem;"
+     onclick="if(event.target===this)closeContact()">
+    <div class="contact-modal-box">
+        <div class="contact-modal-head">
+            <div>
+                <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--c-text-muted); margin-bottom:2px;">Contacter</div>
+                <h5 id="contactModalTitle" style="color:var(--c-text); margin:0; font-weight:800;"></h5>
+            </div>
+            <button onclick="closeContact()" style="background:none; border:none; color:var(--c-text-muted); font-size:1.2rem; cursor:pointer; margin-left:auto;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <form id="contactForm" class="contact-modal-body">
+            <div class="contact-field">
+                <label class="contact-label">Votre email</label>
+                <input type="email" name="email" class="contact-input" value="{{ app.user.email }}" required>
+            </div>
+            <div class="contact-field">
+                <label class="contact-label">Message <span style="color:var(--c-danger,#ff4b5c);">*</span></label>
+                <textarea name="message" class="contact-input contact-textarea" required
+                          placeholder="Décrivez votre besoin…"></textarea>
+            </div>
+            <div class="d-flex gap-3 mt-4">
+                <button type="button" class="contact-btn-cancel" onclick="closeContact()">Annuler</button>
+                <button type="submit" class="contact-btn-send">
+                    <i class="fa-solid fa-paper-plane me-2"></i>Envoyer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+/* ── Grille partenaires ───────────────────────────────────────── */
+.partners-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 20px; }
+
+.partner-card {
+    background: var(--c-surface); border: 1px solid var(--c-border);
+    border-radius: 18px; overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transition: transform .25s, border-color .25s;
+    display: flex; flex-direction: column;
+}
+.partner-card:hover { transform: translateY(-4px); border-color: var(--c-primary); }
+
+/* Barre catégorie */
+.partner-cat-bar {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    padding: 12px 18px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.partner-cat-chip {
+    font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.9);
+    letter-spacing: .06em;
+}
+.partner-active-dot {
+    font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.8);
+    display: flex; align-items: center;
+}
+
+/* Corps */
+.partner-body { padding: 20px 20px 12px; text-align: center; }
+.partner-avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--c-primary), #764ba2);
+    color: #fff; font-size: 1.4rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px;
+}
+.partner-name {
+    font-size: 1.05rem; font-weight: 800; color: var(--c-text);
+    margin: 0 0 8px; font-family: var(--f-serif);
+}
+.partner-desc {
+    font-size: 13px; color: var(--c-text-muted); line-height: 1.6; margin: 0;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* Coordonnées */
+.partner-contacts { padding: 0 20px 12px; border-top: 1px solid var(--c-border); margin-top: 12px; }
+.partner-contact-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--c-border);
+    text-decoration: none; transition: color .2s;
+    font-size: 13px; color: var(--c-text-muted);
+}
+.partner-contact-row:last-child { border-bottom: none; }
+.partner-contact-row:hover { color: var(--c-primary); }
+.partner-contact-icon { color: var(--c-primary); width: 14px; flex-shrink: 0; }
+
+/* Bouton */
+.partner-footer { padding: 14px 20px; margin-top: auto; }
+.partner-btn-contact {
+    width: 100%; background: linear-gradient(135deg, var(--c-primary), #e67e00);
+    color: #fff; border: none; border-radius: 50px;
+    padding: 11px; font-size: 13px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(255,140,0,0.3); transition: all .2s;
+}
+.partner-btn-contact:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(255,140,0,0.45); }
+
+/* État vide */
+.partner-empty {
+    text-align: center; padding: 4rem 2rem;
+    background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 18px;
+}
+.partner-empty-icon { font-size: 3.5rem; color: var(--c-text-muted); opacity: .25; display: block; margin-bottom: 1rem; }
+.partner-empty h3 { color: var(--c-text); font-family: var(--f-serif); margin-bottom: 8px; }
+.partner-empty p { color: var(--c-text-muted); font-size: 14px; margin: 0; }
+
+/* Modal contact */
+.contact-modal-box {
+    background: var(--c-surface); border: 1px solid var(--c-border);
+    border-radius: 20px; width: 100%; max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.contact-modal-head {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--c-border);
+}
+.contact-modal-body { padding: 20px 24px 24px; }
+.contact-field { margin-bottom: 16px; }
+.contact-label {
+    display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--c-text-muted); margin-bottom: 7px;
+}
+.contact-input {
+    width: 100%; background: rgba(255,255,255,0.05);
+    border: 1px solid var(--c-border); border-radius: 10px;
+    color: var(--c-text); padding: 10px 14px; font-size: 14px;
+    font-family: inherit; outline: none; transition: border-color .2s;
+}
+.contact-input:focus { border-color: var(--c-primary); box-shadow: 0 0 0 3px rgba(255,140,0,.12); }
+.contact-input::placeholder { color: var(--c-text-muted); opacity: .5; }
+.contact-textarea { resize: vertical; min-height: 110px; }
+.contact-btn-cancel {
+    flex: 1; background: rgba(255,255,255,0.06); color: var(--c-text-muted);
+    border: 1px solid var(--c-border); border-radius: 50px;
+    padding: 11px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s;
+}
+.contact-btn-cancel:hover { background: rgba(255,255,255,0.1); color: var(--c-text); }
+.contact-btn-send {
+    flex: 2; background: linear-gradient(135deg, var(--c-primary), #e67e00);
+    color: #fff; border: none; border-radius: 50px;
+    padding: 11px; font-size: 13px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(255,140,0,0.3); transition: all .2s;
+}
+.contact-btn-send:hover { transform: translateY(-2px); }
+
+/* Light mode */
+[data-theme="light"] .partner-card { background: #fff; border-color: #e2e8f0; }
+[data-theme="light"] .partner-contact-row { color: #64748b; }
+[data-theme="light"] .contact-modal-box { background: #fff; border-color: #e2e8f0; }
+[data-theme="light"] .contact-input { background: #f8fafc; color: #1e293b; border-color: #e2e8f0; }
+[data-theme="light"] .contact-input::placeholder { color: #94a3b8; opacity: 1; }
+[data-theme="light"] .contact-btn-cancel { background: #f1f5f9; color: #64748b; border-color: #e2e8f0; }
+[data-theme="light"] .partner-empty { background: #fff; border-color: #e2e8f0; }
+
+@media (max-width: 640px) { .partners-grid { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+let _contactId = null;
+
+function openContact(id, name) {
+    _contactId = id;
+    document.getElementById('contactModalTitle').textContent = name;
+    document.getElementById('contactModal').style.display = 'flex';
+    document.getElementById('contactForm').reset();
+    document.querySelector('.contact-input[type="email"]').value = '{{ app.user.email }}';
+}
+
+function closeContact() {
+    document.getElementById('contactModal').style.display = 'none';
+}
+
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ path('app_owner_partner_contact', {'id': 0}) }}'.replace('/0', '/' + _contactId);
+
+    ['email','message'].forEach(n => {
+        const inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = n;
+        inp.value = document.querySelector('[name="' + n + '"]').value;
+        form.appendChild(inp);
+    });
+    document.body.appendChild(form);
+    form.submit();
+});
+</script>
+
+{% endblock %}

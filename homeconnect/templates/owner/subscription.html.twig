@@ -1,0 +1,467 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Mon Abonnement - Espace Propriétaire{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active" style="color: var(--c-text);">Abonnement</li>
+{% endblock %}
+
+{% block content %}
+
+{# ── Carte statut actuel ─────────────────────────────────────────────────── #}
+<div class="sub-current-card mb-5">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-4">
+        <div class="d-flex align-items-center gap-4">
+            <div class="sub-plan-icon
+                {% if subscription.plan == 'pro' %}sub-icon-pro
+                {% elseif subscription.plan == 'starter' %}sub-icon-starter
+                {% else %}sub-icon-free{% endif %}">
+                {% if subscription.plan == 'pro' %}<i class="fa-solid fa-crown"></i>
+                {% elseif subscription.plan == 'starter' %}<i class="fa-solid fa-star"></i>
+                {% else %}<i class="fa-solid fa-user"></i>{% endif %}
+            </div>
+            <div>
+                <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--c-text-muted); margin-bottom:4px;">Plan actuel</div>
+                <h2 class="sub-plan-name {% if subscription.plan == 'pro' %}name-pro{% elseif subscription.plan == 'starter' %}name-starter{% else %}name-free{% endif %}">
+                    {{ subscription.planLabel }}
+                </h2>
+                <div style="font-size:13px; color:var(--c-text-muted); margin-top:2px;">
+                    {% if subscription.plan != 'free' and subscription.dateExpiration %}
+                        <i class="fa-regular fa-calendar me-1"></i>Valable jusqu'au <strong style="color:var(--c-text);">{{ subscription.dateExpiration|date('d/m/Y') }}</strong>
+                    {% else %}
+                        <i class="fa-solid fa-building me-1"></i>{{ publishedCount }} /
+                        {% if subscription.maxProperties %}{{ subscription.maxProperties }}{% else %}<span style="color:var(--c-success,#00e676);">∞</span>{% endif %} bien(s) utilisé(s)
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# Barre de progression #}
+        {% if subscription.maxProperties %}
+            {% set pct = ((publishedCount / subscription.maxProperties) * 100)|round %}
+            <div class="sub-progress-wrap">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span style="font-size:13px; color:var(--c-text);">{{ publishedCount }} bien(s) publié(s)</span>
+                    <span style="font-size:12px; color:var(--c-text-muted);">Limite : {{ subscription.maxProperties }}</span>
+                </div>
+                <div class="sub-progress-bar-bg">
+                    <div class="sub-progress-bar
+                        {% if pct >= 100 %}pbar-danger{% elseif pct >= 70 %}pbar-warning{% else %}pbar-ok{% endif %}"
+                         style="width:{{ pct > 100 ? 100 : pct }}%;"></div>
+                </div>
+                {% if publishedCount >= subscription.maxProperties %}
+                    <div style="margin-top:6px; font-size:12px; font-weight:700; color:#ff4b5c;">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>Limite atteinte — passez au plan supérieur
+                    </div>
+                {% else %}
+                    <div style="margin-top:6px; font-size:12px; color:var(--c-text-muted);">
+                        {{ subscription.maxProperties - publishedCount }} emplacement(s) disponible(s)
+                    </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="sub-unlimited-badge">
+                <i class="fa-solid fa-infinity me-2"></i>Biens illimités
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{# ── Titre section plans ─────────────────────────────────────────────────── #}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <div class="sub-section-line"></div>
+    <h4 style="color:var(--c-text); font-weight:800; margin:0; white-space:nowrap; font-family:var(--f-serif);">
+        Choisir un plan
+    </h4>
+    <div class="sub-section-line"></div>
+</div>
+
+{# ── Grille des 3 plans ─────────────────────────────────────────────────── #}
+{% set plans = [
+    {
+        key: 'free', label: 'Gratuit', price: 0, max: 3,
+        accentColor: '#6B7280', glowColor: 'rgba(107,114,128,0.2)',
+        icon: 'fa-user',
+        features: [
+            {ok: true,  text: '3 biens maximum'},
+            {ok: true,  text: 'Tableau de bord standard'},
+            {ok: true,  text: 'Messagerie incluse'},
+            {ok: false, text: 'Statistiques avancées'},
+            {ok: false, text: 'Badge propriétaire'},
+            {ok: false, text: 'Support prioritaire'},
+        ]
+    },
+    {
+        key: 'starter', label: 'Starter', price: 5000, max: 10,
+        accentColor: '#3B82F6', glowColor: 'rgba(59,130,246,0.2)',
+        icon: 'fa-star', recommended: true,
+        features: [
+            {ok: true, text: "Jusqu'à 10 biens"},
+            {ok: true, text: 'Tableau de bord avancé'},
+            {ok: true, text: 'Messagerie incluse'},
+            {ok: true, text: 'Statistiques détaillées'},
+            {ok: false, text: 'Badge propriétaire Pro'},
+            {ok: true, text: 'Support email prioritaire'},
+        ]
+    },
+    {
+        key: 'pro', label: 'Pro', price: 10000, max: null,
+        accentColor: '#8B5CF6', glowColor: 'rgba(139,92,246,0.2)',
+        icon: 'fa-crown',
+        features: [
+            {ok: true, text: 'Biens illimités'},
+            {ok: true, text: 'Tableau de bord premium'},
+            {ok: true, text: 'Messagerie + Appels vidéo'},
+            {ok: true, text: 'Statistiques & exports PDF'},
+            {ok: true, text: 'Badge "Propriétaire Pro" ✨'},
+            {ok: true, text: 'Support téléphonique dédié'},
+        ]
+    }
+] %}
+
+<div class="plans-grid mb-5">
+    {% for plan in plans %}
+        {% set isCurrent = subscription.plan == plan.key %}
+        {% set canUpgrade = (plan.key == 'starter' and subscription.plan == 'free')
+                         or (plan.key == 'pro' and subscription.plan in ['free','starter']) %}
+
+        <div class="plan-card {% if isCurrent %}plan-current{% endif %} {% if plan.recommended is defined %}plan-recommended{% endif %}"
+             style="--accent: {{ plan.accentColor }}; --glow: {{ plan.glowColor }};">
+
+            {% if plan.recommended is defined %}
+                <div class="plan-recommended-badge">
+                    <i class="fa-solid fa-bolt me-1"></i>Recommandé
+                </div>
+            {% endif %}
+
+            {% if isCurrent %}
+                <div class="plan-current-badge">
+                    <i class="fa-solid fa-check me-1"></i>Actif
+                </div>
+            {% endif %}
+
+            {# En-tête plan #}
+            <div class="plan-header">
+                <div class="plan-icon-wrap" style="background: {{ plan.glowColor }}; color: {{ plan.accentColor }};">
+                    <i class="fa-solid {{ plan.icon }}"></i>
+                </div>
+                <h3 class="plan-name" style="color: {{ plan.accentColor }};">{{ plan.label }}</h3>
+                <div class="plan-price-wrap">
+                    {% if plan.price == 0 %}
+                        <span class="plan-price-amount">Gratuit</span>
+                    {% else %}
+                        <span class="plan-price-amount">{{ plan.price|number_format(0, ',', ' ') }}</span>
+                        <span class="plan-price-unit">FCFA/mois</span>
+                    {% endif %}
+                </div>
+                <div class="plan-limit-chip" style="background: {{ plan.glowColor }}; color: {{ plan.accentColor }};">
+                    {% if plan.max %}
+                        <i class="fa-solid fa-building me-1"></i>{{ plan.max }} biens max
+                    {% else %}
+                        <i class="fa-solid fa-infinity me-1"></i>Illimité
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Features #}
+            <ul class="plan-features">
+                {% for f in plan.features %}
+                    <li class="{{ not f.ok ? 'feat-off' : '' }}">
+                        <i class="fa-solid fa-{{ f.ok ? 'check' : 'xmark' }} feat-icon feat-{{ f.ok ? 'ok' : 'no' }}"></i>
+                        {{ f.text }}
+                    </li>
+                {% endfor %}
+            </ul>
+
+            {# CTA #}
+            <div class="plan-cta">
+                {% if isCurrent %}
+                    <button class="plan-btn plan-btn-current" disabled>
+                        <i class="fa-solid fa-check-circle me-2"></i>Plan actuel
+                    </button>
+                {% elseif canUpgrade %}
+                    <button class="plan-btn plan-btn-upgrade"
+                            style="background: {{ plan.accentColor }}; box-shadow: 0 4px 14px {{ plan.glowColor }};"
+                            onclick="openUpgradeModal('{{ plan.key }}', '{{ plan.label }}', {{ plan.price }}, '{{ plan.accentColor }}')">
+                        <i class="fa-solid fa-rocket me-2"></i>
+                        {% if plan.price == 0 %}Activer gratuitement{% else %}Passer à {{ plan.label }}{% endif %}
+                    </button>
+                {% else %}
+                    <button class="plan-btn plan-btn-disabled" disabled>
+                        <i class="fa-solid fa-lock me-2"></i>Non disponible
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{# Note bas de page #}
+<div class="sub-info-note mb-5">
+    <i class="fa-solid fa-circle-info sub-info-icon"></i>
+    <div>
+        <strong style="color:var(--c-text);">Système progressif :</strong>
+        <span style="color:var(--c-text-muted);"> Chaque fois que vous atteignez votre limite, le système vous propose le plan supérieur.
+        Vous pouvez aussi choisir directement le plan Pro.</span>
+    </div>
+</div>
+
+{# ── Modal upgrade ───────────────────────────────────────────────────────── #}
+<div class="modal fade" id="upgradeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="background: var(--c-surface); border: 1px solid var(--c-border) !important;">
+            <div class="modal-header border-0 pb-0 px-4 pt-4">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="upgradeModalTitle" style="color:var(--c-text);"></h5>
+                    <p class="mb-0 mt-1" style="font-size:13px; color:var(--c-text-muted);" id="upgradeModalDesc"></p>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4 pb-4 pt-3">
+
+                <div class="mb-4" id="durationSection">
+                    <label style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--c-text-muted); display:block; margin-bottom:10px;">Durée</label>
+                    <div class="d-flex gap-2 flex-wrap" id="monthBtns">
+                        <button type="button" class="month-btn active" data-months="1" onclick="selectMonths(this,1)">1 mois</button>
+                        <button type="button" class="month-btn" data-months="3" onclick="selectMonths(this,3)">3 mois</button>
+                        <button type="button" class="month-btn" data-months="6" onclick="selectMonths(this,6)">6 mois <span class="discount-badge">-10%</span></button>
+                        <button type="button" class="month-btn" data-months="12" onclick="selectMonths(this,12)">12 mois <span class="discount-badge">-20%</span></button>
+                    </div>
+                </div>
+
+                <div class="total-price-box mb-4">
+                    <div style="font-size:12px; color:var(--c-text-muted); margin-bottom:4px;">Total à payer</div>
+                    <div class="fw-bold" id="totalPrice" style="font-size:2rem; color:var(--c-primary);">—</div>
+                </div>
+
+                <button type="button" class="plan-btn plan-btn-upgrade w-100" id="payBtn" onclick="submitUpgrade()"
+                        style="background: var(--c-primary); box-shadow: 0 4px 14px rgba(255,140,0,0.35);">
+                    <i class="fa-solid fa-credit-card me-2"></i>Payer et activer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ── Carte statut ─────────────────────────────────────────────── */
+.sub-current-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 20px;
+    padding: 28px 32px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+.sub-plan-icon {
+    width: 64px; height: 64px; border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; flex-shrink: 0;
+}
+.sub-icon-pro     { background: rgba(139,92,246,0.15); color: #8B5CF6; }
+.sub-icon-starter { background: rgba(59,130,246,0.15);  color: #3B82F6; }
+.sub-icon-free    { background: rgba(107,114,128,0.12); color: #94a3b8; }
+
+.sub-plan-name { font-size: 1.8rem; font-weight: 800; margin: 0; font-family: var(--f-serif); }
+.name-pro     { color: #8B5CF6; }
+.name-starter { color: #3B82F6; }
+.name-free    { color: var(--c-text-muted); }
+
+.sub-progress-wrap { min-width: 240px; }
+.sub-progress-bar-bg { height: 8px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; }
+.sub-progress-bar { height: 100%; border-radius: 99px; transition: width .5s ease; }
+.pbar-ok      { background: linear-gradient(90deg, #00e676, #00b050); }
+.pbar-warning { background: linear-gradient(90deg, #ffc107, #e67e00); }
+.pbar-danger  { background: linear-gradient(90deg, #ff4b5c, #c0392b); }
+
+.sub-unlimited-badge {
+    background: rgba(0,230,118,0.12); color: #00e676;
+    border: 1px solid rgba(0,230,118,0.25); border-radius: 50px;
+    padding: 10px 20px; font-weight: 700; font-size: 14px;
+}
+.sub-section-line { flex: 1; height: 1px; background: var(--c-border); }
+
+/* ── Grille plans ─────────────────────────────────────────────── */
+.plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+
+.plan-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 20px; padding: 28px 24px;
+    position: relative; overflow: hidden;
+    transition: transform .25s, border-color .25s, box-shadow .25s;
+}
+.plan-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 12px 32px var(--glow);
+}
+.plan-card.plan-current {
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 0 3px var(--glow);
+}
+.plan-card.plan-recommended { border: 2px solid var(--accent); }
+
+.plan-recommended-badge {
+    position: absolute; top: 0; right: 20px;
+    background: #e74c3c; color: #fff;
+    font-size: 11px; font-weight: 700; padding: 5px 14px;
+    border-radius: 0 0 10px 10px;
+}
+.plan-current-badge {
+    position: absolute; top: 0; left: 20px;
+    background: rgba(0,230,118,0.15); color: #00e676;
+    border: 1px solid rgba(0,230,118,0.3);
+    font-size: 11px; font-weight: 700; padding: 4px 12px;
+    border-radius: 0 0 10px 10px;
+}
+
+/* Header plan */
+.plan-header { text-align: center; padding-bottom: 18px; border-bottom: 1px solid var(--c-border); margin-bottom: 16px; }
+.plan-icon-wrap {
+    width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 10px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+}
+.plan-name { font-size: 1.3rem; font-weight: 800; margin-bottom: 8px; font-family: var(--f-serif); }
+.plan-price-wrap { margin-bottom: 10px; }
+.plan-price-amount { font-size: 1.9rem; font-weight: 800; color: var(--c-text); }
+.plan-price-unit { font-size: .8rem; color: var(--c-text-muted); margin-left: 4px; }
+.plan-limit-chip {
+    display: inline-flex; align-items: center;
+    font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 50px;
+}
+
+/* Features */
+.plan-features { list-style: none; padding: 0; margin: 0 0 20px; }
+.plan-features li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--c-border);
+    font-size: 13px; color: var(--c-text);
+}
+.plan-features li:last-child { border-bottom: none; }
+.plan-features li.feat-off { color: var(--c-text-muted); }
+.feat-icon { font-size: 12px; flex-shrink: 0; width: 16px; text-align: center; }
+.feat-ok { color: #00e676; }
+.feat-no { color: #ff4b5c; }
+
+/* Boutons plan */
+.plan-btn {
+    width: 100%; border: none; border-radius: 50px;
+    padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+}
+.plan-btn-upgrade { color: #fff; }
+.plan-btn-upgrade:hover { transform: translateY(-2px); filter: brightness(1.1); color: #fff; }
+.plan-btn-current { background: rgba(0,230,118,0.1); color: #00e676; border: 1px solid rgba(0,230,118,0.3); }
+.plan-btn-disabled { background: rgba(255,255,255,0.05); color: var(--c-text-muted); border: 1px solid var(--c-border); }
+
+/* Note info */
+.sub-info-note {
+    background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 14px; padding: 16px 20px;
+    display: flex; align-items: flex-start; gap: 14px;
+}
+.sub-info-icon { color: #3B82F6; font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+
+/* Modal */
+.month-btn {
+    background: rgba(255,255,255,0.05); border: 1px solid var(--c-border);
+    color: var(--c-text-muted); border-radius: 50px; padding: 7px 16px;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s;
+}
+.month-btn:hover { border-color: var(--c-primary); color: var(--c-primary); }
+.month-btn.active { background: rgba(255,140,0,0.12); border-color: var(--c-primary); color: var(--c-primary); }
+.discount-badge {
+    background: rgba(0,230,118,0.2); color: #00e676;
+    font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 50px;
+    margin-left: 4px; vertical-align: middle;
+}
+.total-price-box {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--c-border);
+    border-radius: 14px; padding: 18px; text-align: center;
+}
+
+/* Light mode */
+[data-theme="light"] .sub-current-card { background: #fff; border-color: #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+[data-theme="light"] .sub-progress-bar-bg { background: #e2e8f0; }
+[data-theme="light"] .plan-card { background: #fff; border-color: #e2e8f0; }
+[data-theme="light"] .plan-features li { color: #1e293b; }
+[data-theme="light"] .plan-features li.feat-off { color: #94a3b8; }
+[data-theme="light"] .plan-btn-disabled { background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; }
+[data-theme="light"] .plan-btn-current { background: rgba(0,200,81,0.08); color: #16a34a; border-color: rgba(0,200,81,0.25); }
+[data-theme="light"] .month-btn { background: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+[data-theme="light"] .total-price-box { background: #f8fafc; border-color: #e2e8f0; }
+[data-theme="light"] .sub-info-note { background: rgba(59,130,246,0.05); }
+</style>
+
+<script>
+let _upgradePlan  = null;
+let _upgradePrice = 0;
+let _months       = 1;
+
+function openUpgradeModal(plan, label, price, color) {
+    _upgradePlan  = plan;
+    _upgradePrice = price;
+    _months       = 1;
+
+    document.getElementById('upgradeModalTitle').textContent = 'Passer au plan ' + label;
+    document.getElementById('upgradeModalDesc').textContent  =
+        price === 0 ? 'Ce plan est gratuit, activation immédiate.' : 'Choisissez la durée de votre abonnement.';
+
+    document.getElementById('durationSection').style.display = price === 0 ? 'none' : '';
+    const payBtn = document.getElementById('payBtn');
+    payBtn.style.background = price === 0 ? '#00e676' : (color || 'var(--c-primary)');
+    payBtn.style.boxShadow  = price === 0
+        ? '0 4px 14px rgba(0,230,118,0.35)'
+        : '0 4px 14px rgba(255,140,0,0.35)';
+    payBtn.innerHTML = price === 0
+        ? '<i class="fa-solid fa-check-circle me-2"></i>Activer gratuitement'
+        : '<i class="fa-solid fa-credit-card me-2"></i>Payer et activer';
+    payBtn.disabled = false;
+
+    selectMonths(document.querySelector('.month-btn[data-months="1"]'), 1);
+    new bootstrap.Modal(document.getElementById('upgradeModal')).show();
+}
+
+function selectMonths(btn, m) {
+    _months = m;
+    document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    let total = _upgradePrice * m;
+    if (m === 12) total = Math.round(total * 0.80);
+    else if (m === 6) total = Math.round(total * 0.90);
+
+    document.getElementById('totalPrice').textContent =
+        total === 0 ? 'GRATUIT' : total.toLocaleString('fr-FR') + ' FCFA';
+}
+
+function submitUpgrade() {
+    if (!_upgradePlan) return;
+
+    const btn = document.getElementById('payBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Activation…';
+
+    // Soumission via formulaire web (session auth, pas JWT)
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ path("app_owner_subscription_upgrade") }}';
+
+    const addField = (name, value) => {
+        const inp = document.createElement('input');
+        inp.type  = 'hidden';
+        inp.name  = name;
+        inp.value = value;
+        form.appendChild(inp);
+    };
+
+    addField('plan',   _upgradePlan);
+    addField('months', _months);
+
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+
+{% endblock %}

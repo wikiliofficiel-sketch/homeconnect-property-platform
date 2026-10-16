@@ -1,0 +1,48 @@
+{% block tenant_content %}
+<div class="faq-container-modern">
+    <div class="page-header text-center mb-5">
+        <h1 class="display-5 fw-bold" style="color: #2c3e50;"><i class="fa-solid fa-circle-question text-primary me-2"></i> Centre d'Aide</h1>
+        <p class="text-muted fs-5">Trouvez rapidement des réponses à vos questions les plus fréquentes.</p>
+    </div>
+
+    <div class="accordion accordion-flush rounded-5 overflow-hidden shadow-sm border mb-5" id="faqAccordion">
+        {% for faq in faqs|default([
+            {id: 1, question: "Comment postuler à un bien ?", answer: "Rendez-vous sur la fiche du bien, cliquez sur 'Postuler' et joignez votre dossier centralisé."},
+            {id: 2, question: "Comment fonctionne le paiement de la caution ?", answer: "Le paiement s'effectue via FedaPay de manière sécurisée une fois le contrat signé."},
+            {id: 3, question: "Qu'est-ce que le Score de Fiabilité ?", answer: "C'est un indicateur basé sur la complétude de votre dossier et vos avis précédents."}
+        ]) %}
+            <div class="accordion-item border-bottom">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-bold py-4 px-4 fs-5" type="button" data-bs-toggle="collapse" data-bs-target="#faq-{{ faq.id }}">
+                        <i class="fa-solid fa-chevron-right small me-3 text-primary opacity-50"></i> {{ faq.question }}
+                    </button>
+                </h2>
+                <div id="faq-{{ faq.id }}" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body p-4 text-muted fs-6" style="line-height: 1.8; background: #fcfcfd;">
+                        {{ faq.answer }}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="support-cta bg-white p-5 rounded-5 shadow-sm border text-center">
+        <div class="cta-icon mb-4">
+            <i class="fa-solid fa-headset display-4 text-primary opacity-25"></i>
+        </div>
+        <h3 class="fw-bold mb-3">Besoin d'une assistance personnalisée ?</h3>
+        <p class="text-muted mb-4 px-lg-5">Nos conseillers ImmoBénin sont disponibles 6j/7 pour vous accompagner dans vos démarches de location.</p>
+        <a href="{{ path('app_tenant_support')|default('#') }}" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow">
+            Contacter le Support
+        </a>
+    </div>
+</div>
+
+<style>
+.faq-container-modern { max-width: 900px; margin: 0 auto; }
+.accordion-button:not(.collapsed) { background-color: #fff; color: #4834d4; box-shadow: none; }
+.accordion-button:not(.collapsed) i { transform: rotate(90deg); color: #4834d4; opacity: 1; }
+.accordion-button:focus { border-color: transparent; box-shadow: none; }
+.accordion-item:last-child { border-bottom: none !important; }
+</style>
+{% endblock %}

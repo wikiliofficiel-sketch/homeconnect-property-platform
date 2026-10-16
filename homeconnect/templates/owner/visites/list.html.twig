@@ -1,0 +1,100 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Mes Visites - Espace Propriétaire{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('app_owner_dashboard') }}">Accueil</a></li>
+    <li class="breadcrumb-item active">Visites</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Planning des Visites</h1>
+            <p class="text-white-50 small mb-0">Gérez vos rendez-vous avec les candidats intéressés.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-white-10 rounded-pill px-3 active">Toutes</button>
+            <button class="btn btn-white-10 rounded-pill px-3">Aujourd'hui</button>
+        </div>
+    </div>
+
+    {% if visites|length == 0 %}
+        <div class="card card-premium text-center py-5">
+            <div class="py-5">
+                <div class="bg-white-10 rounded-circle p-4 d-inline-block mb-4">
+                    <i class="fa-solid fa-calendar-xmark fs-1 text-white-50 opacity-25"></i>
+                </div>
+                <h4 class="fw-bold">Aucune visite planifiée</h4>
+                <p class="text-white-50 mx-auto mb-4" style="max-width: 400px;">
+                    Vous n'avez pas encore de rendez-vous. Proposez des dates aux candidats depuis l'onglet candidatures.
+                </p>
+                <a href="{{ path('app_owner_applications') }}" class="btn btn-primary rounded-pill px-5">
+                    Voir les candidatures
+                </a>
+            </div>
+        </div>
+    {% else %}
+        <div class="row g-4">
+            {% for visite in visites %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card card-premium h-100 overflow-hidden shadow-hover border-0">
+                        <div class="card-header bg-white-5 border-bottom border-white-10 p-3 d-flex justify-content-between align-items-center">
+                            <span class="badge rounded-pill px-3 py-2 
+                                {{ visite.statut == 'completee' ? 'bg-success-subtle text-success' : (visite.statut == 'annulee' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning') }}">
+                                {{ visite.statut|capitalize }}
+                            </span>
+                            <small class="text-white-50"><i class="fa-regular fa-clock me-1"></i>{{ visite.dateHeureDebut|date('H:i') }}</small>
+                        </div>
+                        
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold text-white mb-3 text-truncate">{{ visite.application.property.title }}</h6>
+                            
+                            <div class="d-flex flex-column gap-3 mb-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-primary-subtle rounded-3 p-2 text-center" style="width: 45px;">
+                                        <div class="fw-bold lh-1">{{ visite.dateHeureDebut|date('d') }}</div>
+                                        <div class="x-small text-uppercase opacity-75">{{ visite.dateHeureDebut|date('M') }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="small fw-bold text-white">{{ visite.application.locataire.fullName }}</div>
+                                        <div class="x-small text-white-50">Candidat Locataire</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="small text-white-50">
+                                    <i class="fa-solid fa-location-dot me-2 text-primary"></i>{{ visite.application.property.city }}, {{ visite.application.property.address }}
+                                </div>
+                            </div>
+
+                            {% if visite.notes %}
+                                <div class="bg-white-5 rounded-3 p-3 mb-4 border border-white-10">
+                                    <div class="x-small fw-bold text-white-50 text-uppercase mb-1">Notes</div>
+                                    <div class="small text-white-50 italic">"{{ visite.notes }}"</div>
+                                </div>
+                            {% endif %}
+
+                            <div class="d-grid gap-2">
+                                <a href="{{ path('app_owner_application_show', {id: visite.application.id}) }}" class="btn btn-sm btn-outline-white-10 rounded-pill">
+                                    Détails Candidature
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.shadow-hover { transition: all 0.3s ease; }
+.shadow-hover:hover { transform: translateY(-5px); border-color: var(--owner-primary) !important; box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important; }
+.bg-white-5 { background: rgba(255,255,255,0.05); }
+.btn-outline-white-10 { border: 1px solid rgba(255,255,255,0.1); color: white; }
+.btn-outline-white-10:hover { background: rgba(255,255,255,0.1); color: white; }
+.x-small { font-size: 0.7rem; }
+.bg-primary-subtle { background: rgba(108, 92, 231, 0.2); color: var(--owner-primary); }
+</style>
+{% endblock %}

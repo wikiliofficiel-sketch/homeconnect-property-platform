@@ -1,0 +1,569 @@
+{% extends 'tenant/base.html.twig' %}
+
+{% block tenant_content %}
+<div class="wa-wrap shadow rounded-4 overflow-hidden position-relative">
+  <div class="row g-0 h-100">
+
+    {# ── SIDEBAR ── #}
+    <div class="col-md-4 d-flex flex-column wa-sidebar {% if activeContact is defined %}d-none d-md-flex{% endif %}">
+      <div class="wa-header p-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <div class="wa-av-sm" style="background:#128c7e"><i class="fa-solid fa-user text-white"></i></div>
+          <span class="badge rounded-pill" style="background:#128c7e;font-size:.65rem;">Locataire</span>
+        </div>
+        <div class="d-flex gap-3 fs-5 text-muted">
+          <i class="fa-solid fa-circle-dot cursor-pointer" title="Statut"></i>
+          <i class="fa-solid fa-message cursor-pointer"></i>
+          <div class="dropdown"><i class="fa-solid fa-ellipsis-vertical cursor-pointer" data-bs-toggle="dropdown"></i>
+            <ul class="dropdown-menu shadow">
+              <li><a class="dropdown-item small" href="#"><i class="fa-solid fa-gear me-2"></i>Paramètres</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="wa-search-bar">
+        <div class="wa-search-inner">
+          <i class="fa-solid fa-magnifying-glass small me-2" style="color:var(--c-text-muted);"></i>
+          <input type="text" id="searchContacts" class="wa-search-input" placeholder="Rechercher…">
+        </div>
+      </div>
+      <div class="flex-grow-1 overflow-auto" id="contactsList">
+
+        {% for conv in conversations %}
+          {% set contact = conv.partner %}
+          {% set lastMsg = conv.lastMessage %}
+          {% set unread  = conv.unreadCount %}
+          <a href="{{ path('app_tenant_messages_chat', {receiverId: contact.id}) }}"
+             class="wa-contact d-flex align-items-center gap-3 p-3 text-decoration-none {% if activeContact is defined and activeContact.id == contact.id %}wa-contact-active{% endif %}"
+             data-name="{{ contact.fullName|lower }}">
+            <div class="wa-av">{{ contact.fullName|first|upper }}</div>
+            <div class="flex-grow-1 min-w-0 border-bottom pb-2" style="border-color:var(--c-border)!important;">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="wa-contact-name {% if unread > 0 %}fw-bold{% endif %} text-truncate">{{ contact.fullName }}</span>
+                <small class="{% if unread > 0 %}wa-unread-time{% else %}wa-time{% endif %} ms-2 flex-shrink-0">{{ lastMsg.createdAt|date('H:i') }}</small>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-1">
+                <small class="wa-preview text-truncate {% if unread > 0 %}wa-preview-bold{% endif %}">
+                  {% if lastMsg.sender.id == app.user.id %}<i class="fa-solid fa-check{% if lastMsg.status == 'read' %}-double{% elseif lastMsg.status == 'delivered' %}-double{% endif %} me-1" style="color:{% if lastMsg.status == 'read' %}#53bdeb{% else %}var(--c-text-muted){% endif %};"></i>{% endif %}
+                  {% if lastMsg.type == 'voice' %}🎤 Vocal
+                  {% elseif lastMsg.type == 'image' %}📷 Photo
+                  {% elseif lastMsg.type == 'call' %}📞 Appel
+                  {% else %}{{ lastMsg.content|default('...')|slice(0,45) }}{% endif %}
+                </small>
+                {% if unread > 0 %}<span class="wa-badge ms-2 flex-shrink-0">{{ unread }}</span>{% endif %}
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+
+        {% if conversations|length == 0 %}
+          {% for contact in defaultContacts %}
+            <a href="{{ path('app_tenant_messages_chat', {receiverId: contact.id}) }}"
+               class="wa-contact d-flex align-items-center gap-3 p-3 text-decoration-none {% if activeContact is defined and activeContact.id == contact.id %}wa-contact-active{% endif %}"
+               data-name="{{ contact.fullName|lower }}">
+              <div class="wa-av">{{ contact.fullName|first|upper }}</div>
+              <div class="flex-grow-1 border-bottom pb-2" style="border-color:var(--c-border)!important;">
+                <div class="wa-contact-name">{{ contact.fullName }}</div>
+                <small class="wa-preview">Démarrer une discussion</small>
+              </div>
+            </a>
+          {% endfor %}
+        {% endif %}
+
+      </div>
+    </div>
+
+    {# ── CHAT ── #}
+    <div class="col-md-8 d-flex flex-column wa-chat {% if activeContact is not defined %}d-none d-md-flex{% endif %}">
+      {% if activeContact is defined and activeContact is not null %}
+
+        <div class="wa-header p-3 d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-3">
+            <a href="{{ path('app_tenant_messages') }}" class="d-md-none text-dark"><i class="fa-solid fa-arrow-left"></i></a>
+            <div class="wa-av">{{ activeContact.fullName|first|upper }}</div>
+            <div>
+              <div class="fw-bold" style="color:#fff;">{{ activeContact.fullName }}</div>
+              <small style="color:rgba(255,255,255,0.75);">en ligne</small>
+            </div>
+          </div>
+          <div class="d-flex gap-3 fs-5 text-muted">
+            <i class="fa-solid fa-phone cursor-pointer" onclick="startCall('audio')"></i>
+            <i class="fa-solid fa-video cursor-pointer" onclick="startCall('video')"></i>
+            <i class="fa-solid fa-magnifying-glass cursor-pointer" onclick="toggleSearch()"></i>
+            <i class="fa-solid fa-ellipsis-vertical cursor-pointer" data-bs-toggle="dropdown"></i>
+            <ul class="dropdown-menu dropdown-menu-end shadow"><li><a class="dropdown-item small" href="#" onclick="clearChat()"><i class="fa-solid fa-trash me-2"></i>Effacer</a></li></ul>
+          </div>
+        </div>
+
+        <div id="chatSearch" class="d-none px-3 py-2 border-bottom" style="background:var(--c-surface); border-color:var(--c-border)!important;">
+          <input type="text" id="chatSearchInput" class="wa-search-input" placeholder="Rechercher dans la conversation…" oninput="searchInChat(this.value)">
+        </div>
+
+        <div id="replyPreview" class="d-none px-3 py-2 border-top" style="background:var(--c-surface); border-color:var(--c-border)!important;">
+          <div class="d-flex align-items-center gap-2">
+            <div class="flex-grow-1 border-start border-success ps-2">
+              <div class="small text-success fw-bold" id="replyToName"></div>
+              <div class="small text-muted text-truncate" id="replyToText"></div>
+            </div>
+            <i class="fa-solid fa-xmark cursor-pointer text-muted" onclick="cancelReply()"></i>
+          </div>
+        </div>
+
+        <div class="wa-messages flex-grow-1 overflow-auto p-3" id="msgBox">
+          {% set prevDate = null %}
+          {% for msg in messages %}
+            {% set isMe = (msg.sender.id == app.user.id) %}
+            {% set msgDate = msg.createdAt|date('d/m/Y') %}
+            {% if msgDate != prevDate %}
+              <div class="text-center my-2"><span class="wa-date-chip">{{ msgDate }}</span></div>
+              {% set prevDate = msgDate %}
+            {% endif %}
+
+            <div class="d-flex mb-1 {% if isMe %}justify-content-end{% endif %} msg-row"
+                 id="msg-{{ msg.id }}"
+                 data-id="{{ msg.id }}"
+                 data-content="{{ msg.content|e('html_attr') }}"
+                 data-is-mine="{{ isMe ? '1' : '0' }}"
+                 oncontextmenu="showMsgMenu(event,{{ msg.id }},{{ isMe ? 1 : 0 }})">
+
+              <div class="wa-bubble-t {% if isMe %}wa-sent{% else %}wa-recv{% endif %} position-relative">
+
+                {% if msg.replyTo is defined and msg.replyTo %}
+                  <div class="wa-reply-snip mb-1 p-1 rounded cursor-pointer" onclick="scrollToMsg({{ msg.replyTo.id }})">
+                    <div class="small text-success fw-bold">{{ msg.replyTo.sender.fullName }}</div>
+                    <div class="small text-muted text-truncate">{{ msg.replyTo.content|default('📎 Média')|slice(0,50) }}</div>
+                  </div>
+                {% endif %}
+
+                {% if msg.forwardedFrom is defined and msg.forwardedFrom %}
+                  <div class="small text-muted mb-1"><i class="fa-solid fa-share me-1"></i>Transféré</div>
+                {% endif %}
+
+                {% if msg.type == 'image' %}
+                  <img src="{{ msg.attachmentUrl }}" class="img-fluid rounded-2 cursor-pointer" style="max-width:250px;" onclick="openLightbox('{{ msg.attachmentUrl }}')">
+                {% elseif msg.type in ['audio','voice'] %}
+                  <div class="d-flex align-items-center gap-2" style="min-width:180px;">
+                    <button class="btn btn-success rounded-circle p-0" style="width:38px;height:38px;" onclick="toggleAudio(this,'{{ msg.attachmentUrl }}')"><i class="fa-solid fa-play text-white"></i></button>
+                    <div style="flex-grow:1;height:3px;background:rgba(0,0,0,.15);border-radius:2px;"></div>
+                    {% if msg.voiceDuration %}<small class="text-muted">{{ msg.voiceDuration }}s</small>{% endif %}
+                    <i class="fa-solid fa-microphone text-muted small"></i>
+                  </div>
+                {% elseif msg.type == 'call' %}
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-phone{% if msg.callStatus == 'missed' %}-missed text-danger{% endif %}"></i>
+                    <span class="small">{% if msg.callType == 'video' %}Appel vidéo{% else %}Appel audio{% endif %}
+                      {% if msg.callStatus == 'missed' %}<span class="text-danger">(manqué)</span>{% endif %}</span>
+                    {% if msg.callDuration %}<small class="text-muted">{{ msg.callDuration }}s</small>{% endif %}
+                  </div>
+                {% elseif msg.type == 'file' %}
+                  <a href="{{ msg.attachmentUrl }}" target="_blank" class="d-flex align-items-center gap-2 text-decoration-none text-dark">
+                    <i class="fa-solid fa-file fs-5 text-primary"></i><span class="small">{{ msg.attachmentName|default('Fichier') }}</span>
+                  </a>
+                {% else %}
+                  <div class="msg-text-content">{{ msg.content|nl2br }}</div>
+                  {% if msg.isEdited %}<small class="text-muted"><em>modifié</em></small>{% endif %}
+                {% endif %}
+
+                <div class="text-end mt-1" style="font-size:.65rem;opacity:.7;">
+                  {{ msg.createdAt|date('H:i') }}
+                  {% if isMe %}<i class="fa-solid fa-check{% if msg.status == 'read' %}-double text-info{% elseif msg.status == 'delivered' %}-double{% endif %} ms-1"></i>{% endif %}
+                </div>
+
+                {% if msg.reactions is defined and msg.reactions %}
+                  <div class="d-flex flex-wrap gap-1 mt-1">
+                    {% for emoji, users in msg.reactions %}
+                      <span class="wa-react cursor-pointer" onclick="toggleReaction({{ msg.id }},'{{ emoji }}')" title="{{ users|length }} réaction(s)">{{ emoji }}<small>{{ users|length }}</small></span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        {# Context menu #}
+        <div id="msgContextMenu" class="wa-ctx d-none shadow rounded-3 border">
+          <div class="wa-ctx-i" onclick="ctxReply()"><i class="fa-solid fa-reply me-2 text-primary"></i>Répondre</div>
+          <div class="wa-ctx-i" onclick="ctxReact()"><i class="fa-regular fa-face-smile me-2 text-warning"></i>Réagir</div>
+          <div class="wa-ctx-i" onclick="ctxForward()"><i class="fa-solid fa-share me-2 text-success"></i>Transférer</div>
+          <div class="wa-ctx-i ctx-mine d-none" onclick="ctxEdit()"><i class="fa-solid fa-pen me-2 text-info"></i>Modifier</div>
+          <div class="wa-ctx-i" onclick="ctxCopy()"><i class="fa-solid fa-copy me-2 text-secondary"></i>Copier</div>
+          <div class="wa-ctx-i text-danger" onclick="ctxDelete()"><i class="fa-solid fa-trash me-2"></i>Supprimer</div>
+        </div>
+
+        <div id="emojiPicker" class="wa-emoji d-none shadow rounded-pill p-2 border">
+          {% for em in ['👍','❤️','😂','😮','😢','🙏','🔥','👏'] %}
+            <span class="fs-5 cursor-pointer px-1 wa-em-btn" onclick="sendReaction('{{ em }}')">{{ em }}</span>
+          {% endfor %}
+        </div>
+
+        {# Recording #}
+        <div id="recordingUI" class="d-none p-3 border-top" style="background:var(--c-surface); border-color:var(--c-border)!important;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+              <i class="fa-solid fa-microphone text-danger" style="animation:pulse 1s infinite;"></i>
+              <span id="recordTimer" class="fw-bold">0:00</span>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="cancelRecording()">Annuler</button>
+              <button class="btn btn-sm btn-success rounded-pill" id="stopRecordBtn">Envoyer</button>
+            </div>
+          </div>
+        </div>
+
+        {# Call overlay #}
+        <div id="callOverlay" class="wa-call-ov d-none">
+          <div class="text-center text-white p-5">
+            <div class="wa-call-av mx-auto mb-4" style="animation:pulse 1.5s infinite;">{{ activeContact.fullName|first|upper }}</div>
+            <h2 class="fw-bold">{{ activeContact.fullName }}</h2>
+            <p class="opacity-75" id="callStatusText">Appel en cours…</p>
+            <div id="callTimer" class="fs-3 fw-bold mb-3 d-none">0:00</div>
+            <div id="videoContainer" class="d-none mb-3"><video id="localVideo" autoplay muted playsinline class="rounded-4" style="max-width:350px;width:100%;"></video></div>
+            <div class="d-flex justify-content-center gap-4">
+              <button class="btn btn-secondary rounded-circle p-3" id="muteBtn" onclick="toggleMute()"><i class="fa-solid fa-microphone-slash"></i></button>
+              <button class="btn btn-danger rounded-circle p-4" onclick="endCall()"><i class="fa-solid fa-phone-slash fs-4"></i></button>
+            </div>
+          </div>
+        </div>
+
+        {# Stickers #}
+        <div id="stickerPicker" class="wa-stk d-none shadow rounded-3 border">
+          <div class="p-2 border-bottom d-flex justify-content-between bg-light"><span class="small fw-bold">Stickers</span><i class="fa-solid fa-xmark cursor-pointer text-muted" onclick="toggleStickers()"></i></div>
+          <div class="p-2 d-grid gap-2 overflow-auto" style="grid-template-columns:repeat(4,1fr);max-height:220px;">
+            {% for s in ['619/619153','287/287602','1048/1048953','1584/1584892','2583/2583217','1864/1864834','1490/1490805','1000/1000966'] %}
+              <img src="https://cdn-icons-png.flaticon.com/512/{{ s }}.png" width="50" class="cursor-pointer" style="transition:.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform=''" onclick="sendSticker('https://cdn-icons-png.flaticon.com/512/{{ s }}.png')">
+            {% endfor %}
+          </div>
+        </div>
+
+        {# Input #}
+        <div id="inputPanel" style="background:var(--c-surface); flex-shrink:0; border-top:1px solid var(--c-border); padding:8px 10px;">
+          <div id="aiSuggestions" class="d-none mb-2" style="display:none; gap:6px; overflow-x:auto; padding-bottom:4px; white-space:nowrap;">
+            {% for s in ['Bonjour 👋','Bien reçu ✅','Merci','Je vous recontacte','D\'accord'] %}
+              <button class="btn btn-sm btn-outline-success rounded-pill" style="white-space:nowrap; font-size:12px;" onclick="useQuickReply('{{ s }}')">{{ s }}</button>
+            {% endfor %}
+          </div>
+          <form id="chatForm" method="POST" action="{{ path('app_tenant_messages_chat', {receiverId: activeContact.id}) }}"
+                onsubmit="return handleFormSend(event)" style="display:flex; align-items:center; gap:8px;">
+            <div style="display:flex; gap:10px; font-size:18px; color:#667781; flex-shrink:0; position:relative;">
+              <i class="fa-solid fa-face-smile" style="cursor:pointer;" onclick="toggleStickers()" title="Stickers"></i>
+              <i class="fa-solid fa-wand-magic-sparkles" style="cursor:pointer; color:#25d366;" onclick="toggleAiPanel()" title="Suggestions rapides"></i>
+              <i class="fa-solid fa-plus" style="cursor:pointer;" onclick="toggleAttachMenu(event)" title="Joindre un fichier"></i>
+              <input type="file" id="fileInputImg" class="d-none" accept="image/*" onchange="uploadMedia(this,'image')">
+              <input type="file" id="fileInputDoc" class="d-none" accept="*/*" onchange="uploadMedia(this,'file')">
+              <div id="attachMenu" class="d-none shadow rounded-3 border p-2"
+                   style="position:absolute; bottom:38px; left:0; background:#fff; min-width:160px; z-index:200;"
+                   onclick="event.stopPropagation()">
+                <div class="wa-at-it" onclick="document.getElementById('fileInputImg').click()"><i class="fa-solid fa-image text-primary me-2"></i>Photo</div>
+                <div class="wa-at-it" onclick="document.getElementById('fileInputDoc').click()"><i class="fa-solid fa-file text-warning me-2"></i>Document</div>
+              </div>
+            </div>
+            <input type="text" id="messageInput" name="content"
+                   placeholder="Écrire un message…"
+                   style="flex:1; font-size:15px; background:var(--c-surface); color:var(--c-text); caret-color:#25d366;
+                          padding:10px 18px; border-radius:24px; border:1px solid var(--c-border);
+                          box-shadow:0 1px 4px rgba(0,0,0,.2); outline:none;
+                          font-family:inherit; min-width:0;"
+                   autocomplete="off">
+            <button type="submit" id="sendBtn"
+                    style="width:46px;height:46px;border-radius:50%;border:none;background:#25d366;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;box-shadow:0 2px 8px rgba(37,211,102,.4);">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+
+        <div id="lightbox" class="wa-lbox d-none" onclick="closeLightbox()">
+          <img id="lightboxImg" src="" style="max-width:90vw;max-height:90vh;border-radius:8px;">
+        </div>
+
+      {% else %}
+        <div class="d-flex flex-column align-items-center justify-content-center h-100" style="background:var(--c-bg);">
+          <div style="width:80px;height:80px;border-radius:50%;background:rgba(37,211,102,0.12);display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+            <i class="fa-solid fa-comments fs-2" style="color:#25d366;opacity:.6;"></i>
+          </div>
+          <h5 style="color:var(--c-text); opacity:.6; font-weight:700; margin-bottom:8px;">Sélectionnez une discussion</h5>
+          <p class="small" style="color:var(--c-text-muted); margin:0;">Communiquez avec l'administration HomeConnect</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<style>
+/* ── Structure ──────────────────────────────────────────────── */
+.wa-wrap { height:calc(100vh - 130px); min-height:580px; background:var(--c-surface); border:1px solid var(--c-border); border-radius:16px; width:100%; overflow:hidden; }
+.wa-wrap > .row { height:100%; }
+
+/* ── Sidebar ────────────────────────────────────────────────── */
+.wa-sidebar { background:var(--c-surface); border-right:1px solid var(--c-border); height:100%; overflow:hidden; display:flex; flex-direction:column; }
+.wa-header { background:linear-gradient(135deg,#075e54,#128c7e); color:#fff; flex-shrink:0; }
+.wa-search-bar { background:var(--c-bg); padding:8px 10px; border-bottom:1px solid var(--c-border); flex-shrink:0; }
+.wa-search-inner { background:var(--c-surface); border:1px solid var(--c-border); border-radius:999px; padding:7px 14px; display:flex; align-items:center; }
+.wa-search-input { background:transparent; border:none; outline:none; color:var(--c-text); font-size:13px; width:100%; font-family:inherit; }
+.wa-search-input::placeholder { color:var(--c-text-muted); opacity:.6; }
+
+/* Contacts */
+.wa-contact { border-bottom:1px solid var(--c-border); color:var(--c-text); transition:.15s; }
+.wa-contact:hover { background:rgba(255,255,255,0.04); }
+.wa-contact-active { background:rgba(37,211,102,0.08) !important; border-left:3px solid #25d366; }
+.wa-contact-name { font-weight:600; font-size:14px; color:var(--c-text); display:block; }
+.wa-preview { font-size:12px; color:var(--c-text-muted); }
+.wa-preview-bold { color:var(--c-text); font-weight:600; }
+.wa-time { font-size:11px; color:var(--c-text-muted); }
+.wa-unread-time { font-size:11px; color:#25d366; font-weight:700; }
+.wa-badge { background:#25d366; color:#fff; font-size:11px; font-weight:700; padding:2px 7px; border-radius:999px; min-width:20px; text-align:center; }
+
+/* Avatars */
+.wa-av { width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#128c7e,#075e54);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0; }
+.wa-av-sm { width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center; }
+
+/* ── Zone chat ──────────────────────────────────────────────── */
+.wa-chat { background-color:var(--c-bg); height:100%; overflow:hidden; }
+.wa-messages { background:transparent; }
+
+/* Bulles */
+.wa-bubble-t { max-width:72%; padding:8px 12px; border-radius:10px; word-break:break-word; box-shadow:0 1px 2px rgba(0,0,0,0.15); }
+.wa-sent { background:linear-gradient(135deg,#005c4b,#128c7e); color:#e9fde3 !important; border-top-right-radius:2px; }
+.wa-recv { background:var(--c-surface); color:var(--c-text) !important; border-top-left-radius:2px; border:1px solid var(--c-border); }
+.wa-sent * { color:#e9fde3 !important; }
+.wa-recv * { color:var(--c-text) !important; }
+.msg-text-content { font-size:14px; line-height:1.55; }
+
+.wa-reply-snip { background:rgba(255,255,255,0.08); border-left:3px solid #25d366; border-radius:4px; }
+.wa-react { background:var(--c-surface); border:1px solid var(--c-border); border-radius:999px; padding:2px 7px; font-size:.8rem; }
+.wa-em-btn:hover { transform:scale(1.3); display:inline-block; }
+
+.wa-date-chip { background:var(--c-surface); border:1px solid var(--c-border); color:var(--c-text-muted); font-size:.7rem; padding:4px 14px; border-radius:999px; }
+
+/* Context menu */
+.wa-ctx { position:fixed; z-index:9999; background:var(--c-surface); border:1px solid var(--c-border); min-width:170px; overflow:hidden; border-radius:10px; }
+.wa-ctx-i { padding:11px 16px; cursor:pointer; font-size:.85rem; color:var(--c-text); transition:.15s; display:flex; align-items:center; }
+.wa-ctx-i:hover { background:rgba(255,255,255,0.06); }
+
+/* Emoji picker */
+.wa-emoji { position:fixed; z-index:9999; background:var(--c-surface); border:1px solid var(--c-border); border-radius:999px; }
+
+/* Stickers & pièces jointes */
+.wa-stk { position:absolute; bottom:85px; left:15px; width:270px; background:var(--c-surface); border:1px solid var(--c-border); z-index:1000; border-radius:12px; overflow:hidden; }
+.wa-at-it { padding:9px 14px; cursor:pointer; font-size:.85rem; display:flex; align-items:center; gap:8px; transition:.15s; color:var(--c-text); }
+.wa-at-it:hover { background:rgba(255,255,255,0.06); }
+#attachMenu { background:var(--c-surface) !important; border:1px solid var(--c-border) !important; border-radius:10px; }
+
+/* Appel */
+.wa-call-ov { position:fixed; inset:0; background:rgba(5,10,18,.97); z-index:9999; display:flex; align-items:center; justify-content:center; }
+.wa-call-av { width:90px; height:90px; border-radius:50%; background:linear-gradient(135deg,#128c7e,#075e54); color:#fff; font-size:2rem; font-weight:700; display:flex; align-items:center; justify-content:center; }
+
+/* Lightbox */
+.wa-lbox { position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:10000; display:flex; align-items:center; justify-content:center; }
+
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+.cursor-pointer { cursor:pointer; }
+.min-w-0 { min-width:0; }
+#messageInput::placeholder { color:var(--c-text-muted) !important; opacity:.7 !important; }
+
+/* Light mode */
+[data-theme="light"] .wa-wrap { background:#fff; border-color:#e2e8f0; }
+[data-theme="light"] .wa-sidebar { background:#fff; border-color:#e2e8f0; }
+[data-theme="light"] .wa-search-bar { background:#f0f2f5; }
+[data-theme="light"] .wa-search-inner { background:#fff; border-color:#dde1e4; }
+[data-theme="light"] .wa-contact:hover { background:#f5f6f6; }
+[data-theme="light"] .wa-contact-active { background:rgba(37,211,102,0.06) !important; }
+[data-theme="light"] .wa-chat { background-color:#efeae2; background-image:url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
+[data-theme="light"] .wa-recv { background:#fff; border-color:#e9edef; }
+[data-theme="light"] .wa-recv * { color:#1a1a2e !important; }
+[data-theme="light"] .wa-ctx { background:#fff; border-color:#e9edef; }
+[data-theme="light"] .wa-ctx-i { color:#1a1a2e; }
+[data-theme="light"] .wa-ctx-i:hover { background:#f5f6f6; }
+[data-theme="light"] .wa-emoji { background:#fff; border-color:#e9edef; }
+[data-theme="light"] .wa-stk { background:#fff; border-color:#e9edef; }
+[data-theme="light"] .wa-at-it { color:#1a1a2e; }
+[data-theme="light"] .wa-at-it:hover { background:#f5f6f6; }
+[data-theme="light"] .wa-date-chip { background:rgba(255,255,255,.8); border-color:rgba(0,0,0,0.06); color:#667781; }
+[data-theme="light"] #attachMenu { background:#fff !important; border-color:#e9edef !important; }
+</style>
+
+<script>
+const RECEIVER_ID = {{ activeContact.id|default(0) }};
+const SEND_URL    = "{{ activeContact is defined ? path('app_tenant_messages_chat', {receiverId: activeContact.id}) : '#' }}";
+const UPLOAD_URL  = "{{ activeContact is defined ? path('app_tenant_messages_upload', {receiverId: activeContact.id|default(0)}) : '#' }}";
+
+let mediaRecorder, audioChunks=[], recordInterval, recordSec=0, stream;
+let callTimer, callSec=0, isMuted=false;
+let ctxMsgId=null, ctxIsMine=false, replyToId=null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  scrollToBottom();
+  document.getElementById('searchContacts')?.addEventListener('input', function() {
+    document.querySelectorAll('.wa-contact').forEach(el => {
+      el.style.display = el.dataset.name?.includes(this.value.toLowerCase()) ? '' : 'none';
+    });
+  });
+  {% if activeContact is defined %} setInterval(pollMessages, 5000); {% endif %}
+  document.addEventListener('click', () => {
+    document.getElementById('msgContextMenu')?.classList.add('d-none');
+    document.getElementById('emojiPicker')?.classList.add('d-none');
+    document.getElementById('attachMenu')?.classList.add('d-none');
+  });
+});
+
+function scrollToBottom() { const b=document.getElementById('msgBox'); if(b) b.scrollTop=b.scrollHeight; }
+
+function handleFormSend(e) {
+  e.preventDefault();
+  const inp = document.getElementById('messageInput');
+  const text = inp.value.trim();
+  if (!text) return false;
+
+  const form = document.getElementById('chatForm');
+  const url  = form.action;
+  inp.value  = '';
+  cancelReply();
+
+  const fd = new FormData();
+  fd.append('content', text);
+  if (replyToId) fd.append('replyToId', replyToId);
+
+  fetch(url, {
+    method: 'POST',
+    body: fd,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) appendBubble(d.message);
+    else { inp.value = text; }
+  })
+  .catch(() => {
+    // Fallback : rechargement simple
+    const fFallback = document.createElement('form');
+    fFallback.method = 'POST';
+    fFallback.action = url;
+    const hidden = document.createElement('input');
+    hidden.type = 'hidden'; hidden.name = 'content'; hidden.value = text;
+    fFallback.appendChild(hidden);
+    document.body.appendChild(fFallback);
+    fFallback.submit();
+  });
+
+  return false;
+}
+
+function toggleAiPanel() {
+  const el = document.getElementById('aiSuggestions');
+  el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+}
+
+function appendBubble(msg) {
+  const box=document.getElementById('msgBox'); if(!box) return;
+  const div=document.createElement('div');
+  div.className='d-flex mb-1 justify-content-end msg-row';
+  div.id='msg-'+msg.id; div.dataset.id=msg.id; div.dataset.content=msg.content||''; div.dataset.isMine='1';
+  div.innerHTML=`<div class="wa-bubble-t wa-sent" oncontextmenu="showMsgMenu(event,${msg.id},1)"><div class="msg-text-content">${escapeHtml(msg.content)}</div><div class="text-end mt-1" style="font-size:.65rem;opacity:.7;">${msg.createdAt} <i class="fa-solid fa-check ms-1"></i></div></div>`;
+  box.appendChild(div); scrollToBottom();
+}
+
+async function pollMessages() {
+  try {
+    const r=await fetch(window.location.href);
+    const html=await r.text();
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    const nb=doc.getElementById('msgBox'), cb=document.getElementById('msgBox');
+    if(nb&&cb&&nb.children.length>cb.children.length){ cb.innerHTML=nb.innerHTML; scrollToBottom(); }
+  } catch(e){}
+}
+
+function showMsgMenu(e,id,isMine) {
+  e.preventDefault(); e.stopPropagation();
+  ctxMsgId=id; ctxIsMine=!!isMine;
+  const m=document.getElementById('msgContextMenu'); m.classList.remove('d-none');
+  m.style.top=Math.min(e.clientY,window.innerHeight-220)+'px';
+  m.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';
+  m.querySelectorAll('.ctx-mine').forEach(el=>el.classList.toggle('d-none',!isMine));
+}
+
+function ctxReply() {
+  const row=document.getElementById('msg-'+ctxMsgId); if(!row) return;
+  replyToId=ctxMsgId;
+  document.getElementById('replyToName').textContent=row.dataset.isMine==='1'?'Vous':'{{ activeContact.fullName|default("") }}';
+  document.getElementById('replyToText').textContent=(row.dataset.content||'').slice(0,80);
+  document.getElementById('replyPreview').classList.remove('d-none');
+  document.getElementById('messageInput').focus();
+}
+function cancelReply() { replyToId=null; document.getElementById('replyPreview').classList.add('d-none'); }
+function ctxReact() {
+  const m=document.getElementById('emojiPicker'); m.classList.remove('d-none');
+  const menu=document.getElementById('msgContextMenu');
+  m.style.top=menu.style.top; m.style.left=menu.style.left;
+}
+async function sendReaction(em) {
+  document.getElementById('emojiPicker').classList.add('d-none');
+  await fetch(`/api/messages/${ctxMsgId}/react`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('jwt')||'')},body:JSON.stringify({emoji:em})}).catch(()=>{});
+  location.reload();
+}
+async function ctxForward() {
+  const dest=prompt('ID utilisateur :'); if(!dest) return;
+  await fetch(`/api/messages/${ctxMsgId}/forward`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('jwt')||'')},body:JSON.stringify({receiverIds:[parseInt(dest)]})}).catch(()=>{});
+  alert('Transféré !');
+}
+async function ctxEdit() {
+  const row=document.getElementById('msg-'+ctxMsgId);
+  const t=prompt('Modifier :',row?.dataset.content||''); if(!t) return;
+  const r=await fetch(`/api/messages/${ctxMsgId}/edit`,{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('jwt')||'')},body:JSON.stringify({content:t})}).catch(()=>null);
+  if(r?.ok) location.reload();
+}
+async function ctxDelete() {
+  const forAll=confirm('Supprimer pour tout le monde ?');
+  await fetch(`/api/messages/${ctxMsgId}/delete`,{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('jwt')||'')},body:JSON.stringify({forAll})}).catch(()=>{});
+  document.getElementById('msg-'+ctxMsgId)?.remove();
+}
+function ctxCopy() { navigator.clipboard.writeText(document.getElementById('msg-'+ctxMsgId)?.dataset.content||'').catch(()=>{}); }
+
+async function startRecording() {
+  try {
+    stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRecorder=new MediaRecorder(stream); audioChunks=[];
+    mediaRecorder.ondataavailable=e=>audioChunks.push(e.data);
+    mediaRecorder.onstop=()=>{ uploadFile(new Blob(audioChunks,{type:'audio/mpeg'}),'voice'); };
+    document.getElementById('inputPanel').classList.add('d-none');
+    document.getElementById('recordingUI').classList.remove('d-none');
+    mediaRecorder.start(); recordSec=0;
+    recordInterval=setInterval(()=>{ recordSec++; const m=Math.floor(recordSec/60),s=recordSec%60; document.getElementById('recordTimer').textContent=`${m}:${s<10?'0':''}${s}`; },1000);
+    document.getElementById('stopRecordBtn').onclick=()=>{ mediaRecorder.stop(); stream.getTracks().forEach(t=>t.stop()); stopRecUI(); };
+  } catch(e){ alert('Micro non disponible.'); }
+}
+function cancelRecording(){ if(mediaRecorder?.state!=='inactive')mediaRecorder?.stop(); if(stream)stream.getTracks().forEach(t=>t.stop()); audioChunks=[]; stopRecUI(); }
+function stopRecUI(){ clearInterval(recordInterval); document.getElementById('inputPanel').classList.remove('d-none'); document.getElementById('recordingUI').classList.add('d-none'); }
+
+async function uploadFile(file,type,stickerUrl=null){
+  const fd=new FormData(); if(file)fd.append('file',file); fd.append('type',type); if(stickerUrl)fd.append('sticker_url',stickerUrl);
+  const r=await fetch(UPLOAD_URL,{method:'POST',body:fd,headers:{'X-Requested-With':'XMLHttpRequest'}}).catch(()=>null);
+  if(r){const d=await r.json(); if(d.success)location.reload();}
+}
+function uploadMedia(inp,type){ if(inp.files[0])uploadFile(inp.files[0],type); }
+
+async function startCall(type){
+  document.getElementById('callOverlay').classList.remove('d-none');
+  if(type==='video'){document.getElementById('videoContainer').classList.remove('d-none');try{stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});document.getElementById('localVideo').srcObject=stream;}catch(e){}}
+  else{try{stream=await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){}}
+  callSec=0; callTimer=setInterval(()=>{ callSec++; const m=Math.floor(callSec/60),s=callSec%60; const el=document.getElementById('callTimer'); el.classList.remove('d-none'); el.textContent=`${m}:${s<10?'0':''}${s}`; },1000);
+  await fetch('/api/messages/call-log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('jwt')||'')},body:JSON.stringify({receiverId:RECEIVER_ID,callType:type,status:'missed'})}).catch(()=>{});
+}
+function endCall(){ clearInterval(callTimer); if(stream)stream.getTracks().forEach(t=>t.stop()); document.getElementById('callOverlay').classList.add('d-none'); document.getElementById('videoContainer').classList.add('d-none'); location.reload(); }
+function toggleMute(){ isMuted=!isMuted; if(stream)stream.getAudioTracks().forEach(t=>t.enabled=!isMuted); }
+
+function toggleAudio(btn,url){ const i=btn.querySelector('i'); if(btn._a){btn._a.pause();btn._a=null;i.className='fa-solid fa-play text-white';return;} const a=new Audio(url);btn._a=a;i.className='fa-solid fa-pause text-white';a.play();a.onended=()=>{i.className='fa-solid fa-play text-white';btn._a=null;}; }
+function toggleStickers(){ document.getElementById('stickerPicker').classList.toggle('d-none'); }
+function sendSticker(u){ uploadFile(null,'image',u); toggleStickers(); }
+function toggleAi(){ document.getElementById('aiSuggestions').classList.toggle('d-none'); }
+function useQuickReply(t){ document.getElementById('messageInput').value=t; document.getElementById('aiSuggestions').classList.add('d-none'); toggleSendMic(); document.getElementById('messageInput').focus(); }
+function toggleSearch(){ document.getElementById('chatSearch').classList.toggle('d-none'); document.getElementById('chatSearchInput')?.focus(); }
+function toggleAttachMenu(e){ e?.stopPropagation(); document.getElementById('attachMenu').classList.toggle('d-none'); }
+function searchInChat(q){ document.querySelectorAll('.msg-row').forEach(el=>{ el.style.display=q?(el.dataset.content?.toLowerCase().includes(q.toLowerCase())?'':'none'):''; }); }
+function scrollToMsg(id){ const el=document.getElementById('msg-'+id); if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.background='rgba(37,211,102,.15)';setTimeout(()=>el.style.background='',1500);} }
+function openLightbox(url){ document.getElementById('lightboxImg').src=url; document.getElementById('lightbox').classList.remove('d-none'); }
+function closeLightbox(){ document.getElementById('lightbox').classList.add('d-none'); }
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+</script>
+{% endblock %}

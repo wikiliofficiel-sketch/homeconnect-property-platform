@@ -1,0 +1,532 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Ajouter un Bien - Espace Propriétaire{% endblock %}
+
+{% block stylesheets %}
+<style>
+/* ══ Conteneur principal ══════════════════════════════════════════════ */
+.pf-container { max-width: 860px; }
+.pf-container h1 {
+    font-family: var(--f-serif);
+    font-size: 2rem;
+    color: var(--c-text);
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--c-border);
+}
+
+/* ══ Sections / Fieldsets ════════════════════════════════════════════ */
+.pf-section {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+}
+.pf-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--c-primary);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--c-border);
+}
+.pf-section-title i { font-size: 1rem; }
+
+/* ══ Grille de champs ════════════════════════════════════════════════ */
+.pf-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.pf-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem; }
+.pf-field:last-child { margin-bottom: 0; }
+
+.pf-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--c-text-muted);
+}
+.pf-label .req { color: var(--c-primary); margin-left: 2px; }
+
+.pf-input, .pf-select, .pf-textarea {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: var(--c-text);
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: var(--f-sans);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+}
+.pf-input::placeholder, .pf-textarea::placeholder { color: rgba(255,255,255,0.2); }
+.pf-input:focus, .pf-select:focus, .pf-textarea:focus {
+    outline: none;
+    border-color: var(--c-primary);
+    box-shadow: 0 0 0 3px rgba(255,140,0,0.15);
+    background: rgba(255,140,0,0.04);
+}
+.pf-select option { background: #1a1f35; color: var(--c-text); }
+.pf-textarea { resize: vertical; min-height: 110px; }
+
+/* ══ Chips ════════════════════════════════════════════════════════════ */
+.chips-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+.chip { display: inline-flex; align-items: center; cursor: pointer; user-select: none; }
+.chip input[type="checkbox"] { display: none; }
+.chip span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: 50px;
+    border: 1.5px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    color: var(--c-text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+}
+.chip:hover span {
+    border-color: var(--c-primary);
+    color: var(--c-primary);
+    background: rgba(255,140,0,0.08);
+}
+.chip input:checked + span {
+    background: linear-gradient(135deg, #FF8C00, #e67e00);
+    border-color: #FF8C00;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(255,140,0,0.35);
+}
+/* Règles → accent vert */
+.chip-rule input:checked + span {
+    background: linear-gradient(135deg, #00b894, #00a381);
+    border-color: #00b894;
+    box-shadow: 0 4px 14px rgba(0,184,148,0.35);
+}
+
+/* ══ Zone upload photos ══════════════════════════════════════════════ */
+.pf-upload-zone {
+    border: 2px dashed rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.pf-upload-zone:hover, .pf-upload-zone.drag-active {
+    border-color: var(--c-primary);
+    background: rgba(255,140,0,0.05);
+}
+.pf-upload-zone p { color: var(--c-text-muted); font-size: 14px; margin: 0; }
+.pf-upload-zone .pf-upload-hint { color: rgba(255,255,255,0.2); font-size: 12px; margin-top: 6px; }
+.pf-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px,1fr));
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* ══ Sublabel ════════════════════════════════════════════════════════ */
+.pf-sublabel {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--c-text-muted);
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* ══ Boutons d'action ════════════════════════════════════════════════ */
+.pf-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--c-border);
+}
+.pf-btn-cancel {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--c-text-muted);
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.pf-btn-cancel:hover { background: rgba(255,255,255,0.1); color: var(--c-text); }
+.pf-btn-submit {
+    background: linear-gradient(135deg, #FF8C00, #e67e00);
+    border: none;
+    color: #fff;
+    padding: 12px 32px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(255,140,0,0.4);
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.pf-btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,140,0,0.5); }
+
+/* ══ Parking places champ conditionnel ══════════════════════════════ */
+#parkingPlacesGroup { display: none; }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('app_owner_properties') }}" style="color: var(--c-text-muted); text-decoration:none;">Mes biens</a></li>
+    <li class="breadcrumb-item active" style="color: var(--c-text);">Ajouter un bien</li>
+{% endblock %}
+
+{% block content %}
+<div class="pf-container">
+    <h1><i class="fa-solid fa-plus-circle me-2" style="color:var(--c-primary);font-size:1.6rem;"></i> Ajouter un bien</h1>
+
+    <form method="POST" id="form_create_property">
+
+        {# ── PHOTOS ── #}
+        <div class="pf-section">
+            <div class="pf-section-title"><i class="fa-solid fa-camera"></i> Photos du bien</div>
+            <div class="pf-upload-zone" id="photoDropZone">
+                <input type="file" id="main_photos" name="photos[]" accept="image/*" multiple style="display:none;">
+                <div id="uploadPlaceholder">
+                    <i class="fa-solid fa-images" style="font-size:2.5rem;color:var(--c-primary);margin-bottom:12px;display:block;"></i>
+                    <p><strong style="color:var(--c-text);">Glissez vos photos ici</strong> ou <span style="color:var(--c-primary);cursor:pointer;text-decoration:underline;">parcourez</span></p>
+                    <p class="pf-upload-hint">Minimum 3 photos · JPG, PNG · Max 5 Mo total</p>
+                </div>
+                <div id="previewContainer" class="pf-preview-grid"></div>
+            </div>
+            <input type="hidden" id="photos_base64" name="photos_base64">
+            <div id="photoErrorMsg" style="display:none;color:#ff6b6b;font-size:13px;margin-top:8px;font-weight:600;">⚠️ Veuillez ajouter au moins 3 photos.</div>
+        </div>
+
+        {# ── INFOS DE BASE ── #}
+        <div class="pf-section">
+            <div class="pf-section-title"><i class="fa-solid fa-circle-info"></i> Informations de base</div>
+
+            <div class="pf-field">
+                <label class="pf-label" for="title">Titre de l'annonce <span class="req">*</span></label>
+                <input class="pf-input" type="text" id="title" name="title" required placeholder="ex: Villa T4 meublée à Fidjrossè">
+            </div>
+
+            <div class="pf-row">
+                <div class="pf-field">
+                    <label class="pf-label" for="propertyType">Type de bien <span class="req">*</span></label>
+                    <select class="pf-select" id="propertyType" name="propertyType" required>
+                        <option value="">Sélectionner…</option>
+                        <option value="appartement">Appartement</option>
+                        <option value="maison">Maison</option>
+                        <option value="villa">Villa</option>
+                        <option value="studio">Studio</option>
+                        <option value="chambre">Chambre</option>
+                        <option value="bureau">Bureau / Local</option>
+                        <option value="entrepot">Entrepôt</option>
+                        <option value="terrain">Terrain</option>
+                        <option value="commerce">Commerce</option>
+                    </select>
+                </div>
+                <div class="pf-field">
+                    <label class="pf-label" for="statutAnnonce">Statut <span class="req">*</span></label>
+                    <select class="pf-select" id="statutAnnonce" name="statutAnnonce" required onchange="togglePriceFields()">
+                        <option value="À louer">À louer</option>
+                        <option value="À vendre">À vendre</option>
+                        <option value="Les deux">À louer et à vendre</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="pf-field">
+                <label class="pf-label" for="description">Description <span class="req">*</span></label>
+                <textarea class="pf-textarea" id="description" name="description" required placeholder="Décrivez votre bien : points forts, environnement, équipements…"></textarea>
+            </div>
+
+            <div class="pf-row">
+                <div class="pf-field">
+                    <label class="pf-label" for="city">Ville <span class="req">*</span></label>
+                    <select class="pf-select" id="city" name="city" required>
+                        <option value="">Sélectionner…</option>
+                        <option>Cotonou</option><option>Porto-Novo</option><option>Parakou</option>
+                        <option>Abomey-Calavi</option><option>Ouidah</option><option>Bohicon</option>
+                        <option>Natitingou</option><option>Lokossa</option><option>Kandi</option>
+                        <option>Autre</option>
+                    </select>
+                </div>
+                <div class="pf-field">
+                    <label class="pf-label" for="address">Adresse / Quartier <span class="req">*</span></label>
+                    <input class="pf-input" type="text" id="address" name="address" required placeholder="ex: Quartier Fidjrossè, Rue 123">
+                </div>
+                <div class="pf-field">
+                    <label class="pf-label" for="zipCode">Code Postal</label>
+                    <input class="pf-input" type="text" id="zipCode" name="zipCode" placeholder="ex: 01BP123">
+                </div>
+            </div>
+        </div>
+
+        {# ── PRIX & FRAIS ── #}
+        <div class="pf-section">
+            <div class="pf-section-title"><i class="fa-solid fa-coins"></i> Prix & Frais</div>
+
+            <div class="pf-row" id="loyerRow">
+                <div class="pf-field">
+                    <label class="pf-label" for="pricePerMonth">Loyer mensuel (FCFA) <span class="req">*</span></label>
+                    <input class="pf-input" type="number" id="pricePerMonth" name="pricePerMonth" min="0" placeholder="150 000">
+                </div>
+                <div class="pf-field">
+                    <label class="pf-label" for="deposit">Dépôt de garantie (FCFA)</label>
+                    <input class="pf-input" type="number" id="deposit" name="deposit" min="0" placeholder="300 000">
+                </div>
+            </div>
+
+            <div class="pf-row" id="venteRow" style="display:none;">
+                <div class="pf-field">
+                    <label class="pf-label" for="prixVente">Prix de vente (FCFA)</label>
+                    <input class="pf-input" type="number" id="prixVente" name="prixVente" min="0" placeholder="25 000 000">
+                </div>
+            </div>
+
+            <div class="pf-row">
+                <div class="pf-field">
+                    <label class="pf-label" for="fraisAgence">Frais d'agence (FCFA)</label>
+                    <input class="pf-input" type="number" id="fraisAgence" name="fraisAgence" min="0" placeholder="50 000">
+                </div>
+                <div class="pf-field" id="montantChargesGroup" style="display:none;">
+                    <label class="pf-label" for="montantCharges">Montant des charges (FCFA)</label>
+                    <input class="pf-input" type="number" id="montantCharges" name="montantCharges" min="0" placeholder="20 000">
+                </div>
+            </div>
+
+            <div style="margin-top:4px;">
+                <label class="chip chip-rule">
+                    <input type="checkbox" id="chargesComprises" name="chargesComprises" value="1" onchange="toggleCharges(this)">
+                    <span><i class="fa-solid fa-circle-check"></i> Charges comprises</span>
+                </label>
+            </div>
+        </div>
+
+        {# ── CARACTÉRISTIQUES ── #}
+        <div class="pf-section">
+            <div class="pf-section-title"><i class="fa-solid fa-ruler-combined"></i> Caractéristiques</div>
+
+            <div class="pf-row">
+                <div class="pf-field">
+                    <label class="pf-label" for="rooms">Pièces <span class="req">*</span></label>
+                    <input class="pf-input" type="number" id="rooms" name="rooms" required min="1" placeholder="4">
+                </div>
+                <div class="pf-field">
+                    <label class="pf-label" for="bedrooms">Chambres</label>
+                    <input class="pf-input" type="number" id="bedrooms" name="bedrooms" min="0" placeholder="2">
+                </div>
+                <div class="pf-field">
+                    <label class="pf-label" for="nbSalons">Salons</label>
+                    <input class="pf-input" type="number" id="nbSalons" name="nbSalons" min="0" placeholder="1">
+                </div>
+                <div class="pf-field">
+                    <label class="pf-label" for="nbSallesDeBain">Sdb</label>
+                    <input class="pf-input" type="number" id="nbSallesDeBain" name="nbSallesDeBain" min="0" placeholder="2">
+                </div>
+                <div class="pf-field">
+                    <label class="pf-label" for="nbToilettes">WC</label>
+                    <input class="pf-input" type="number" id="nbToilettes" name="nbToilettes" min="0" placeholder="2">
+                </div>
+            </div>
+
+            <div class="pf-row">
+                <div class="pf-field">
+                    <label class="pf-label" for="surface">Surface (m²) <span class="req">*</span></label>
+                    <input class="pf-input" type="number" id="surface" name="surface" required min="0" step="0.1" placeholder="120">
+                </div>
+                <div class="pf-field">
+                    <label class="pf-label" for="etage">Étage</label>
+                    <input class="pf-input" type="number" id="etage" name="etage" min="0" placeholder="0 = RDC">
+                </div>
+                <div class="pf-field">
+                    <label class="pf-label" for="typeCuisine">Cuisine</label>
+                    <select class="pf-select" id="typeCuisine" name="typeCuisine">
+                        <option value="Non équipée">Non équipée</option>
+                        <option value="Équipée">Équipée</option>
+                        <option value="Américaine">Américaine</option>
+                        <option value="Séparée">Séparée</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="pf-sublabel" style="margin-top:8px;">Options</div>
+            <div class="chips-grid">
+                <label class="chip"><input type="checkbox" name="hasAscenseur" value="1"><span><i class="fa-solid fa-elevator"></i> Ascenseur</span></label>
+                <label class="chip"><input type="checkbox" name="hasJardin" value="1"><span><i class="fa-solid fa-tree"></i> Jardin</span></label>
+                <label class="chip"><input type="checkbox" name="hasBalcon" value="1"><span><i class="fa-solid fa-door-open"></i> Balcon</span></label>
+                <label class="chip"><input type="checkbox" name="hasParking" value="1" id="hasParkingCheck" onchange="toggleParking(this)"><span><i class="fa-solid fa-square-parking"></i> Parking</span></label>
+            </div>
+
+            <div id="parkingPlacesGroup" style="margin-top:12px;max-width:200px;">
+                <label class="pf-label" for="parkingPlaces">Nombre de places</label>
+                <input class="pf-input" type="number" id="parkingPlaces" name="parkingPlaces" min="1" value="1">
+            </div>
+        </div>
+
+        {# ── ÉQUIPEMENTS & RÈGLES ── #}
+        <div class="pf-section">
+            <div class="pf-section-title"><i class="fa-solid fa-star"></i> Équipements & Règles</div>
+
+            <div class="pf-sublabel"><i class="fa-solid fa-plug-circle-check" style="color:var(--c-primary);"></i> Équipements inclus</div>
+            <div class="chips-grid" style="margin-bottom:1.5rem;">
+                {% set equipList = [
+                    {val: 'wifi',               icon: 'fa-wifi',         label: 'Wi-Fi'},
+                    {val: 'climatisation',       icon: 'fa-snowflake',    label: 'Climatisation'},
+                    {val: 'ventilateur',         icon: 'fa-fan',          label: 'Ventilateur'},
+                    {val: 'chauffage',           icon: 'fa-fire',         label: 'Chauffage'},
+                    {val: 'eau_courante',        icon: 'fa-droplet',      label: 'Eau courante'},
+                    {val: 'groupe_electrogene',  icon: 'fa-bolt',         label: 'Groupe élec.'},
+                    {val: 'panneaux_solaires',   icon: 'fa-solar-panel',  label: 'Solaire'},
+                    {val: 'gardiennage',         icon: 'fa-user-shield',  label: 'Gardiennage'},
+                    {val: 'interphone',          icon: 'fa-phone',        label: 'Interphone'},
+                    {val: 'alarme',              icon: 'fa-bell',         label: 'Alarme'},
+                    {val: 'piscine',             icon: 'fa-water-ladder', label: 'Piscine'},
+                    {val: 'salle_sport',         icon: 'fa-dumbbell',     label: 'Salle sport'},
+                    {val: 'buanderie',           icon: 'fa-shirt',        label: 'Buanderie'},
+                    {val: 'meuble',              icon: 'fa-couch',        label: 'Meublé'},
+                ] %}
+                {% for equip in equipList %}
+                <label class="chip">
+                    <input type="checkbox" name="equipments[]" value="{{ equip.val }}">
+                    <span><i class="fa-solid {{ equip.icon }}"></i> {{ equip.label }}</span>
+                </label>
+                {% endfor %}
+            </div>
+
+            <div class="pf-sublabel"><i class="fa-solid fa-shield-halved" style="color:var(--c-primary);"></i> Règles</div>
+            <div class="chips-grid">
+                <label class="chip chip-rule"><input type="checkbox" name="rules[]" value="pets_allowed"><span><i class="fa-solid fa-dog"></i> Animaux acceptés</span></label>
+                <label class="chip chip-rule"><input type="checkbox" name="rules[]" value="smoking_allowed"><span><i class="fa-solid fa-smoking"></i> Fumeurs acceptés</span></label>
+            </div>
+        </div>
+
+        {# ── CONDITIONS ── #}
+        <div class="pf-section">
+            <div class="pf-section-title"><i class="fa-solid fa-file-contract"></i> Conditions de location</div>
+            <div class="pf-row">
+                <div class="pf-field">
+                    <label class="pf-label" for="dureeMinLocation">Durée min. (mois)</label>
+                    <input class="pf-input" type="number" id="dureeMinLocation" name="dureeMinLocation" min="1" placeholder="6">
+                </div>
+                <div class="pf-field">
+                    <label class="pf-label" for="preavis">Préavis (mois)</label>
+                    <input class="pf-input" type="number" id="preavis" name="preavis" min="1" placeholder="1">
+                </div>
+                <div class="pf-field">
+                    <label class="pf-label" for="disponibilite">Disponible à partir du</label>
+                    <input class="pf-input" type="date" id="disponibilite" name="disponibilite">
+                </div>
+            </div>
+        </div>
+
+        {# ── MÉDIAS ── #}
+        <div class="pf-section">
+            <div class="pf-section-title"><i class="fa-solid fa-video"></i> Médias</div>
+            <div class="pf-field">
+                <label class="pf-label" for="videoUrl">Lien vidéo YouTube</label>
+                <input class="pf-input" type="url" id="videoUrl" name="videoUrl" placeholder="https://youtube.com/watch?v=…">
+            </div>
+        </div>
+
+        <div class="pf-actions">
+            <a href="{{ path('app_owner_properties') }}" class="pf-btn-cancel"><i class="fa-solid fa-arrow-left me-2"></i>Annuler</a>
+            <button type="submit" class="pf-btn-submit" id="submitBtn"><i class="fa-solid fa-paper-plane"></i> Soumettre l'annonce</button>
+        </div>
+    </form>
+</div>
+
+<script>
+// ── Photos drag & drop ──────────────────────────────────────────────
+(function() {
+    const dropZone = document.getElementById('photoDropZone');
+    const fileInput = document.getElementById('main_photos');
+    const placeholder = document.getElementById('uploadPlaceholder');
+    const previewContainer = document.getElementById('previewContainer');
+    const hiddenBase64Input = document.getElementById('photos_base64');
+    let uploadedPhotos = [];
+
+    placeholder.addEventListener('click', () => fileInput.click());
+    ['dragenter','dragover','dragleave','drop'].forEach(e => dropZone.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); }));
+    ['dragenter','dragover'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.add('drag-active')));
+    ['dragleave','drop'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.remove('drag-active')));
+    dropZone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+    fileInput.addEventListener('change', function() { handleFiles(this.files); });
+
+    function handleFiles(files) {
+        Array.from(files).forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = () => {
+                uploadedPhotos.push(reader.result);
+                renderPreviews();
+                hiddenBase64Input.value = JSON.stringify(uploadedPhotos);
+            };
+        });
+    }
+
+    function renderPreviews() {
+        previewContainer.innerHTML = '';
+        uploadedPhotos.forEach((src, i) => {
+            const wrap = document.createElement('div');
+            wrap.style = 'position:relative;';
+            wrap.innerHTML = `<img src="${src}" style="width:100%;height:80px;object-fit:cover;border-radius:8px;">
+                <button type="button" onclick="removePhoto(${i})" style="position:absolute;top:2px;right:2px;background:#dc3545;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;">✕</button>`;
+            previewContainer.appendChild(wrap);
+        });
+    }
+    window.removePhoto = function(i) {
+        uploadedPhotos.splice(i, 1);
+        renderPreviews();
+        hiddenBase64Input.value = JSON.stringify(uploadedPhotos);
+    };
+})();
+
+// ── Champs conditionnels ────────────────────────────────────────────
+function togglePriceFields() {
+    const val = document.getElementById('statutAnnonce').value;
+    document.getElementById('loyerRow').style.display = val === 'À vendre' ? 'none' : '';
+    document.getElementById('venteRow').style.display = val === 'À louer' ? 'none' : '';
+}
+function toggleCharges(cb) {
+    document.getElementById('montantChargesGroup').style.display = cb.checked ? 'none' : 'flex';
+}
+function toggleParking(cb) {
+    document.getElementById('parkingPlacesGroup').style.display = cb.checked ? 'block' : 'none';
+}
+
+// ── Validation min 3 photos ─────────────────────────────────────────
+document.getElementById('form_create_property').addEventListener('submit', function(e) {
+    const photos = JSON.parse(document.getElementById('photos_base64').value || '[]');
+    if (photos.length < 3) {
+        e.preventDefault();
+        document.getElementById('photoErrorMsg').style.display = 'block';
+        document.getElementById('photoDropZone').scrollIntoView({ behavior: 'smooth' });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Contrat de bail — {{ application.property.title }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 12px; color: #222; padding: 40px; }
+
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 20px; }
+        .header h1 { font-size: 22px; color: #1e3a8a; letter-spacing: 1px; margin-bottom: 4px; }
+        .header .subtitle { font-size: 13px; color: #64748b; }
+        .header .badge { display: inline-block; background: #dbeafe; color: #1e40af; padding: 2px 12px; border-radius: 20px; font-size: 11px; margin-top: 6px; }
+
+        .section { margin-bottom: 24px; }
+        .section-title { font-size: 13px; font-weight: bold; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 12px; }
+
+        .info-grid { display: table; width: 100%; }
+        .info-row { display: table-row; }
+        .info-label { display: table-cell; width: 40%; font-weight: bold; color: #475569; padding: 4px 0; vertical-align: top; }
+        .info-value { display: table-cell; color: #1e293b; padding: 4px 0; }
+
+        .highlight-box { background: #f0f9ff; border-left: 4px solid #2563eb; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; }
+        .highlight-box .amount { font-size: 20px; font-weight: bold; color: #2563eb; }
+
+        .clauses { margin-bottom: 24px; }
+        .clause { margin-bottom: 10px; padding-left: 16px; position: relative; }
+        .clause::before { content: "•"; position: absolute; left: 0; color: #2563eb; font-weight: bold; }
+
+        .signatures { margin-top: 50px; }
+        .sig-row { display: table; width: 100%; }
+        .sig-col { display: table-cell; width: 50%; vertical-align: top; padding: 0 10px; }
+        .sig-box { border: 1px solid #cbd5e1; border-radius: 6px; padding: 20px; text-align: center; min-height: 90px; }
+        .sig-label { font-size: 11px; color: #64748b; margin-bottom: 6px; text-transform: uppercase; font-weight: bold; }
+        .sig-name { font-weight: bold; color: #1e293b; margin-top: 8px; }
+
+        .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 14px; }
+
+        .watermark-note { text-align: center; color: #94a3b8; font-size: 10px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>CONTRAT DE BAIL RÉSIDENTIEL</h1>
+    <div class="subtitle">Plateforme HomeConnect — Bénin</div>
+    <div class="badge">Référence : HC-{{ application.id }}-{{ "now"|date("Y") }}</div>
+</div>
+
+<div class="watermark-note">
+    Contrat généré automatiquement le {{ "now"|date("d/m/Y à H:i") }} · Document officiel HomeConnect
+</div>
+
+{# ── PARTIES ── #}
+<div class="section">
+    <div class="section-title">1. Les Parties</div>
+
+    <p style="margin-bottom: 10px;"><strong>Bailleur (Propriétaire) :</strong></p>
+    <div class="info-grid">
+        <div class="info-row">
+            <div class="info-label">Nom complet</div>
+            <div class="info-value">{{ application.property.proprietaire ? application.property.proprietaire.fullName : 'N/A' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Email</div>
+            <div class="info-value">{{ application.property.proprietaire ? application.property.proprietaire.email : 'N/A' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Téléphone</div>
+            <div class="info-value">{{ application.property.proprietaire ? (application.property.proprietaire.phone ?? 'N/A') : 'N/A' }}</div>
+        </div>
+    </div>
+
+    <p style="margin-top: 14px; margin-bottom: 10px;"><strong>Locataire :</strong></p>
+    <div class="info-grid">
+        <div class="info-row">
+            <div class="info-label">Nom complet</div>
+            <div class="info-value">{{ application.locataire.fullName }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Email</div>
+            <div class="info-value">{{ application.locataire.email }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Téléphone</div>
+            <div class="info-value">{{ application.locataire.phone ?? 'N/A' }}</div>
+        </div>
+    </div>
+</div>
+
+{# ── BIEN ── #}
+<div class="section">
+    <div class="section-title">2. Le Bien Loué</div>
+    <div class="info-grid">
+        <div class="info-row">
+            <div class="info-label">Désignation</div>
+            <div class="info-value">{{ application.property.title }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Adresse</div>
+            <div class="info-value">{{ application.property.address }}, {{ application.property.city }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Type</div>
+            <div class="info-value">{{ application.property.type ?? 'N/A' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Surface</div>
+            <div class="info-value">{{ application.property.surface ? application.property.surface ~ ' m²' : 'N/A' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Chambres</div>
+            <div class="info-value">{{ application.property.rooms ?? 'N/A' }}</div>
+        </div>
+    </div>
+</div>
+
+{# ── DURÉE & LOYER ── #}
+<div class="section">
+    <div class="section-title">3. Durée et Loyer</div>
+    <div class="highlight-box">
+        <div>Loyer mensuel : <span class="amount">{{ application.property.pricePerMonth|number_format(0, ',', ' ') }} FCFA</span></div>
+    </div>
+    <div class="info-grid">
+        <div class="info-row">
+            <div class="info-label">Date d'entrée</div>
+            <div class="info-value">{{ application.dateDebut ? application.dateDebut|date('d/m/Y') : 'À définir' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Date de fin prévisionnelle</div>
+            <div class="info-value">{{ application.dateFin ? application.dateFin|date('d/m/Y') : 'À définir' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Paiement</div>
+            <div class="info-value">Mensuel, payable au plus tard le 5 du mois</div>
+        </div>
+    </div>
+</div>
+
+{# ── CLAUSES ── #}
+<div class="section">
+    <div class="section-title">4. Clauses Générales</div>
+    <div class="clauses">
+        <div class="clause">Le locataire s'engage à utiliser le bien à des fins exclusivement résidentielles.</div>
+        <div class="clause">Toute sous-location est formellement interdite sans accord écrit du bailleur.</div>
+        <div class="clause">Le locataire est tenu d'entretenir le bien et de signaler tout dommage dans les 48h.</div>
+        <div class="clause">Un dépôt de garantie équivalent à deux mois de loyer est exigé à la signature.</div>
+        <div class="clause">Le préavis de départ est fixé à un (1) mois minimum.</div>
+        <div class="clause">Les charges communes (eau, entretien parties communes) sont à la charge du locataire.</div>
+        <div class="clause">Le bailleur s'engage à assurer la jouissance paisible des lieux loués.</div>
+        <div class="clause">Tout litige sera soumis aux juridictions compétentes de Cotonou, Bénin.</div>
+    </div>
+</div>
+
+{# ── ÉTAT DES LIEUX ── #}
+<div class="section">
+    <div class="section-title">5. État des Lieux</div>
+    <p>Un état des lieux contradictoire sera établi à l'entrée et à la sortie du locataire en présence des deux parties et d'un représentant HomeConnect.</p>
+    {% if application.visites|length > 0 %}
+        {% set visite = application.visites|first %}
+        <p style="margin-top: 8px;">Date de visite prévue : <strong>{{ visite.dateHeureDebut|date('d/m/Y à H:i') }}</strong></p>
+    {% endif %}
+</div>
+
+{# ── SIGNATURES ── #}
+<div class="signatures">
+    <div class="section-title">6. Signatures des Parties</div>
+    <br>
+    <div class="sig-row">
+        <div class="sig-col">
+            <div class="sig-box">
+                <div class="sig-label">Le Bailleur</div>
+                <div style="height: 40px; border-bottom: 1px dashed #cbd5e1;"></div>
+                <div class="sig-name">{{ application.property.proprietaire ? application.property.proprietaire.fullName : 'N/A' }}</div>
+                <div style="font-size: 10px; color: #94a3b8;">Date : _______________</div>
+            </div>
+        </div>
+        <div class="sig-col">
+            <div class="sig-box">
+                <div class="sig-label">Le Locataire</div>
+                <div style="height: 40px; border-bottom: 1px dashed #cbd5e1;"></div>
+                <div class="sig-name">{{ application.locataire.fullName }}</div>
+                <div style="font-size: 10px; color: #94a3b8;">Date : _______________</div>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div style="text-align: center; margin-top: 14px;">
+        <div class="sig-box" style="display: inline-block; min-width: 260px;">
+            <div class="sig-label">Représentant HomeConnect (Admin)</div>
+            <div style="height: 40px; border-bottom: 1px dashed #cbd5e1;"></div>
+            <div class="sig-name">Administration HomeConnect</div>
+            <div style="font-size: 10px; color: #94a3b8;">Date : _______________</div>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    HomeConnect — Plateforme immobilière digitale du Bénin · Contrat #HC-{{ application.id }}-{{ "now"|date("Y") }} · Généré le {{ "now"|date("d/m/Y à H:i") }}
+</div>
+
+</body>
+</html>

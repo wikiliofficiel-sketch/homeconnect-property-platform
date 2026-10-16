@@ -1,0 +1,247 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Mes Biens - Espace Propriétaire{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active" style="color: var(--c-text);">Mes biens</li>
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+.prop-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 16px; overflow: hidden; transition: transform 0.25s, border-color 0.25s; }
+.prop-card:hover { transform: translateY(-4px); border-color: var(--c-primary); }
+.prop-img { height: 200px; width: 100%; object-fit: cover; }
+.prop-img-placeholder { height: 200px; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; }
+.prop-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 50px; font-size: 11px; font-weight: 700; }
+.st-active   { background: rgba(0,230,118,0.15); color: #00e676; }
+.st-pending  { background: rgba(255,193,7,0.15); color: #ffc107; }
+.st-suspended{ background: rgba(255,75,92,0.15); color: #ff4b5c; }
+.st-draft    { background: rgba(148,163,184,0.15); color: #94a3b8; }
+.prop-stat   { font-size: 11px; color: var(--c-text-muted); display: flex; align-items: center; gap: 4px; }
+.filter-chip { padding: 6px 16px; border-radius: 50px; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: var(--c-text-muted); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.filter-chip:hover, .filter-chip.active { border-color: var(--c-primary); color: var(--c-primary); background: rgba(255,140,0,0.08); }
+.search-box { background: rgba(255,255,255,0.05); border: 1px solid var(--c-border); border-radius: 10px; padding: 10px 16px; color: var(--c-text); font-size: 14px; }
+.search-box:focus { outline: none; border-color: var(--c-primary); }
+.search-box::placeholder { color: rgba(255,255,255,0.25); }
+.btn-add { background: linear-gradient(135deg, #FF8C00, #e67e00); color: #fff; border: none; border-radius: 50px; padding: 11px 24px; font-weight: 700; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(255,140,0,0.35); transition: all 0.2s; }
+.btn-add:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(255,140,0,0.5); color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div>
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+        <div>
+            <h1 style="font-family: var(--f-serif); font-size: 2rem; color: var(--c-text); margin-bottom: 4px;">Mes Biens</h1>
+            <p style="color: var(--c-text-muted); font-size: 14px; margin: 0;">
+                {{ publishedCount }} /
+                {% if subscription.maxProperties is null %}
+                    illimité
+                {% else %}
+                    {{ subscription.maxProperties }}
+                {% endif %}
+                bien{% if publishedCount > 1 %}s{% endif %} — Plan <strong style="color:var(--c-primary);">{{ subscription.planLabel }}</strong>
+            </p>
+        </div>
+        {% if canAddMore %}
+            <a href="{{ path('app_owner_property_new') }}" class="btn-add">
+                <i class="fa-solid fa-plus"></i> Ajouter un bien
+            </a>
+        {% else %}
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+                <span style="background:rgba(255,75,92,0.12); color:#ff4b5c; border:1px solid rgba(255,75,92,0.3); border-radius:50px; padding:8px 18px; font-size:13px; font-weight:700;">
+                    <i class="fa-solid fa-lock me-2"></i>Limite atteinte ({{ publishedCount }}/{{ subscription.maxProperties }})
+                </span>
+                <a href="{{ path('app_owner_subscription') }}" style="font-size:12px; color:var(--c-primary); text-decoration:none; font-weight:600;">
+                    <i class="fa-solid fa-arrow-up me-1"></i>Passer au plan supérieur
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    {# Bandeau d'avertissement limite atteinte #}
+    {% if not canAddMore %}
+    <div style="background:rgba(255,193,7,0.1); border:1px solid rgba(255,193,7,0.3); border-radius:12px; padding:14px 20px; margin-bottom:1.5rem; display:flex; align-items:center; gap:14px;">
+        <i class="fa-solid fa-triangle-exclamation" style="color:#ffc107; font-size:1.3rem; flex-shrink:0;"></i>
+        <div>
+            <strong style="color:#ffc107; display:block; font-size:14px;">Limite du plan {{ subscription.planLabel }} atteinte</strong>
+            <span style="color:var(--c-text-muted); font-size:13px;">
+                Vous avez {{ publishedCount }} bien{% if publishedCount > 1 %}s{% endif %} sur {{ subscription.maxProperties }} autorisé{% if subscription.maxProperties > 1 %}s{% endif %}.
+                <a href="{{ path('app_owner_subscription') }}" style="color:var(--c-primary); font-weight:600;">Mettre à niveau →</a>
+            </span>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if properties|length == 0 %}
+        <div style="text-align:center; padding: 4rem 2rem; background: var(--c-surface); border-radius: 16px; border: 1px solid var(--c-border);">
+            <i class="fa-solid fa-house-chimney-crack" style="font-size: 4rem; color: var(--c-text-muted); opacity: 0.2; display: block; margin-bottom: 1rem;"></i>
+            <h3 style="color: var(--c-text); font-family: var(--f-serif);">Aucun bien publié</h3>
+            <p style="color: var(--c-text-muted); max-width: 400px; margin: 0.5rem auto 1.5rem;">Commencez par ajouter votre premier bien pour attirer des locataires.</p>
+            {% if canAddMore %}
+            <a href="{{ path('app_owner_property_new') }}" class="btn-add">
+                <i class="fa-solid fa-plus"></i> Créer mon annonce
+            </a>
+            {% endif %}
+        </div>
+    {% else %}
+        {# ── Filtres ─────────────────────────────────────────────── #}
+        <div class="d-flex flex-wrap gap-3 align-items-center mb-4">
+            <div class="position-relative flex-grow-1" style="max-width: 320px;">
+                <i class="fa-solid fa-magnifying-glass position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--c-text-muted); font-size: 13px;"></i>
+                <input type="text" id="propertySearch" class="search-box w-100" placeholder="Rechercher par titre ou ville…" style="padding-left: 38px;">
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="filter-chip active" data-filter="all">Tous ({{ properties|length }})</button>
+                <button class="filter-chip" data-filter="active">
+                    Actifs ({{ properties|filter(p => p.statut == 'active')|length }})
+                </button>
+                <button class="filter-chip" data-filter="pending">
+                    En attente ({{ properties|filter(p => p.statut == 'pending')|length }})
+                </button>
+                <button class="filter-chip" data-filter="suspended">
+                    Suspendus ({{ properties|filter(p => p.statut == 'suspended')|length }})
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-4" id="propertiesGrid">
+            {% for property in properties %}
+            <div class="col-md-6 col-lg-4 property-item" data-status="{{ property.statut }}" data-title="{{ (property.title ~ ' ' ~ property.city)|lower }}">
+                <div class="prop-card h-100">
+                    {# Photo #}
+                    <div class="position-relative">
+                        {% if property.images and property.images|length > 0 %}
+                            {% set imgSrc = property.images[0] %}
+                            <img src="{{ imgSrc starts with 'http' or imgSrc starts with 'data:' ? imgSrc : asset('uploads/properties/' ~ imgSrc) }}"
+                                 class="prop-img" alt="{{ property.title }}">
+                        {% else %}
+                            <div class="prop-img-placeholder">
+                                <i class="fa-solid fa-house" style="font-size: 3rem; color: rgba(255,255,255,0.1);"></i>
+                            </div>
+                        {% endif %}
+                        {# Badge statut #}
+                        <div class="position-absolute top-0 end-0 m-3">
+                            <span class="prop-status {{ property.statut == 'active' ? 'st-active' : (property.statut == 'pending' ? 'st-pending' : (property.statut == 'suspended' ? 'st-suspended' : 'st-draft')) }}">
+                                <i class="fa-solid fa-circle" style="font-size: 7px;"></i>
+                                {{ property.statut == 'active' ? 'Actif' : (property.statut == 'pending' ? 'En attente' : (property.statut == 'suspended' ? 'Suspendu' : 'Brouillon')) }}
+                            </span>
+                        </div>
+                        {# Nombre de photos #}
+                        {% if property.images|length > 1 %}
+                        <div class="position-absolute bottom-0 start-0 m-3">
+                            <span style="background: rgba(0,0,0,0.6); color: #fff; font-size: 11px; padding: 3px 10px; border-radius: 50px;">
+                                <i class="fa-solid fa-camera me-1"></i>{{ property.images|length }}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div style="padding: 1.2rem;">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <h5 style="color: var(--c-text); font-weight: 700; font-size: 15px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 68%;">{{ property.title }}</h5>
+                            <span style="color: var(--c-primary); font-weight: 800; font-size: 15px;">{{ property.pricePerMonth|number_format(0, ',', ' ') }}<small style="font-size:10px;color:var(--c-text-muted);font-weight:500;"> F</small></span>
+                        </div>
+
+                        <p style="color: var(--c-text-muted); font-size: 12px; margin: 0 0 10px;">
+                            <i class="fa-solid fa-location-dot me-1" style="color: var(--c-primary);"></i>{{ property.city }}{% if property.address %}, {{ property.address|slice(0,25) }}{% endif %}
+                        </p>
+
+                        <div class="d-flex gap-3 mb-3">
+                            <span class="prop-stat"><i class="fa-solid fa-door-open"></i> {{ property.rooms }} pièces</span>
+                            <span class="prop-stat"><i class="fa-solid fa-ruler-combined"></i> {{ property.surface }} m²</span>
+                            <span class="prop-stat"><i class="fa-solid fa-eye"></i> {{ property.views }}</span>
+                        </div>
+
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="{{ path('app_owner_property_show', {id: property.id}) }}"
+                               style="flex:1; text-align:center; padding:7px; border-radius:50px; background: rgba(255,140,0,0.15); color: var(--c-primary); font-size:12px; font-weight:600; text-decoration:none; border: 1px solid rgba(255,140,0,0.25); transition: all 0.2s;"
+                               onmouseover="this.style.background='rgba(255,140,0,0.25)'"
+                               onmouseout="this.style.background='rgba(255,140,0,0.15)'">
+                                <i class="fa-solid fa-eye me-1"></i> Détails
+                            </a>
+                            <a href="{{ path('app_owner_property_edit', {id: property.id}) }}"
+                               style="flex:1; text-align:center; padding:7px; border-radius:50px; background: rgba(255,255,255,0.05); color: var(--c-text-muted); font-size:12px; font-weight:600; text-decoration:none; border: 1px solid var(--c-border); transition: all 0.2s;"
+                               onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                               onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                                <i class="fa-solid fa-pen-to-square me-1"></i> Modifier
+                            </a>
+                            <button type="button"
+                               style="padding:7px 12px; border-radius:50px; background: rgba(255,75,92,0.1); color: #ff4b5c; font-size:12px; font-weight:600; border: 1px solid rgba(255,75,92,0.25); cursor:pointer; transition: all 0.2s;"
+                               onclick="confirmDeletePropertySweetAlert({{ property.id }}, '{{ property.title|escape('js') }}')"
+                               onmouseover="this.style.background='rgba(255,75,92,0.2)'"
+                               onmouseout="this.style.background='rgba(255,75,92,0.1)'">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal Suppression (Formulaire caché unique) -->
+<form id="deleteForm" method="POST" style="display:none;">
+    <input type="hidden" name="_token" id="deleteToken">
+</form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById('propertySearch');
+    const filterBtns = document.querySelectorAll('.filter-chip');
+    const items = document.querySelectorAll('.property-item');
+
+    function filter() {
+        const term = searchInput ? searchInput.value.toLowerCase() : '';
+        const activeFilter = document.querySelector('.filter-chip.active')?.dataset.filter || 'all';
+
+        items.forEach(item => {
+            const matchSearch = item.dataset.title.includes(term);
+            const matchStatus = activeFilter === 'all' || item.dataset.status === activeFilter;
+            item.style.display = (matchSearch && matchStatus) ? '' : 'none';
+        });
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filter);
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filter();
+        });
+    });
+
+    window.confirmDeletePropertySweetAlert = function(id, title) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Êtes-vous sûr ?',
+                html: `Voulez-vous vraiment supprimer le bien "<strong>${title}</strong>" ?<br><br>Cette action est irréversible et supprimera toutes les données liées (photos, candidatures).`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, supprimer !',
+                cancelButtonText: 'Annuler',
+                background: 'var(--c-surface)',
+                color: 'var(--c-body)'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.getElementById('deleteForm');
+                    form.action = `/proprietary/properties/${id}/delete`;
+                    form.submit();
+                }
+            });
+        } else {
+            if (confirm(`Voulez-vous vraiment supprimer le bien "${title}" ?\nCette action est irréversible.`)) {
+                const form = document.getElementById('deleteForm');
+                form.action = `/proprietary/properties/${id}/delete`;
+                form.submit();
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

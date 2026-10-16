@@ -1,0 +1,128 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Notifications - Espace Propriétaire{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active">Notifications</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Centre de Notifications</h1>
+            <p class="text-white-50 small mb-0">Retrouvez toutes les alertes concernant vos biens et activités.</p>
+        </div>
+        {% if notifications|filter(n => not n.lue)|length > 0 %}
+            <button class="btn btn-white-10 rounded-pill px-4 text-white small" onclick="markAllAsRead()">
+                Tout marquer comme lu
+            </button>
+        {% endif %}
+    </div>
+
+    {% if notifications|length == 0 %}
+        <div class="card card-premium text-center py-5 shadow-lg border-0">
+            <div class="py-5">
+                <div class="bg-white-10 rounded-circle p-4 d-inline-block mb-4">
+                    <i class="fa-solid fa-bell-slash fs-1 text-white-50 opacity-25"></i>
+                </div>
+                <h4 class="fw-bold text-white">Aucune notification</h4>
+                <p class="text-white-50 mx-auto" style="max-width: 400px;">
+                    Vous êtes à jour ! Toutes les nouvelles alertes apparaîtront ici en temps réel.
+                </p>
+            </div>
+        </div>
+    {% else %}
+        <div class="notification-list">
+            {% for notif in notifications %}
+                <div class="card card-premium mb-3 notification-card {% if not notif.lue %}unread{% endif %} border-0 shadow-sm" data-id="{{ notif.id }}">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-start gap-4">
+                            <div class="notification-icon-wrapper rounded-4 d-flex align-items-center justify-content-center flex-shrink-0">
+                                {% if 'property' in notif.type %}
+                                    <i class="fa-solid fa-house-circle-check text-success"></i>
+                                {% elseif 'application' in notif.type %}
+                                    <i class="fa-solid fa-file-signature text-primary"></i>
+                                {% elseif 'visite' in notif.type %}
+                                    <i class="fa-solid fa-calendar-days text-warning"></i>
+                                {% elseif 'subscription' in notif.type %}
+                                    <i class="fa-solid fa-crown text-warning"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-info-circle text-info"></i>
+                                {% endif %}
+                            </div>
+
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <h6 class="fw-bold text-white mb-0">{{ notif.message }}</h6>
+                                    <span class="text-white-50 x-small">{{ notif.createdAt|date('d M Y, H:i') }}</span>
+                                </div>
+                                <p class="text-white-50 small mb-3">
+                                    Une mise à jour importante concernant votre compte ou vos propriétés.
+                                </p>
+
+                                <div class="d-flex gap-2">
+                                    {% if notif.lien %}
+                                        <a href="{{ notif.lien }}" class="btn btn-sm btn-primary rounded-pill px-3">
+                                            Voir le détail
+                                        </a>
+                                    {% endif %}
+                                    {% if not notif.lue %}
+                                        <button class="btn btn-sm btn-white-10 rounded-pill px-3 mark-read-btn" onclick="markAsRead({{ notif.id }})">
+                                            <i class="fa-solid fa-check me-1"></i> Marquer comme lu
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if not notif.lue %}
+                                <div class="unread-dot bg-primary rounded-circle"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.notification-card { transition: all 0.3s ease; position: relative; }
+.notification-card.unread { background: rgba(108, 92, 231, 0.08); border-left: 4px solid var(--owner-primary) !important; }
+.notification-card:hover { transform: translateX(8px); background: rgba(255,255,255,0.05); }
+
+.notification-icon-wrapper { width: 55px; height: 55px; background: rgba(255,255,255,0.05); font-size: 1.4rem; }
+.notification-card.unread .notification-icon-wrapper { background: rgba(108, 92, 231, 0.15); }
+
+.unread-dot { width: 10px; height: 10px; box-shadow: 0 0 10px var(--owner-primary); }
+.x-small { font-size: 0.7rem; }
+
+.btn-white-10 { background: rgba(255,255,255,0.1); color: white; border: none; }
+.btn-white-10:hover { background: rgba(255,255,255,0.2); }
+</style>
+
+<script>
+function markAsRead(id) {
+    fetch(`/proprietary/notifications/${id}/read`, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            const card = document.querySelector(`.notification-card[data-id="${id}"]`);
+            card.classList.remove('unread');
+            card.querySelector('.mark-read-btn')?.remove();
+            card.querySelector('.unread-dot')?.remove();
+        }
+    });
+}
+
+function markAllAsRead() {
+    // Implement if route exists, or loop markAsRead
+    document.querySelectorAll('.notification-card.unread').forEach(card => {
+        markAsRead(card.dataset.id);
+    });
+}
+</script>
+{% endblock %}

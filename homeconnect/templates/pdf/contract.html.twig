@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Contrat de Bail - HomeConnect</title>
+    <style>
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; line-height: 1.6; font-size: 12pt; }
+        .header { text-align: center; margin-bottom: 50px; border-bottom: 2px solid #FF4B5C; padding-bottom: 20px; }
+        .logo { font-size: 24pt; font-weight: bold; color: #FF4B5C; }
+        .contract-title { font-size: 18pt; margin-top: 10px; text-transform: uppercase; }
+        .section { margin-bottom: 25px; }
+        .section-title { font-weight: bold; text-decoration: underline; margin-bottom: 10px; display: block; color: #000; }
+        .info-grid { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .info-grid td { padding: 8px; vertical-align: top; border: 1px solid #eee; }
+        .label { font-weight: bold; width: 30%; }
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 8pt; color: #999; border-top: 1px solid #eee; padding-top: 10px; }
+        .signatures { margin-top: 50px; width: 100%; }
+        .signature-box { width: 45%; display: inline-block; text-align: center; }
+        .electronic-seal { border: 2px dashed #00D2FF; padding: 15px; border-radius: 10px; color: #00D2FF; font-size: 9pt; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">HomeConnect</div>
+        <div class="contract-title">CONTRAT DE BAIL À USAGE D'HABITATION</div>
+        <p>Référence : HC-{{ rental.id }}-{{ "now"|date("Y") }}</p>
+    </div>
+
+    <div class="section">
+        <span class="section-title">ARTICLE 1 : LES PARTIES</span>
+        <table class="info-grid">
+            <tr>
+                <td class="label">LE BAILLEUR :</td>
+                <td>
+                    <strong>{{ rental.property.proprietaire.fullName }}</strong><br>
+                    Email : {{ rental.property.proprietaire.email }}<br>
+                    Téléphone : {{ rental.property.proprietaire.telephone }}
+                </td>
+            </tr>
+            <tr>
+                <td class="label">LE PRENEUR :</td>
+                <td>
+                    <strong>{{ rental.locataire.fullName }}</strong><br>
+                    Email : {{ rental.locataire.email }}<br>
+                    Téléphone : {{ rental.locataire.telephone }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <span class="section-title">ARTICLE 2 : DÉSIGNATION DU BIEN</span>
+        <p>Le bailleur donne en location au preneur le bien immobilier suivant :</p>
+        <table class="info-grid">
+            <tr><td class="label">Désignation :</td><td>{{ rental.property.titre }} ({{ rental.property.type }})</td></tr>
+            <tr><td class="label">Localisation :</td><td>{{ rental.property.address }}, {{ rental.property.city }} - BENIN</td></tr>
+            <tr><td class="label">Description :</td><td>{{ rental.property.pieces }} pièces, {{ rental.property.nbChambres }} chambres, {{ rental.property.superficie }} m²</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <span class="section-title">ARTICLE 3 : DURÉE ET PRIX</span>
+        <table class="info-grid">
+            <tr><td class="label">Date de début :</td><td>{{ rental.startDate|date('d/m/Y') }}</td></tr>
+            <tr><td class="label">Date de fin :</td><td>{{ rental.endDate|date('d/m/Y') }}</td></tr>
+            <tr><td class="label">Loyer Mensuel :</td><td><strong>{{ rental.monthlyPrice|number_format(0, '.', ' ') }} FCFA</strong></td></tr>
+            <tr><td class="label">Dépôt de Garantie :</td><td>{{ rental.property.depotGarantie|default(0)|number_format(0, '.', ' ') }} FCFA</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <span class="section-title">ARTICLE 4 : ENGAGEMENTS</span>
+        <p>Le preneur s'engage à user paisiblement des locaux et à payer le loyer aux termes convenus. Le bailleur s'engage à délivrer au preneur le logement en bon état d'usage et de réparations.</p>
+    </div>
+
+    <div class="signatures">
+        <div class="signature-box">
+            <p>Signature du Bailleur</p>
+            <div style="height: 60px;"></div>
+            <div class="electronic-seal">
+                CERTIFIÉ HOMECONNECT<br>
+                Date : {{ "now"|date('d/m/Y H:i') }}<br>
+                ID : SEC-{{ rental.property.proprietaire.id }}-AUTH
+            </div>
+        </div>
+        <div class="signature-box" style="float: right;">
+            <p>Signature du Preneur</p>
+            <div style="height: 60px;"></div>
+            <div class="electronic-seal">
+                CERTIFIÉ HOMECONNECT<br>
+                Date : {{ "now"|date('d/m/Y H:i') }}<br>
+                ID : SEC-{{ rental.locataire.id }}-AUTH
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        HomeConnect - Plateforme de gestion immobilière digitalisée au Bénin<br>
+        Document généré automatiquement le {{ "now"|date('d/m/Y') }} - Fait foi de contrat officiel.
+    </div>
+</body>
+</html>

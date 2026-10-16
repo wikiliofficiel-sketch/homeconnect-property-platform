@@ -1,0 +1,148 @@
+<nav id="main-nav">
+    <a href="{{ path('app_home') }}" class="logo">
+        <div class="logo-icon">
+            <i class="fa-solid fa-house-chimney"></i>
+        </div>
+        <span class="logo-name">Home<span>Connect</span></span>
+    </a>
+
+    <ul class="nav-links">
+        <li><a href="{{ path('app_home') }}"><i class="fa-regular fa-building fa-xs"></i> {{ 'public.nav.ads'|trans }}</a></li>
+        <li><a href="{{ path('app_how_it_works') }}">{{ 'public.nav.how_it_works'|trans }}</a></li>
+        <li><a href="{{ path('app_pricing') }}">{{ 'public.nav.pricing'|trans }}</a></li>
+        <li><a href="{{ path('app_contact') }}">{{ 'public.nav.contact'|trans }}</a></li>
+        
+        <li style="list-style:none;">
+            <button id="theme-toggle" onclick="toggleTheme()" style="display:flex; align-items:center; justify-content:center; width:40px; height:40px; border:1px solid var(--gray-line); border-radius:8px; background:none; cursor:pointer; color:var(--gray-dark); transition: all 0.2s;">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </li>
+        <li class="dropdown" style="list-style:none;">
+            <a href="#" class="nav-link-dropdown">
+                <i class="fa-solid fa-globe"></i>
+                <span class="text-uppercase" style="font-size:12px; font-weight:700;">{{ app.request.locale|default('fr') }}</span>
+            </a>
+            <ul class="dropdown-menu-custom">
+                <li><a class="dropdown-item" href="{{ path('app_change_locale', {'locale': 'fr'}) }}">🇫🇷 Français</a></li>
+                <li><a class="dropdown-item" href="{{ path('app_change_locale', {'locale': 'en'}) }}">🇺🇸 English</a></li>
+                <li><a class="dropdown-item" href="{{ path('app_change_locale', {'locale': 'fon'}) }}">🇧🇯 Fon</a></li>
+            </ul>
+        </li>
+        {% if app.user %}
+            <li><a href="{{ path('app_owner_dashboard') }}" class="nav-btn-outline">{{ 'dashboard.title'|trans }}</a></li>
+        {% else %}
+            <li><a href="{{ path('app_login') }}" class="nav-btn-outline">{{ 'public.nav.login'|trans }}</a></li>
+            <li><a href="{{ path('app_register') }}" class="nav-btn-primary">{{ 'public.nav.register'|trans }}</a></li>
+        {% endif %}
+    </ul>
+
+    <button class="nav-burger" id="burger-btn" aria-label="Menu">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+</nav>
+
+<style>
+    /* ══════════════════════════════
+       NAVIGATION (SYNC)
+    ══════════════════════════════ */
+    nav {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 5%;
+        height: 72px;
+        background: var(--nav-bg, rgba(13, 13, 26, 0.93));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--gray-line);
+        transition: all 0.3s;
+    }
+    [data-theme="dark"] nav { --nav-bg: rgba(13, 13, 26, 0.93); }
+    [data-theme="light"] nav { --nav-bg: rgba(255, 255, 255, 0.93); }
+
+    nav.scrolled { box-shadow: 0 4px 30px rgba(108, 92, 231, 0.15); }
+    .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
+    .logo-icon {
+        width: 40px; height: 40px;
+        background: linear-gradient(135deg, var(--wine), var(--wine-light));
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 1rem;
+        box-shadow: 0 4px 14px rgba(108, 92, 231, 0.3);
+    }
+    .logo-name { font-size: 1.2rem; font-weight: 700; color: var(--black); letter-spacing: -0.01em; }
+    .logo-name span { color: var(--wine); }
+    .nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; margin: 0; padding: 0; }
+    .nav-links a { font-size: 0.875rem; font-weight: 500; color: var(--gray-dark, #d1d1d1); text-decoration: none; transition: color 0.25s; position: relative; }
+    .nav-links a:hover { color: var(--wine); }
+    .nav-link-dropdown {
+        display:flex; align-items:center; gap:8px; border:1px solid var(--gray-line); 
+        padding:6px 12px; border-radius:8px; text-decoration:none; color:var(--gray-dark);
+        transition: all 0.2s;
+    }
+    .nav-link-dropdown:hover { border-color: var(--wine); color: var(--wine); }
+    
+    .nav-btn-primary {
+        background: var(--wine) !important; color: #fff !important;
+        padding: 0.55rem 1.4rem !important; border-radius: 8px !important;
+        font-weight: 600 !important; font-size: 0.85rem !important;
+        transition: all 0.25s !important; box-shadow: 0 3px 12px rgba(108, 92, 231, 0.25) !important;
+        text-decoration: none;
+    }
+    .nav-btn-outline {
+        border: 1.5px solid var(--wine) !important; color: var(--wine) !important;
+        padding: 0.5rem 1.3rem !important; border-radius: 8px !important;
+        font-weight: 600 !important; font-size: 0.85rem !important;
+        transition: all 0.25s !important; text-decoration: none;
+    }
+    .nav-burger { display: none; background: none; border: none; cursor: pointer; font-size: 1.4rem; color: var(--wine); }
+    .dropdown { position: relative; }
+    .dropdown-menu-custom { 
+        display: none; position: absolute; top: 100%; right: 0; 
+        background: var(--c-surface); border: 1px solid var(--c-border); 
+        border-radius: 12px; box-shadow: var(--shadow-lg); 
+        list-style: none; padding: 8px 0; z-index: 1000; margin-top: 10px;
+    }
+    .dropdown:hover .dropdown-menu-custom { display: block; }
+    .dropdown-item { 
+        display: flex; align-items: center; gap: 8px; padding: 10px 20px; 
+        color: var(--c-white) !important; text-decoration: none !important; font-size: 13px; transition: background 0.2s;
+        white-space: nowrap;
+    }
+    .dropdown-item:hover { background: var(--c-indigo-pale) !important; color: var(--wine) !important; }
+
+    @media (max-width: 1024px) {
+        .nav-links { display: none; }
+        .nav-burger { display: block; }
+    }
+</style>
+
+<script>
+    // Nav scroll effect
+    const navbar = document.getElementById('main-nav');
+    if (navbar) {
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('scrolled', window.scrollY > 20);
+        });
+    }
+
+    // Mobile menu toggle
+    const burger = document.getElementById('burger-btn');
+    if (burger) {
+        burger.addEventListener('click', () => {
+            const links = document.querySelector('.nav-links');
+            const isOpen = links.style.display === 'flex';
+            if (!isOpen) {
+                const theme = document.documentElement.getAttribute('data-theme');
+                const bg = theme === 'light' ? '#ffffff' : '#0D0D1A';
+                const border = theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
+                links.style.cssText = `display:flex;flex-direction:column;position:fixed;top:72px;left:0;right:0;background:${bg};padding:1.5rem 5%;border-bottom:1px solid ${border};box-shadow:0 8px 30px rgba(0,0,0,0.5);gap:1.2rem;z-index:199;`;
+            } else {
+                links.style.display = 'none';
+            }
+        });
+    }
+</script>

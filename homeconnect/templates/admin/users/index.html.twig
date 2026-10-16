@@ -1,0 +1,266 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Gestion des utilisateurs{% endblock %}
+
+{% block admin_body %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <h1 class="fw-bold mb-0" style="color: var(--c-text); font-family: var(--f-serif);">Gestion des utilisateurs</h1>
+    <button class="btn btn-premium d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addUserModal">
+        <i class="fa-solid fa-user-plus"></i> Ajouter un utilisateur
+    </button>
+</div>
+
+<div class="users-filters d-flex justify-content-between align-items-center p-3 rounded mb-4" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+    <div class="d-flex gap-3">
+        <select id="roleFilter" class="form-select bg-dark text-white border-secondary">
+            <option value="">Tous les rôles</option>
+            <option value="ROLE_PROPRIETAIRE">Propriétaires</option>
+            <option value="ROLE_LOCATAIRE">Locataires</option>
+            <option value="ROLE_ADMIN">Administrateurs</option>
+        </select>
+    </div>
+    <div class="search-box" style="width: 300px;">
+        <input type="text" id="searchInput" class="form-control bg-dark text-white border-secondary" placeholder="🔍 Rechercher par nom ou email...">
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="users-table table table-dark table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Utilisateur</th>
+                <th>Rôles</th>
+                <th>Statuts</th>
+                <th>Inscription</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="usersTableBody">
+            {% for user in users %}
+            <tr class="user-row">
+                <td>
+                    <div class="fw-bold name-cell" style="color: var(--c-text);">{{ user.fullName }}</div>
+                    <div class="small text-muted email-cell">{{ user.email }}</div>
+                </td>
+                <td class="roles-cell">
+                    {% for role in user.roles %}
+                        <span class="badge bg-{{ role == 'ROLE_ADMIN' ? 'danger' : (role == 'ROLE_PROPRIETAIRE' ? 'success' : 'info') }} mb-1">
+                            {{ role }}
+                        </span>
+                    {% endfor %}
+                </td>
+                <td>
+                    <div class="d-flex flex-column gap-1 align-items-start">
+                        {% if user.isVerified %}
+                            <span class="badge bg-success" style="font-size: 0.65rem;">✅ Email Vérifié</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">⏳ Email Non vérifié</span>
+                        {% endif %}
+                        
+                        {% if user.isProprietaire %}
+                            {% if user.isKycApproved %}
+                                <span class="badge bg-success" style="font-size: 0.65rem;">✅ KYC Approuvé</span>
+                            {% elseif user.isKycPending %}
+                                <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">⏳ KYC En attente</span>
+                            {% elseif user.isKycRejected %}
+                                <span class="badge bg-danger" style="font-size: 0.65rem;">❌ KYC Rejeté</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </td>
+                <td class="small">{{ user.createdAt|date('d/m/Y') }}</td>
+                <td class="text-end">
+                    <div class="d-flex gap-2 justify-content-end">
+                        {% if user.isProprietaire and not user.isKycApproved %}
+                            <button class="btn btn-sm btn-info text-white shadow-sm" data-bs-toggle="modal" data-bs-target="#kycModal" onclick="prepareKycModal('{{ user.id }}', '{{ user.fullName }}')" title="Vérification KYC">
+                                <i class="fa-solid fa-id-card"></i>
+                            </button>
+                        {% endif %}
+                        <a href="{{ path('admin_users_show', {'id': user.id}) }}" class="btn btn-sm btn-primary text-white shadow-sm" title="Voir les détails"><i class="fa-solid fa-eye"></i></a>
+                        <form method="post" action="{{ path('admin_users_delete', {'id': user.id}) }}" style="margin:0;" onsubmit="return confirmDeleteUser(event, this)">
+                            <button type="submit" class="btn btn-sm btn-danger text-white shadow-sm" title="Supprimer l'utilisateur"><i class="fa-solid fa-trash"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">Aucun utilisateur trouvé</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Ajout Utilisateur -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content shadow-lg" style="background: var(--c-surface); color: var(--c-text); border: 1px solid var(--c-border); border-radius: 16px;">
+      <div class="modal-header border-bottom border-white-10">
+        <h5 class="modal-title fw-bold" style="font-family: var(--f-serif);">Ajouter un utilisateur</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addUserForm" method="POST" action="{{ path('admin_users_new') }}">
+            <div class="mb-3">
+                <label class="form-label">Nom complet</label>
+                <input type="text" name="fullName" class="form-control bg-dark text-white border-secondary" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" id="newUserEmail" class="form-control bg-dark text-white border-secondary" required>
+                <div class="invalid-feedback">L'email doit être valide et unique.</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Mot de passe</label>
+                <input type="password" name="password" id="newUserPassword" class="form-control bg-dark text-white border-secondary" required minlength="6">
+                <div class="invalid-feedback">Le mot de passe doit contenir au moins 6 caractères.</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Rôle</label>
+                <select name="role" class="form-select bg-dark text-white border-secondary" required>
+                    <option value="ROLE_LOCATAIRE">Locataire</option>
+                    <option value="ROLE_PROPRIETAIRE">Propriétaire</option>
+                </select>
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer border-top border-white-10">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-premium" onclick="validateAndSubmitUser()">Créer l'utilisateur</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="kycModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content shadow-lg" style="background: var(--c-surface); color: var(--c-text); border: 1px solid var(--c-border); border-radius: 16px;">
+            <div class="modal-header border-bottom border-white-10">
+                <h5 class="modal-title fw-bold" style="font-family: var(--f-serif);">Vérification KYC - <span id="kycUserName" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="text-muted mb-3">Document d'identité fourni :</p>
+                <!-- Simulation d'une image base64 stockée -->
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" class="img-fluid border border-secondary rounded mb-3 w-100" style="max-height: 250px; object-fit: cover;" alt="Document KYC">
+            </div>
+            <div class="modal-footer border-top border-white-10 justify-content-between">
+                <button type="button" class="btn btn-danger rounded-pill px-4" onclick="certifyKyc(false)"><i class="fa-solid fa-times me-2"></i> Rejeter</button>
+                <button type="button" class="btn btn-success rounded-pill px-4" onclick="certifyKyc(true)"><i class="fa-solid fa-check me-2"></i> Certifier</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Recherche Instantanée (JS)
+    const searchInput = document.getElementById('searchInput');
+    const roleFilter = document.getElementById('roleFilter');
+    const rows = document.querySelectorAll('.user-row');
+
+    function filterTable() {
+        const term = searchInput.value.toLowerCase();
+        const role = roleFilter.value;
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const rolesText = row.querySelector('.roles-cell').textContent;
+            const matchesSearch = text.includes(term);
+            const matchesRole = role === "" || rolesText.includes(role);
+            
+            row.style.display = (matchesSearch && matchesRole) ? '' : 'none';
+        });
+    }
+
+    searchInput.addEventListener('input', filterTable);
+    roleFilter.addEventListener('change', filterTable);
+});
+
+// 2. Validation Ajout Utilisateur
+function validateAndSubmitUser() {
+    const form = document.getElementById('addUserForm');
+    const email = document.getElementById('newUserEmail');
+    const pwd = document.getElementById('newUserPassword');
+    let valid = true;
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(!emailRegex.test(email.value)) {
+        email.classList.add('is-invalid');
+        valid = false;
+    } else {
+        email.classList.remove('is-invalid');
+    }
+    
+    if(pwd.value.length < 6) {
+        pwd.classList.add('is-invalid');
+        valid = false;
+    } else {
+        pwd.classList.remove('is-invalid');
+    }
+    
+    if(valid) {
+        form.submit();
+    }
+}
+
+// 3. KYC Modal preparation and submission
+let currentKycUserId = null;
+function prepareKycModal(userId, userName) {
+    currentKycUserId = userId;
+    document.getElementById('kycUserName').textContent = userName;
+}
+
+function certifyKyc(approve) {
+    const modalEl = document.getElementById('kycModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    modal.hide();
+    
+    if (!currentKycUserId) return;
+
+    const action = approve ? 'approve' : 'reject';
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/admin/kyc/${currentKycUserId}/${action}`;
+    
+    if (!approve) {
+        const reasonInput = document.createElement('input');
+        reasonInput.type = 'hidden';
+        reasonInput.name = 'reason';
+        reasonInput.value = 'Rejeté manuellement depuis la liste des utilisateurs.';
+        form.appendChild(reasonInput);
+    }
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// 4. SweetAlert2 Delete Confirmation
+function confirmDeleteUser(event, form) {
+    event.preventDefault();
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Êtes-vous sûr ?',
+            text: "Voulez-vous supprimer cet utilisateur de manière irréversible ?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Oui, supprimer !',
+            cancelButtonText: 'Annuler',
+            background: 'var(--c-surface)',
+            color: 'var(--c-body)'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+    } else {
+        if (confirm("Voulez-vous supprimer cet utilisateur de manière irréversible ?")) {
+            form.submit();
+        }
+    }
+}
+</script>
+{% endblock %}

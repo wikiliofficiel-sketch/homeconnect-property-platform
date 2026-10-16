@@ -1,0 +1,802 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Messagerie - Propriétaire{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active" style="color: var(--c-text);">Messages</li>
+{% endblock %}
+
+{% block content %}
+<div class="whatsapp-wrap shadow-lg rounded-4 overflow-hidden position-relative">
+  <div class="row g-0 h-100">
+
+    {# ── SIDEBAR ── #}
+    <div class="col-lg-4 d-flex flex-column wa-sidebar {% if activeContact is defined %}d-none d-lg-flex{% endif %}">
+
+      {# Header #}
+      <div class="wa-sidebar-header p-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <div class="wa-avatar-sm bg-primary"><i class="fa-solid fa-user-tie"></i></div>
+          <span class="badge rounded-pill wa-badge-owner">Propriétaire</span>
+        </div>
+        <div class="d-flex gap-3 fs-5 wa-icon-muted">
+          <i class="fa-solid fa-circle-dot cursor-pointer" title="Statut"></i>
+          <i class="fa-solid fa-message cursor-pointer"></i>
+          <i class="fa-solid fa-ellipsis-vertical cursor-pointer"></i>
+        </div>
+      </div>
+
+      {# Search #}
+      <div class="p-2 wa-sidebar-bg">
+        <div class="rounded-pill px-3 py-2 d-flex align-items-center wa-search-bar">
+          <i class="fa-solid fa-magnifying-glass small me-2 wa-icon-muted"></i>
+          <input type="text" id="searchContacts" class="form-control border-0 bg-transparent small wa-text-body" placeholder="Rechercher...">
+        </div>
+      </div>
+
+      {# Contact list #}
+      <div class="flex-grow-1 overflow-auto wa-contacts-list" id="contactsList">
+
+        {# Conversations existantes #}
+        {% for conv in conversations %}
+          {% set contact = conv.partner %}
+          {% set lastMsg = conv.lastMessage %}
+          {% set unread  = conv.unreadCount %}
+          <a href="{{ path('app_owner_messages_chat', {receiverId: contact.id}) }}"
+             class="wa-contact-item d-flex align-items-center gap-3 p-3 text-decoration-none {% if activeContact is defined and activeContact.id == contact.id %}active{% endif %}"
+             data-name="{{ contact.fullName|lower }}">
+            <div class="wa-avatar wa-avatar-{{ contact.fullName|first|lower }}">
+              {{ contact.fullName|first|upper }}
+            </div>
+            <div class="flex-grow-1 min-w-0">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="fw-semibold wa-text-body {% if unread > 0 %}fw-bold{% endif %} text-truncate">{{ contact.fullName }}</span>
+                <span class="wa-time {% if unread > 0 %}text-success fw-bold{% endif %} ms-2 flex-shrink-0">
+                  {{ lastMsg.createdAt|date('H:i') }}
+                </span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-1">
+                <small class="wa-text-muted text-truncate {% if unread > 0 %}fw-medium wa-text-body{% endif %}">
+                  {% if lastMsg.sender.id == app.user.id %}<i class="fa-solid fa-check{% if lastMsg.status == 'read' %}-double text-info{% elseif lastMsg.status == 'delivered' %}-double{% endif %} me-1"></i>{% endif %}
+                  {% if lastMsg.type == 'voice' %}<i class="fa-solid fa-microphone me-1"></i>Message vocal
+                  {% elseif lastMsg.type == 'image' %}<i class="fa-solid fa-image me-1"></i>Photo
+                  {% elseif lastMsg.type == 'call' %}<i class="fa-solid fa-phone me-1"></i>Appel
+                  {% else %}{{ lastMsg.content|default('...')|slice(0,40) }}{% endif %}
+                </small>
+                {% if unread > 0 %}
+                  <span class="badge rounded-pill bg-success ms-2 flex-shrink-0">{{ unread }}</span>
+                {% endif %}
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+
+        {# Admins disponibles (toujours affichés s'ils n'ont pas encore de conversation) #}
+        {% for contact in defaultContacts %}
+          <a href="{{ path('app_owner_messages_chat', {receiverId: contact.id}) }}"
+             class="wa-contact-item d-flex align-items-center gap-3 p-3 text-decoration-none {% if activeContact is defined and activeContact.id == contact.id %}active{% endif %}"
+             data-name="{{ contact.fullName|lower }}">
+            <div class="wa-avatar">{{ contact.fullName|first|upper }}</div>
+            <div class="flex-grow-1">
+              <div class="fw-semibold wa-text-body">{{ contact.fullName }}</div>
+              <small class="wa-text-muted">Administration HomeConnect</small>
+            </div>
+          </a>
+        {% endfor %}
+
+        {% if conversations|length == 0 and defaultContacts|length == 0 %}
+          <div class="text-center p-4 wa-text-muted opacity-50">
+            <i class="fa-solid fa-comments fs-2 d-block mb-2"></i>
+            <small>Aucune conversation</small>
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    {# ── CHAT AREA ── #}
+    <div class="col-lg-8 d-flex flex-column wa-chat-area {% if activeContact is not defined %}d-none d-lg-flex{% endif %}">
+
+      {% if activeContact is defined and activeContact is not null %}
+
+        {# Chat header #}
+        <div class="wa-chat-header p-3 d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-3">
+            <a href="{{ path('app_owner_messages') }}" class="d-lg-none wa-text-body"><i class="fa-solid fa-arrow-left"></i></a>
+            <div class="wa-avatar-lg">{{ activeContact.fullName|first|upper }}</div>
+            <div>
+              <div class="fw-bold wa-text-body">{{ activeContact.fullName }}</div>
+              <small class="text-success" id="onlineStatus">en ligne</small>
+            </div>
+          </div>
+          <div class="d-flex gap-3 fs-5 wa-icon-muted">
+            <i class="fa-solid fa-phone cursor-pointer" onclick="startCall('audio')" title="Appel audio"></i>
+            <i class="fa-solid fa-video cursor-pointer" onclick="startCall('video')" title="Appel vidéo"></i>
+            <i class="fa-solid fa-magnifying-glass cursor-pointer" onclick="toggleSearch()" title="Rechercher"></i>
+            <i class="fa-solid fa-ellipsis-vertical cursor-pointer" data-bs-toggle="dropdown"></i>
+            <ul class="dropdown-menu dropdown-menu-end shadow wa-dropdown">
+              <li><a class="dropdown-item" href="#" onclick="clearChat()"><i class="fa-solid fa-trash me-2"></i>Effacer la discussion</a></li>
+            </ul>
+          </div>
+        </div>
+
+        {# Search in chat (hidden by default) #}
+        <div id="chatSearch" class="wa-chat-search px-3 py-2 d-none border-bottom">
+          <input type="text" id="chatSearchInput" class="form-control form-control-sm wa-input" placeholder="Rechercher dans la discussion..." oninput="searchInChat(this.value)">
+        </div>
+
+        {# Reply preview (shown when replying) #}
+        <div id="replyPreview" class="d-none px-3 py-2 wa-reply-bar border-top">
+          <div class="d-flex align-items-center gap-2">
+            <div class="flex-grow-1">
+              <div class="small text-success fw-bold" id="replyToName"></div>
+              <div class="small wa-text-muted text-truncate" id="replyToText"></div>
+            </div>
+            <i class="fa-solid fa-xmark cursor-pointer wa-icon-muted" onclick="cancelReply()"></i>
+          </div>
+        </div>
+
+        {# Messages #}
+        <div class="wa-messages flex-grow-1 overflow-auto p-3" id="msgBox">
+          {% set prevDate = null %}
+          {% for msg in messages %}
+            {% set isMe   = (msg.sender.id == app.user.id) %}
+            {% set msgDate = msg.createdAt|date('d/m/Y') %}
+
+            {# Date separator #}
+            {% if msgDate != prevDate %}
+              <div class="text-center my-3">
+                <span class="wa-date-chip">{{ msgDate == 'now'|date('d/m/Y') ? "Aujourd'hui" : msgDate }}</span>
+              </div>
+              {% set prevDate = msgDate %}
+            {% endif %}
+
+            <div class="d-flex mb-1 {% if isMe %}justify-content-end{% endif %} msg-row"
+                 id="msg-{{ msg.id }}"
+                 data-id="{{ msg.id }}"
+                 data-content="{{ msg.content|e('html_attr') }}"
+                 data-is-mine="{{ isMe ? '1' : '0' }}">
+
+              <div class="wa-bubble {% if isMe %}wa-bubble-sent{% else %}wa-bubble-received{% endif %} position-relative"
+                   oncontextmenu="showMsgMenu(event, {{ msg.id }}, {{ isMe ? 1 : 0 }})">
+
+                {# Reply snippet #}
+                {% if msg.replyTo is defined and msg.replyTo %}
+                  <div class="wa-reply-snippet mb-2 p-2 rounded" onclick="scrollToMsg({{ msg.replyTo.id }})">
+                    <div class="small text-success fw-bold">{{ msg.replyTo.sender.fullName }}</div>
+                    <div class="small wa-text-muted text-truncate">
+                      {% if msg.replyTo.type == 'image' %}📷 Photo
+                      {% elseif msg.replyTo.type == 'voice' %}🎤 Vocal
+                      {% else %}{{ msg.replyTo.content|slice(0,60) }}{% endif %}
+                    </div>
+                  </div>
+                {% endif %}
+
+                {# Forwarded badge #}
+                {% if msg.forwardedFrom is defined and msg.forwardedFrom %}
+                  <div class="small wa-icon-muted mb-1"><i class="fa-solid fa-share me-1"></i>Transféré</div>
+                {% endif %}
+
+                {# Content by type #}
+                {% if msg.type == 'image' %}
+                  <img src="{{ msg.attachmentUrl }}" class="wa-img-bubble img-fluid rounded-2 cursor-pointer"
+                       onclick="openLightbox('{{ msg.attachmentUrl }}')" style="max-width:280px;">
+                {% elseif msg.type in ['audio','voice'] %}
+                  <div class="wa-audio-msg d-flex align-items-center gap-2">
+                    <button class="btn wa-play-btn rounded-circle" onclick="toggleAudio(this, '{{ msg.attachmentUrl }}')" style="width:38px;height:38px;">
+                      <i class="fa-solid fa-play"></i>
+                    </button>
+                    <div class="flex-grow-1">
+                      <div class="wa-audio-wave" data-url="{{ msg.attachmentUrl }}"></div>
+                      {% if msg.voiceDuration %}<small class="wa-icon-muted">{{ msg.voiceDuration }}s</small>{% endif %}
+                    </div>
+                    <i class="fa-solid fa-microphone wa-icon-muted small"></i>
+                  </div>
+                {% elseif msg.type == 'call' %}
+                  <div class="wa-call-msg d-flex align-items-center gap-2">
+                    {% if msg.callStatus == 'missed' %}
+                      <i class="fa-solid fa-phone-missed text-danger"></i>
+                    {% elseif msg.callStatus == 'rejected' %}
+                      <i class="fa-solid fa-phone-slash text-warning"></i>
+                    {% else %}
+                      <i class="fa-solid fa-phone text-success"></i>
+                    {% endif %}
+                    <div>
+                      <div class="small fw-semibold">
+                        {% if msg.callType == 'video' %}Appel vidéo{% else %}Appel audio{% endif %}
+                        {% if msg.callStatus == 'missed' %} <span class="text-danger">(manqué)</span>{% endif %}
+                      </div>
+                      {% if msg.callDuration %}<small class="wa-icon-muted">{{ msg.callDuration }}s</small>{% endif %}
+                    </div>
+                  </div>
+                {% elseif msg.type == 'file' %}
+                  <a href="{{ msg.attachmentUrl }}" target="_blank" class="wa-file-msg d-flex align-items-center gap-2 text-decoration-none">
+                    <i class="fa-solid fa-file fs-4 text-primary"></i>
+                    <div><div class="small">{{ msg.attachmentName|default('Fichier') }}</div></div>
+                  </a>
+                {% else %}
+                  <div class="wa-msg-text msg-text-content">{{ msg.content|nl2br }}</div>
+                  {% if msg.isEdited %}<small class="wa-icon-muted"><em>modifié</em></small>{% endif %}
+                {% endif %}
+
+                {# Footer : heure + status #}
+                <div class="wa-msg-footer text-end mt-1">
+                  <small class="wa-icon-muted" style="font-size:.65rem;">{{ msg.createdAt|date('H:i') }}</small>
+                  {% if isMe %}
+                    <i class="fa-solid fa-check{% if msg.status == 'read' %}-double text-info{% elseif msg.status == 'delivered' %}-double{% endif %} ms-1" style="font-size:.65rem;"></i>
+                  {% endif %}
+                </div>
+
+                {# Réactions #}
+                {% if msg.reactions is defined and msg.reactions %}
+                  <div class="wa-reactions">
+                    {% for emoji, users in msg.reactions %}
+                      <span class="wa-reaction cursor-pointer" onclick="toggleReaction({{ msg.id }}, '{{ emoji }}')" title="{{ users|length }} personne(s)">
+                        {{ emoji }}<small>{{ users|length }}</small>
+                      </span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+
+              </div>{# .wa-bubble #}
+            </div>
+          {% endfor %}
+        </div>
+
+        {# Message context menu #}
+        <div id="msgContextMenu" class="wa-ctx-menu d-none shadow rounded-3">
+          <div class="wa-ctx-item" onclick="ctxReply()"><i class="fa-solid fa-reply me-2"></i>Répondre</div>
+          <div class="wa-ctx-item" onclick="ctxReact()"><i class="fa-regular fa-face-smile me-2"></i>Réagir</div>
+          <div class="wa-ctx-item" onclick="ctxForward()"><i class="fa-solid fa-share me-2"></i>Transférer</div>
+          <div class="wa-ctx-item ctx-mine d-none" onclick="ctxEdit()"><i class="fa-solid fa-pen me-2"></i>Modifier</div>
+          <div class="wa-ctx-item" onclick="ctxCopy()"><i class="fa-solid fa-copy me-2"></i>Copier</div>
+          <div class="wa-ctx-item text-danger" onclick="ctxDelete()"><i class="fa-solid fa-trash me-2"></i>Supprimer</div>
+        </div>
+
+        {# Emoji reaction picker #}
+        <div id="emojiPicker" class="wa-emoji-picker d-none shadow rounded-pill p-2">
+          {% for em in ['👍','❤️','😂','😮','😢','🙏','🔥','👏'] %}
+            <span class="wa-emoji-btn cursor-pointer" onclick="sendReaction('{{ em }}')">{{ em }}</span>
+          {% endfor %}
+        </div>
+
+        {# Recording UI #}
+        <div id="recordingUI" class="wa-recording-bar px-3 py-2 d-none border-top">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+              <i class="fa-solid fa-microphone text-danger wa-pulse"></i>
+              <span id="recordTimer" class="wa-text-body fw-bold">0:00</span>
+              <div class="wa-record-wave"></div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" onclick="cancelRecording()">Annuler</button>
+              <button type="button" class="btn btn-sm btn-success rounded-pill" id="stopRecordBtn">Envoyer</button>
+            </div>
+          </div>
+        </div>
+
+        {# Call overlay #}
+        <div id="callOverlay" class="wa-call-overlay d-none">
+          <div class="text-center text-white p-5">
+            <div class="wa-call-avatar mx-auto mb-4 wa-pulse">{{ activeContact.fullName|first|upper }}</div>
+            <h2 class="fw-bold mb-1">{{ activeContact.fullName }}</h2>
+            <p class="opacity-75" id="callStatusText">Appel en cours...</p>
+            <div id="callTimer" class="fs-4 fw-bold mb-3 d-none">0:00</div>
+            <div id="videoContainer" class="d-none mb-4 position-relative">
+              <video id="localVideo" autoplay muted playsinline class="rounded-4 shadow-lg" style="max-width:400px;width:100%;"></video>
+            </div>
+            <div class="d-flex justify-content-center gap-4">
+              <button class="btn btn-secondary rounded-circle p-3" id="muteBtn" onclick="toggleMute()" title="Couper le micro"><i class="fa-solid fa-microphone-slash"></i></button>
+              <button class="btn btn-danger rounded-circle p-4" onclick="endCall()"><i class="fa-solid fa-phone-slash fs-4"></i></button>
+              <button class="btn btn-secondary rounded-circle p-3" id="speakerBtn" title="Haut-parleur"><i class="fa-solid fa-volume-high"></i></button>
+            </div>
+          </div>
+        </div>
+
+        {# Sticker picker #}
+        <div id="stickerPicker" class="wa-sticker-picker d-none shadow rounded-3">
+          <div class="p-2 border-bottom d-flex justify-content-between align-items-center">
+            <span class="small fw-bold wa-text-body">Stickers</span>
+            <i class="fa-solid fa-xmark cursor-pointer wa-icon-muted" onclick="toggleStickers()"></i>
+          </div>
+          <div class="p-3 d-grid gap-2 overflow-auto" style="grid-template-columns:repeat(4,1fr);max-height:250px;">
+            {% for s in ['619/619153','287/287602','1048/1048953','1584/1584892','2583/2583217','1864/1864834','1490/1490805','1000/1000966'] %}
+              <img src="https://cdn-icons-png.flaticon.com/512/{{ s }}.png" width="55" class="cursor-pointer wa-sticker-item"
+                   onclick="sendSticker('https://cdn-icons-png.flaticon.com/512/{{ s }}.png')">
+            {% endfor %}
+          </div>
+        </div>
+
+        {# Input panel #}
+        <div id="inputPanel" class="wa-input-bar px-2 py-2 border-top" style="flex-shrink:0;">
+          <div id="aiSuggestions" style="display:none; gap:6px; overflow-x:auto; padding-bottom:4px; white-space:nowrap; margin-bottom:6px;">
+            {% for s in ['Bonjour 👋','Bien reçu ✅','Merci','Je vous recontacte','D\'accord'] %}
+              <button class="btn btn-sm btn-outline-success rounded-pill" style="white-space:nowrap; font-size:12px; flex-shrink:0;" onclick="useQuickReply('{{ s }}')">{{ s }}</button>
+            {% endfor %}
+          </div>
+          <form id="chatForm" method="POST" action="{{ path('app_owner_messages_chat', {receiverId: activeContact.id}) }}"
+                onsubmit="return handleFormSend(event)" style="display:flex; align-items:center; gap:8px;">
+            <div style="display:flex; gap:10px; font-size:18px; color:var(--wa-muted); flex-shrink:0; position:relative;">
+              <i class="fa-solid fa-wand-magic-sparkles cursor-pointer" style="color:var(--wa-green);" onclick="toggleAi()" title="Suggestions"></i>
+              <i class="fa-solid fa-plus cursor-pointer" onclick="toggleAttachMenu(event)" title="Joindre"></i>
+              <i class="fa-solid fa-face-smile cursor-pointer" onclick="toggleStickers()" title="Stickers"></i>
+              <input type="file" id="fileInputImg" class="d-none" accept="image/*,video/*" onchange="uploadMedia(this,'image')">
+              <input type="file" id="fileInputDoc" class="d-none" accept="*/*" onchange="uploadMedia(this,'file')">
+              <div id="attachMenu" class="wa-attach-menu d-none shadow rounded-3 p-2"
+                   style="position:absolute; bottom:38px; left:0; z-index:200;"
+                   onclick="event.stopPropagation()">
+                <div class="wa-attach-item" onclick="document.getElementById('fileInputImg').click()"><i class="fa-solid fa-image text-primary"></i><span>Photo/Vidéo</span></div>
+                <div class="wa-attach-item" onclick="document.getElementById('fileInputDoc').click()"><i class="fa-solid fa-file text-warning"></i><span>Document</span></div>
+              </div>
+            </div>
+            <input type="text" id="messageInput" name="content"
+                   placeholder="Écrire un message…"
+                   style="flex:1; background:var(--wa-input-bg) !important; color:var(--wa-text) !important;
+                          border:none; border-radius:24px; padding:10px 18px; font-size:15px;
+                          outline:none; font-family:inherit; caret-color:var(--wa-green); min-width:0;"
+                   autocomplete="off">
+            <button type="submit" id="sendBtn"
+                    style="width:46px;height:46px;border-radius:50%;border:none;background:var(--wa-green);color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+
+        {# Lightbox #}
+        <div id="lightbox" class="wa-lightbox d-none" onclick="closeLightbox()">
+          <img id="lightboxImg" src="" class="wa-lightbox-img">
+        </div>
+
+      {% else %}
+        {# No conversation selected #}
+        <div class="d-flex flex-column align-items-center justify-content-center h-100 wa-empty-chat">
+          <i class="fa-solid fa-comments fs-1 mb-3 opacity-25"></i>
+          <h5 class="wa-text-body opacity-50">Sélectionnez une discussion</h5>
+        </div>
+      {% endif %}
+
+    </div>{# .wa-chat-area #}
+  </div>
+</div>
+
+<style>
+:root {
+  --wa-bg:       #0b1014;
+  --wa-sidebar:  #111b21;
+  --wa-header:   #202c33;
+  --wa-input-bg: #2a3942;
+  --wa-bubble-me: #005c4b;
+  --wa-bubble-you: #1f2c33;
+  --wa-text:     #e9edef;
+  --wa-muted:    #8696a0;
+  --wa-green:    #00a884;
+  --wa-border:   rgba(134,150,160,.15);
+}
+.whatsapp-wrap { height:calc(100vh - 120px); min-height:600px; display:flex; background:var(--wa-bg); }
+.wa-sidebar { background:var(--wa-sidebar); border-right:1px solid var(--wa-border); }
+.wa-sidebar-bg { background:var(--wa-sidebar); }
+.wa-sidebar-header { background:var(--wa-header); border-bottom:1px solid var(--wa-border); }
+.wa-chat-header { background:var(--wa-header); border-bottom:1px solid var(--wa-border); }
+.wa-chat-area { background:var(--wa-bg); background-image:url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode:overlay; }
+.wa-text-body { color:var(--wa-text)!important; }
+.wa-icon-muted { color:var(--wa-muted); }
+.wa-text-muted { color:var(--wa-muted)!important; }
+.wa-search-bar { background:var(--wa-input-bg); }
+.wa-contacts-list { scrollbar-width:thin; scrollbar-color:var(--wa-border) transparent; }
+.wa-contact-item { border-bottom:1px solid var(--wa-border); color:var(--wa-text); transition:.15s; }
+.wa-contact-item:hover, .wa-contact-item.active { background:var(--wa-header); }
+.wa-avatar { width:50px;height:50px;border-radius:50%;background:var(--wa-green);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.1rem;flex-shrink:0; }
+.wa-avatar-sm { width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.9rem; }
+.wa-avatar-lg { width:45px;height:45px;border-radius:50%;background:var(--wa-green);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0; }
+.wa-badge-owner { background:#7c3aed;font-size:.65rem; }
+.wa-time { font-size:.7rem; }
+.wa-messages { background:transparent; }
+.wa-bubble { max-width:72%;padding:8px 12px;border-radius:8px;position:relative;word-break:break-word; }
+.wa-bubble-sent { background:var(--wa-bubble-me);color:var(--wa-text);border-top-right-radius:0; }
+.wa-bubble-received { background:var(--wa-bubble-you);color:var(--wa-text);border-top-left-radius:0; }
+.wa-bubble:hover .wa-hover-actions { opacity:1; }
+.wa-msg-footer { margin-top:2px; }
+.wa-date-chip { background:var(--wa-header);color:var(--wa-muted);font-size:.7rem;padding:4px 12px;border-radius:999px; }
+.wa-reply-snippet { background:rgba(255,255,255,.08);border-left:3px solid var(--wa-green);cursor:pointer; }
+.wa-reactions { display:flex;flex-wrap:wrap;gap:3px;margin-top:4px; }
+.wa-reaction { background:rgba(255,255,255,.12);border-radius:999px;padding:2px 7px;font-size:.8rem;display:flex;align-items:center;gap:2px; }
+.wa-ctx-menu { position:fixed;z-index:9999;background:var(--wa-header);border:1px solid var(--wa-border);min-width:160px;overflow:hidden; }
+.wa-ctx-item { padding:10px 16px;cursor:pointer;color:var(--wa-text);font-size:.85rem;transition:.15s; }
+.wa-ctx-item:hover { background:var(--wa-input-bg); }
+.wa-emoji-picker { position:fixed;z-index:9999;background:var(--wa-header);border:1px solid var(--wa-border); }
+.wa-emoji-btn { font-size:1.4rem;padding:4px;cursor:pointer;transition:.15s; }
+.wa-emoji-btn:hover { transform:scale(1.3); }
+.wa-audio-msg { min-width:220px;padding:4px 0; }
+.wa-play-btn { background:var(--wa-green);border:none;color:#fff; }
+.wa-audio-wave { height:3px;background:rgba(255,255,255,.25);border-radius:2px;flex-grow:1; }
+.wa-call-msg { padding:2px 0; }
+.wa-file-msg { color:var(--wa-text)!important;padding:4px; }
+.wa-img-bubble { display:block;max-width:280px;border-radius:6px; }
+.wa-input-bar { background:var(--wa-header); flex-shrink:0; }
+.wa-chat-area { height:100%; overflow:hidden; }
+#messageInput { color:var(--wa-text) !important; }
+#messageInput::placeholder { color:var(--wa-muted) !important; opacity:1 !important; }
+.wa-send-btn, .wa-mic-btn { width:48px;height:48px;border:none;background:var(--wa-green);color:#fff;font-size:1rem;flex-shrink:0; }
+.wa-send-btn:hover, .wa-mic-btn:hover { background:#009973; }
+.wa-recording-bar { background:var(--wa-header); }
+.wa-record-wave { width:80px;height:3px;background:var(--wa-green);border-radius:2px; }
+.wa-call-overlay { position:fixed;inset:0;background:rgba(10,15,20,.98);z-index:9999;display:flex;align-items:center;justify-content:center; }
+.wa-call-avatar { width:100px;height:100px;border-radius:50%;background:var(--wa-green);color:#fff;font-size:2.5rem;font-weight:700;display:flex;align-items:center;justify-content:center; }
+.wa-sticker-picker { position:absolute;bottom:90px;left:15px;width:280px;background:var(--wa-header);border:1px solid var(--wa-border);z-index:1000; }
+.wa-sticker-item:hover { transform:scale(1.1);transition:.2s; }
+.wa-attach-menu { position:absolute;bottom:75px;left:60px;background:var(--wa-header);border:1px solid var(--wa-border);z-index:1000; }
+.wa-attach-item { padding:8px 16px;cursor:pointer;color:var(--wa-text);font-size:.85rem;display:flex;align-items:center;gap:10px; }
+.wa-attach-item:hover { background:var(--wa-input-bg); }
+.wa-reply-bar { background:var(--wa-input-bg); }
+.wa-chat-search { background:var(--wa-header); }
+.wa-empty-chat { background:var(--wa-bg); }
+.wa-dropdown { background:var(--wa-header)!important;border:1px solid var(--wa-border); }
+.wa-dropdown .dropdown-item { color:var(--wa-text);padding:10px 16px; }
+.wa-dropdown .dropdown-item:hover { background:var(--wa-input-bg); }
+.wa-lightbox { position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:10000;display:flex;align-items:center;justify-content:center; }
+.wa-lightbox-img { max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 0 40px rgba(0,0,0,.5); }
+.wa-pulse { animation:pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+.cursor-pointer { cursor:pointer; }
+.min-w-0 { min-width:0; }
+</style>
+
+<script>
+const RECEIVER_ID = {{ activeContact.id|default(0) }};
+const SEND_URL    = "{{ activeContact is defined ? path('app_owner_messages_chat', {receiverId: activeContact.id}) : '#' }}";
+const UPLOAD_URL  = "{{ activeContact is defined ? path('app_owner_messages_upload', {receiverId: activeContact.id|default(0)}) : '#' }}";
+
+let mediaRecorder, audioChunks = [], recordInterval, recordSec = 0, stream;
+let callTimer, callSec = 0, isMuted = false;
+let ctxMsgId = null, ctxIsMine = false, replyToId = null;
+
+// ── Init ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  scrollToBottom();
+
+  document.getElementById('searchContacts')?.addEventListener('input', function() {
+    document.querySelectorAll('.wa-contact-item').forEach(el => {
+      el.style.display = el.dataset.name?.includes(this.value.toLowerCase()) ? '' : 'none';
+    });
+  });
+
+  {% if activeContact is defined %}
+  setInterval(pollMessages, 5000);
+  {% endif %}
+
+  document.addEventListener('click', () => {
+    document.getElementById('msgContextMenu')?.classList.add('d-none');
+    document.getElementById('emojiPicker')?.classList.add('d-none');
+    document.getElementById('attachMenu')?.classList.add('d-none');
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.getElementById('lightbox')?.classList.add('d-none');
+  });
+});
+
+function scrollToBottom() {
+  const b = document.getElementById('msgBox');
+  if (b) b.scrollTop = b.scrollHeight;
+}
+
+// ── Envoi via form (fiable) ───────────────────────────────────────────────
+function handleFormSend(e) {
+  e.preventDefault();
+  const inp  = document.getElementById('messageInput');
+  const text = inp.value.trim();
+  if (!text) return false;
+
+  const form = document.getElementById('chatForm');
+  const url  = form.action;
+  inp.value  = '';
+  cancelReply();
+
+  const fd = new FormData();
+  fd.append('content', text);
+  if (replyToId) fd.append('replyToId', replyToId);
+
+  fetch(url, {
+    method: 'POST',
+    body: fd,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) appendBubble(d.message);
+    else inp.value = text;
+  })
+  .catch(() => {
+    const f = document.createElement('form');
+    f.method = 'POST'; f.action = url;
+    const h = document.createElement('input');
+    h.type = 'hidden'; h.name = 'content'; h.value = text;
+    f.appendChild(h); document.body.appendChild(f); f.submit();
+  });
+
+  return false;
+}
+
+function toggleAi() {
+  const el = document.getElementById('aiSuggestions');
+  el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+}
+
+function appendBubble(msg) {
+  const box = document.getElementById('msgBox');
+  if (!box) return;
+  const div = document.createElement('div');
+  div.className = 'd-flex mb-1 justify-content-end msg-row';
+  div.id = 'msg-' + msg.id;
+  div.dataset.id = msg.id;
+  div.dataset.content = msg.content || '';
+  div.dataset.isMine = '1';
+  div.innerHTML = `
+    <div class="wa-bubble wa-bubble-sent" oncontextmenu="showMsgMenu(event,${msg.id},1)">
+      <div class="wa-msg-text msg-text-content">${escapeHtml(msg.content)}</div>
+      <div class="wa-msg-footer text-end mt-1">
+        <small class="wa-icon-muted" style="font-size:.65rem">${msg.createdAt}</small>
+        <i class="fa-solid fa-check ms-1" style="font-size:.65rem"></i>
+      </div>
+    </div>`;
+  box.appendChild(div);
+  scrollToBottom();
+}
+
+// ── Polling ───────────────────────────────────────────────────────────────
+async function pollMessages() {
+  try {
+    const r = await fetch(window.location.href);
+    const html = await r.text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const nb = doc.getElementById('msgBox');
+    const cb = document.getElementById('msgBox');
+    if (nb && cb && nb.children.length > cb.children.length) {
+      cb.innerHTML = nb.innerHTML;
+      scrollToBottom();
+    }
+  } catch(e) {}
+}
+
+// ── Context menu ──────────────────────────────────────────────────────────
+function showMsgMenu(e, id, isMine) {
+  e.preventDefault();
+  e.stopPropagation();
+  ctxMsgId  = id;
+  ctxIsMine = !!isMine;
+  const m = document.getElementById('msgContextMenu');
+  m.classList.remove('d-none');
+  m.style.top  = Math.min(e.clientY, window.innerHeight - 220) + 'px';
+  m.style.left = Math.min(e.clientX, window.innerWidth  - 180) + 'px';
+  m.querySelectorAll('.ctx-mine').forEach(el => el.classList.toggle('d-none', !isMine));
+}
+
+function ctxReply() {
+  const row = document.getElementById('msg-' + ctxMsgId);
+  if (!row) return;
+  replyToId = ctxMsgId;
+  document.getElementById('replyToName').textContent = row.dataset.isMine === '1' ? 'Vous' : '{{ activeContact.fullName|default("") }}';
+  document.getElementById('replyToText').textContent = row.dataset.content.slice(0, 80);
+  document.getElementById('replyPreview').classList.remove('d-none');
+  document.getElementById('messageInput').focus();
+}
+
+function cancelReply() {
+  replyToId = null;
+  document.getElementById('replyPreview').classList.add('d-none');
+}
+
+function ctxReact() {
+  const m = document.getElementById('emojiPicker');
+  m.classList.remove('d-none');
+  const menu = document.getElementById('msgContextMenu');
+  m.style.top  = menu.style.top;
+  m.style.left = menu.style.left;
+}
+
+async function sendReaction(emoji) {
+  document.getElementById('emojiPicker').classList.add('d-none');
+  try {
+    await fetch(`/api/messages/${ctxMsgId}/react`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer ' + (localStorage.getItem('jwt')||'')},
+      body:JSON.stringify({emoji})
+    });
+    // Refresh to show updated reactions
+    location.reload();
+  } catch(e) {}
+}
+
+async function ctxForward() {
+  const dest = prompt('ID du destinataire :');
+  if (!dest) return;
+  try {
+    await fetch(`/api/messages/${ctxMsgId}/forward`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer ' + (localStorage.getItem('jwt')||'')},
+      body:JSON.stringify({receiverIds:[parseInt(dest)]})
+    });
+    alert('Message transféré !');
+  } catch(e) {}
+}
+
+async function ctxEdit() {
+  const row = document.getElementById('msg-' + ctxMsgId);
+  const newText = prompt('Modifier le message :', row?.dataset.content || '');
+  if (!newText) return;
+  try {
+    const r = await fetch(`/api/messages/${ctxMsgId}/edit`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer ' + (localStorage.getItem('jwt')||'')},
+      body:JSON.stringify({content:newText})
+    });
+    if (r.ok) location.reload();
+  } catch(e) {}
+}
+
+async function ctxDelete() {
+  const forAll = confirm('Supprimer pour tout le monde ?');
+  try {
+    await fetch(`/api/messages/${ctxMsgId}/delete`, {
+      method:'DELETE',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer ' + (localStorage.getItem('jwt')||'')},
+      body:JSON.stringify({forAll})
+    });
+    document.getElementById('msg-' + ctxMsgId)?.remove();
+  } catch(e) {}
+}
+
+function ctxCopy() {
+  const row = document.getElementById('msg-' + ctxMsgId);
+  navigator.clipboard.writeText(row?.dataset.content || '').catch(()=>{});
+}
+
+// ── Voice recording ───────────────────────────────────────────────────────
+async function startRecording() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, {type:'audio/mpeg'});
+      uploadFile(blob, 'voice');
+    };
+    document.getElementById('inputPanel').classList.add('d-none');
+    document.getElementById('recordingUI').classList.remove('d-none');
+    mediaRecorder.start();
+    recordSec = 0;
+    recordInterval = setInterval(() => {
+      recordSec++;
+      const m=Math.floor(recordSec/60), s=recordSec%60;
+      document.getElementById('recordTimer').textContent = `${m}:${s<10?'0':''}${s}`;
+    }, 1000);
+    document.getElementById('stopRecordBtn').onclick = () => { mediaRecorder.stop(); stream.getTracks().forEach(t=>t.stop()); stopRecordUI(); };
+  } catch(e) { alert('Microphone non disponible.'); }
+}
+
+function cancelRecording() {
+  if (mediaRecorder?.state !== 'inactive') mediaRecorder?.stop();
+  if (stream) stream.getTracks().forEach(t=>t.stop());
+  audioChunks = [];
+  stopRecordUI();
+}
+
+function stopRecordUI() {
+  clearInterval(recordInterval);
+  document.getElementById('inputPanel').classList.remove('d-none');
+  document.getElementById('recordingUI').classList.add('d-none');
+}
+
+// ── File upload ───────────────────────────────────────────────────────────
+async function uploadFile(file, type, stickerUrl = null) {
+  const fd = new FormData();
+  if (file) fd.append('file', file);
+  fd.append('type', type);
+  if (stickerUrl) fd.append('sticker_url', stickerUrl);
+  try {
+    const r = await fetch(UPLOAD_URL, {method:'POST', body:fd, headers:{'X-Requested-With':'XMLHttpRequest'}});
+    const d = await r.json();
+    if (d.success) location.reload();
+    else alert('Erreur upload');
+  } catch(e) { alert('Erreur réseau'); }
+}
+
+function uploadMedia(input, type) {
+  if (input.files[0]) uploadFile(input.files[0], type);
+}
+
+// ── Calls ─────────────────────────────────────────────────────────────────
+async function startCall(type) {
+  document.getElementById('callOverlay').classList.remove('d-none');
+  document.getElementById('callStatusText').textContent = type === 'video' ? 'Appel vidéo…' : 'Appel audio…';
+  if (type === 'video') {
+    document.getElementById('videoContainer').classList.remove('d-none');
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+      document.getElementById('localVideo').srcObject = stream;
+    } catch(e) { alert('Caméra non disponible.'); }
+  } else {
+    try { stream = await navigator.mediaDevices.getUserMedia({audio:true}); } catch(e) {}
+  }
+  callSec = 0;
+  callTimer = setInterval(() => {
+    callSec++;
+    const m=Math.floor(callSec/60), s=callSec%60;
+    const el=document.getElementById('callTimer');
+    el.classList.remove('d-none');
+    el.textContent = `${m}:${s<10?'0':''}${s}`;
+  }, 1000);
+  // Log appel
+  await fetch('/api/messages/call-log', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('jwt')||'')},
+    body:JSON.stringify({receiverId:RECEIVER_ID, callType:type, status:'missed'})
+  }).catch(()=>{});
+}
+
+function endCall() {
+  clearInterval(callTimer);
+  if (stream) stream.getTracks().forEach(t=>t.stop());
+  document.getElementById('callOverlay').classList.add('d-none');
+  document.getElementById('videoContainer').classList.add('d-none');
+  location.reload();
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  if (stream) stream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+  document.getElementById('muteBtn').querySelector('i').className = isMuted ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash';
+}
+
+// ── Audio playback ────────────────────────────────────────────────────────
+function toggleAudio(btn, url) {
+  const icon = btn.querySelector('i');
+  if (btn._audio) {
+    btn._audio.pause();
+    btn._audio = null;
+    icon.className = 'fa-solid fa-play';
+    return;
+  }
+  const a = new Audio(url);
+  btn._audio = a;
+  icon.className = 'fa-solid fa-pause';
+  a.play();
+  a.onended = () => { icon.className = 'fa-solid fa-play'; btn._audio = null; };
+}
+
+// ── Misc ──────────────────────────────────────────────────────────────────
+function toggleStickers() { document.getElementById('stickerPicker').classList.toggle('d-none'); }
+function sendSticker(u) { uploadFile(null, 'image', u); toggleStickers(); }
+function toggleAi() { document.getElementById('aiSuggestions').classList.toggle('d-none'); }
+function useQuickReply(t) {
+  document.getElementById('messageInput').value = t;
+  document.getElementById('aiSuggestions').style.display = 'none';
+  document.getElementById('messageInput').focus();
+}
+function toggleSearch() { document.getElementById('chatSearch').classList.toggle('d-none'); document.getElementById('chatSearchInput').focus(); }
+function toggleAttachMenu(e) { e?.stopPropagation(); document.getElementById('attachMenu').classList.toggle('d-none'); }
+function toggleEmojiKeyboard() { /* TODO: integrate emoji keyboard */ }
+
+function searchInChat(q) {
+  document.querySelectorAll('.msg-row').forEach(el => {
+    el.style.display = q ? (el.dataset.content?.toLowerCase().includes(q.toLowerCase()) ? '' : 'none') : '';
+  });
+}
+
+function scrollToMsg(id) {
+  const el = document.getElementById('msg-'+id);
+  if (el) { el.scrollIntoView({behavior:'smooth', block:'center'}); el.classList.add('wa-highlight'); setTimeout(()=>el.classList.remove('wa-highlight'),1500); }
+}
+
+function openLightbox(url) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.remove('d-none');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.add('d-none'); }
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+</script>
+{% endblock %}

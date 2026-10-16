@@ -1,0 +1,287 @@
+{% extends 'tenant/base.html.twig' %}
+
+{% block tenant_content %}
+
+{# ── Flash messages ──────────────────────────────────────────────── #}
+{% for label, msgs in app.flashes %}
+    {% for msg in msgs %}
+    <div class="alert alert-{{ label == 'success' ? 'success' : 'danger' }} alert-dismissible fade show rounded-3 mb-4" role="alert">
+        <i class="fa-solid fa-{{ label == 'success' ? 'circle-check' : 'circle-exclamation' }} me-2"></i>{{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+{% endfor %}
+
+<div class="sup-wrap">
+
+    {# ── En-tête ─────────────────────────────────────────────────── #}
+    <div class="sup-header mb-5">
+        <div class="sup-hero-icon"><i class="fa-solid fa-headset"></i></div>
+        <div>
+            <h1 class="sup-title">Centre d'aide</h1>
+            <p class="sup-sub">Une question, un problème ? Notre équipe HomeConnect vous répond sous 2h.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        {# ── Formulaire ──────────────────────────────────────────── #}
+        <div class="col-lg-7">
+            <div class="sup-card">
+                <div class="sup-card-title">
+                    <i class="fa-solid fa-paper-plane"></i> Envoyer une demande
+                </div>
+
+                <form method="POST" action="{{ path('app_tenant_support') }}" id="supportForm" onsubmit="handleSubmit(event)">
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="sup-label">Nom complet</label>
+                            <input type="text" class="sup-input" value="{{ app.user.fullName }}" readonly
+                                   style="opacity:.6; cursor:not-allowed;">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="sup-label">Sujet *</label>
+                            <input type="text" name="subject" class="sup-input" required
+                                   placeholder="ex: Problème avec ma candidature">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="sup-label">Type de demande</label>
+                        <select name="type" class="sup-input">
+                            <option value="paiement">Problème de paiement</option>
+                            <option value="technique">Bug technique</option>
+                            <option value="dossier">Question sur mon dossier</option>
+                            <option value="candidature">Candidature / Location</option>
+                            <option value="general">Autre</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="sup-label">Votre message *</label>
+                        <textarea name="message" class="sup-input sup-textarea" rows="6" required
+                                  placeholder="Décrivez votre situation en détail…"></textarea>
+                    </div>
+
+                    <button type="submit" class="sup-btn-primary w-100" id="submitBtn">
+                        <i class="fa-solid fa-paper-plane me-2"></i> Envoyer la demande
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        {# ── Informations de contact ──────────────────────────────── #}
+        <div class="col-lg-5 d-flex flex-column gap-4">
+
+            {# Horaires #}
+            <div class="sup-card sup-card-accent">
+                <div class="sup-card-title" style="color:#fff;">
+                    <i class="fa-solid fa-clock"></i> Horaires d'ouverture
+                </div>
+                <div class="sup-schedule">
+                    <div class="sup-sched-row">
+                        <span>Lundi — Vendredi</span>
+                        <strong>08:00 – 18:00</strong>
+                    </div>
+                    <div class="sup-sched-row">
+                        <span>Samedi</span>
+                        <strong>09:00 – 13:00</strong>
+                    </div>
+                    <div class="sup-sched-row">
+                        <span>Dimanche</span>
+                        <span class="sup-badge-urgent">Urgences uniquement</span>
+                    </div>
+                </div>
+                <div class="sup-sla mt-3">
+                    <i class="fa-solid fa-bolt me-1"></i> Délai de réponse garanti : <strong>2h</strong>
+                </div>
+            </div>
+
+            {# Autres canaux #}
+            <div class="sup-card">
+                <div class="sup-card-title">
+                    <i class="fa-solid fa-satellite-dish"></i> Autres canaux
+                </div>
+
+                <a href="tel:+22921000000" class="sup-channel">
+                    <div class="sup-ch-icon" style="background:rgba(99,102,241,0.15); color:#818cf8;">
+                        <i class="fa-solid fa-phone"></i>
+                    </div>
+                    <div>
+                        <div class="sup-ch-label">Téléphone</div>
+                        <div class="sup-ch-val">+229 21 00 00 00</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right ms-auto" style="color:var(--c-text-muted); font-size:12px;"></i>
+                </a>
+
+                <a href="mailto:support@homeconnect.bj" class="sup-channel">
+                    <div class="sup-ch-icon" style="background:rgba(255,140,0,0.15); color:var(--c-primary);">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
+                    <div>
+                        <div class="sup-ch-label">Email</div>
+                        <div class="sup-ch-val">support@homeconnect.bj</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right ms-auto" style="color:var(--c-text-muted); font-size:12px;"></i>
+                </a>
+
+                <a href="https://wa.me/22921000000" target="_blank" rel="noopener" class="sup-channel">
+                    <div class="sup-ch-icon" style="background:rgba(37,211,102,0.15); color:#25D366;">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </div>
+                    <div>
+                        <div class="sup-ch-label">WhatsApp</div>
+                        <div class="sup-ch-val">Discuter avec un agent</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right ms-auto" style="color:var(--c-text-muted); font-size:12px;"></i>
+                </a>
+
+                <a href="{{ path('app_tenant_messages') }}" class="sup-channel">
+                    <div class="sup-ch-icon" style="background:rgba(0,210,255,0.15); color:#00D2FF;">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
+                    <div>
+                        <div class="sup-ch-label">Messagerie interne</div>
+                        <div class="sup-ch-val">Chat avec l'administration</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right ms-auto" style="color:var(--c-text-muted); font-size:12px;"></i>
+                </a>
+            </div>
+
+            {# FAQ rapide #}
+            <div class="sup-card">
+                <div class="sup-card-title"><i class="fa-solid fa-circle-question"></i> FAQ rapide</div>
+                <div class="sup-faq">
+                    <details class="sup-faq-item">
+                        <summary>Comment postuler à un bien ?</summary>
+                        <p>Rendez-vous sur la page du bien et cliquez sur "Postuler". Remplissez le formulaire et soumettez votre dossier.</p>
+                    </details>
+                    <details class="sup-faq-item">
+                        <summary>Comment suivre ma candidature ?</summary>
+                        <p>Depuis votre tableau de bord, cliquez sur "Candidatures" pour voir l'état de chaque dossier en temps réel.</p>
+                    </details>
+                    <details class="sup-faq-item">
+                        <summary>Que faire en cas de problème de paiement ?</summary>
+                        <p>Contactez-nous immédiatement via ce formulaire en choisissant "Problème de paiement". Gardez votre référence de transaction.</p>
+                    </details>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+.sup-wrap { max-width: 1080px; margin: 0 auto; }
+
+.sup-header { display: flex; align-items: center; gap: 20px; }
+.sup-hero-icon {
+    width: 64px; height: 64px; border-radius: 18px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--c-primary), #FF4B5C);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; color: #fff;
+    box-shadow: 0 8px 24px rgba(255,140,0,0.3);
+}
+.sup-title { font-size: 1.75rem; font-weight: 800; color: var(--c-text); margin: 0 0 4px; }
+.sup-sub   { color: var(--c-text-muted); font-size: 14px; margin: 0; }
+
+.sup-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 20px; padding: 1.75rem;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+}
+.sup-card-accent {
+    background: linear-gradient(135deg, #1a1a3e, #0d2137);
+    border-color: rgba(99,102,241,0.3);
+}
+.sup-card-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .1em; color: var(--c-primary);
+    margin-bottom: 1.2rem; display: flex; align-items: center; gap: 8px;
+}
+.sup-card-accent .sup-card-title { color: rgba(255,255,255,0.7); }
+
+.sup-label {
+    display: block; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: var(--c-text-muted); margin-bottom: 7px;
+}
+.sup-input {
+    width: 100%; background: rgba(255,255,255,0.05);
+    border: 1px solid var(--c-border); border-radius: 12px;
+    color: var(--c-text) !important; padding: 11px 15px; font-size: 14px;
+    font-family: var(--f-sans); transition: border-color .2s; outline: none;
+    appearance: none;
+}
+.sup-input:focus { border-color: var(--c-primary); box-shadow: 0 0 0 3px rgba(255,140,0,0.12); }
+.sup-input::placeholder { color: rgba(255,255,255,0.25) !important; opacity: 1 !important; }
+.sup-input option { background: var(--c-surface); color: var(--c-text); }
+.sup-textarea { resize: vertical; min-height: 130px; line-height: 1.6; }
+
+.sup-btn-primary {
+    background: linear-gradient(135deg, var(--c-primary), #e67e00);
+    color: #fff; border: none; border-radius: 50px;
+    padding: 14px 28px; font-size: 15px; font-weight: 700;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(255,140,0,0.35); transition: all .2s;
+}
+.sup-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,140,0,.5); }
+.sup-btn-primary:disabled { opacity: .65; cursor: not-allowed; transform: none; }
+
+/* Horaires */
+.sup-schedule { display: flex; flex-direction: column; gap: 10px; }
+.sup-sched-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 14px; color: rgba(255,255,255,0.75); padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.sup-sched-row:last-child { border-bottom: none; }
+.sup-sched-row strong { color: #fff; }
+.sup-badge-urgent {
+    background: rgba(255,75,92,0.2); color: #ff8a94;
+    font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 50px;
+}
+.sup-sla { font-size: 13px; color: rgba(255,255,255,0.5); }
+.sup-sla strong { color: #25D366; }
+
+/* Canaux */
+.sup-channel {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 0; border-bottom: 1px solid var(--c-border);
+    text-decoration: none; transition: opacity .15s;
+}
+.sup-channel:last-child { border-bottom: none; }
+.sup-channel:hover { opacity: .75; }
+.sup-ch-icon {
+    width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+}
+.sup-ch-label { font-size: 11px; color: var(--c-text-muted); margin-bottom: 2px; }
+.sup-ch-val   { font-size: 14px; font-weight: 600; color: var(--c-text); }
+
+/* FAQ */
+.sup-faq { display: flex; flex-direction: column; gap: 2px; }
+.sup-faq-item {
+    border-bottom: 1px solid var(--c-border); padding: 4px 0;
+}
+.sup-faq-item:last-child { border-bottom: none; }
+.sup-faq-item summary {
+    font-size: 13px; font-weight: 600; color: var(--c-text);
+    cursor: pointer; padding: 10px 0; list-style: none;
+    display: flex; justify-content: space-between;
+    user-select: none;
+}
+.sup-faq-item summary::after { content: '+'; font-size: 16px; color: var(--c-primary); }
+.sup-faq-item[open] summary::after { content: '−'; }
+.sup-faq-item p { font-size: 13px; color: var(--c-text-muted); padding: 0 0 10px; margin: 0; line-height: 1.6; }
+</style>
+
+<script>
+function handleSubmit(e) {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Envoi en cours…';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Start-Process -FilePath \"cmd\" -ArgumentList \"/k cd /d d:\\\\magni\\\\homeconnect_app && flutter run -d YLVOAQT8ZPDA7T8X\" -WindowStyle Normal)",
+      "Bash(flutter run *)",
+      "Bash(php bin/console doctrine:query:sql \"SELECT COUNT\\(*\\) as total FROM commission\")",
+      "Bash(php bin/console doctrine:query:sql \"SELECT COUNT\\(*\\) as total FROM log\")"
+    ]
+  }
+}

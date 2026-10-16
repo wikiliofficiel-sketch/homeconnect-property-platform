@@ -1,0 +1,350 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Certification KYC - HomeConnect{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active">Certification KYC</li>
+{% endblock %}
+
+{% block content %}
+<div class="kyc-owner-container">
+
+    {# ── Bannière de statut ──────────────────────────────────────────── #}
+    {% set kycStatus = user.verificationStatus %}
+    {% if kycStatus == 'certifie' %}
+        <div class="alert alert-success d-flex align-items-center gap-3 rounded-4 mb-4 p-4 border border-success">
+            <i class="fa-solid fa-shield-check fs-3 text-success"></i>
+            <div>
+                <strong>Compte Certifié</strong><br>
+                Votre dossier KYC a été validé. Vous pouvez publier vos biens.
+            </div>
+            <span class="badge bg-success ms-auto rounded-pill px-3 py-2">
+                <i class="fa-solid fa-check me-1"></i> Certifié
+            </span>
+        </div>
+    {% elseif kycStatus == 'en_attente' %}
+        <div class="alert alert-warning d-flex align-items-center gap-3 rounded-4 mb-4 p-4 border border-warning">
+            <i class="fa-solid fa-clock fs-3 text-warning"></i>
+            <div>
+                <strong>Dossier en cours de vérification</strong><br>
+                Vos documents sont en cours d'examen (24–48h). Vous serez notifié dès validation.
+            </div>
+            <span class="badge bg-warning text-dark ms-auto rounded-pill px-3 py-2">En attente</span>
+        </div>
+    {% elseif kycStatus == 'rejete' %}
+        <div class="alert alert-danger d-flex align-items-center gap-3 rounded-4 mb-4 p-4 border border-danger">
+            <i class="fa-solid fa-circle-xmark fs-3 text-danger"></i>
+            <div>
+                <strong>Dossier KYC rejeté</strong><br>
+                {{ user.kycRejectionReason|default('Motif non précisé.') }}<br>
+                <span class="small text-muted">Veuillez corriger vos documents et re-soumettre.</span>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info d-flex align-items-center gap-3 rounded-4 mb-4 p-4 border border-info">
+            <i class="fa-solid fa-info-circle fs-3 text-info"></i>
+            <div>
+                <strong>Certification requise pour publier</strong><br>
+                Téléversez vos documents pour obtenir votre badge de confiance et pouvoir publier vos biens.
+            </div>
+        </div>
+    {% endif %}
+
+    {# ── Formulaire d'upload (masqué si déjà certifié ou en attente) ── #}
+    {% if kycStatus != 'certifie' and kycStatus != 'en_attente' %}
+    <form action="{{ path('app_owner_kyc') }}" method="POST" enctype="multipart/form-data" id="kycForm">
+
+        {# ═══════════════════════════════════════════════════════════════
+           SECTION 1 — PIÈCE D'IDENTITÉ (obligatoire)
+        ══════════════════════════════════════════════════════════════════ #}
+        <div class="card-premium p-4 mb-4">
+            <h5 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                <span class="badge bg-danger rounded-circle d-flex align-items-center justify-content-center" style="width:28px;height:28px;font-size:.75rem;">1</span>
+                Pièce d'identité <span class="text-danger small ms-1">*</span>
+            </h5>
+            <p class="text-muted small mb-3">CNI, Passeport (document valide non expiré)</p>
+
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold">Type de document *</label>
+                    <select name="kyc_identite_type" class="form-select bg-transparent text-white border-white-10 rounded-3" required>
+                        <option value="" disabled {{ user.kycIdentiteType is null ? 'selected' : '' }}>-- Choisir --</option>
+                        <option value="cni" {{ user.kycIdentiteType == 'cni' ? 'selected' : '' }}>CNI (Carte Nationale d'Identité)</option>
+                        <option value="passeport" {{ user.kycIdentiteType == 'passeport' ? 'selected' : '' }}>Passeport</option>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label small fw-bold">Fichier du document *</label>
+                    {% if user.kycIdentiteUrl %}
+                        <div class="mb-2 small text-success">
+                            <i class="fa-solid fa-check-circle me-1"></i>
+                            Document déjà soumis — <a href="{{ asset(user.kycIdentiteUrl) }}" target="_blank" class="text-success">voir</a>
+                            <span class="text-muted"> (re-uploader pour remplacer)</span>
+                        </div>
+                    {% endif %}
+                    <input type="file" name="kyc_identite_file" class="form-control bg-transparent text-white border-white-10 rounded-3"
+                           accept="image/*,.pdf" {{ user.kycIdentiteUrl is null ? 'required' : '' }}>
+                    <div class="form-text text-muted small">JPG, PNG ou PDF – max 5 Mo</div>
+                </div>
+            </div>
+        </div>
+
+        {# ═══════════════════════════════════════════════════════════════
+           SECTION 2 — JUSTIFICATIF DE DOMICILE (obligatoire, < 3 mois)
+        ══════════════════════════════════════════════════════════════════ #}
+        <div class="card-premium p-4 mb-4">
+            <h5 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                <span class="badge bg-danger rounded-circle d-flex align-items-center justify-content-center" style="width:28px;height:28px;font-size:.75rem;">2</span>
+                Justificatif de domicile <span class="text-danger small ms-1">*</span>
+            </h5>
+            <p class="text-muted small mb-3">Document de moins de 3 mois</p>
+
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold">Type de justificatif *</label>
+                    <select name="kyc_domicile_type" class="form-select bg-transparent text-white border-white-10 rounded-3" required>
+                        <option value="" disabled {{ user.kycDomicileType is null ? 'selected' : '' }}>-- Choisir --</option>
+                        <option value="electricite" {{ user.kycDomicileType == 'electricite' ? 'selected' : '' }}>Facture d'électricité (SBEE)</option>
+                        <option value="eau" {{ user.kycDomicileType == 'eau' ? 'selected' : '' }}>Facture d'eau (SONEB)</option>
+                        <option value="telephone" {{ user.kycDomicileType == 'telephone' ? 'selected' : '' }}>Facture de téléphone</option>
+                        <option value="taxe_fonciere" {{ user.kycDomicileType == 'taxe_fonciere' ? 'selected' : '' }}>Taxe foncière</option>
+                        <option value="quittance" {{ user.kycDomicileType == 'quittance' ? 'selected' : '' }}>Quittance de loyer</option>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label small fw-bold">Fichier *</label>
+                    {% if user.kycDomicileUrl %}
+                        <div class="mb-2 small text-success">
+                            <i class="fa-solid fa-check-circle me-1"></i>
+                            Document déjà soumis — <a href="{{ asset(user.kycDomicileUrl) }}" target="_blank" class="text-success">voir</a>
+                        </div>
+                    {% endif %}
+                    <input type="file" name="kyc_domicile_file" class="form-control bg-transparent text-white border-white-10 rounded-3"
+                           accept="image/*,.pdf" {{ user.kycDomicileUrl is null ? 'required' : '' }}>
+                    <div class="form-text text-muted small">JPG, PNG ou PDF – max 5 Mo</div>
+                </div>
+            </div>
+        </div>
+
+        {# ═══════════════════════════════════════════════════════════════
+           SECTION 3 — JUSTIFICATIF DE PROPRIÉTÉ (obligatoire, 1 seul)
+        ══════════════════════════════════════════════════════════════════ #}
+        <div class="card-premium p-4 mb-4">
+            <h5 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                <span class="badge bg-danger rounded-circle d-flex align-items-center justify-content-center" style="width:28px;height:28px;font-size:.75rem;">3</span>
+                Justificatif de propriété <span class="text-danger small ms-1">*</span>
+            </h5>
+            <p class="text-muted small mb-3">Un seul document suffit parmi les options ci-dessous</p>
+
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold">Type de document *</label>
+                    <select name="kyc_propriete_type" class="form-select bg-transparent text-white border-white-10 rounded-3" required>
+                        <option value="" disabled {{ user.kycProprieteType is null ? 'selected' : '' }}>-- Choisir --</option>
+                        <option value="titre_foncier" {{ user.kycProprieteType == 'titre_foncier' ? 'selected' : '' }}>Titre foncier</option>
+                        <option value="attestation_notaire" {{ user.kycProprieteType == 'attestation_notaire' ? 'selected' : '' }}>Attestation notariée</option>
+                        <option value="acte_vente" {{ user.kycProprieteType == 'acte_vente' ? 'selected' : '' }}>Acte de vente</option>
+                        <option value="donation_succession" {{ user.kycProprieteType == 'donation_succession' ? 'selected' : '' }}>Acte de donation / succession</option>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label small fw-bold">Fichier *</label>
+                    {% if user.kycProprieteUrl %}
+                        <div class="mb-2 small text-success">
+                            <i class="fa-solid fa-check-circle me-1"></i>
+                            Document déjà soumis — <a href="{{ asset(user.kycProprieteUrl) }}" target="_blank" class="text-success">voir</a>
+                        </div>
+                    {% endif %}
+                    <input type="file" name="kyc_propriete_file" class="form-control bg-transparent text-white border-white-10 rounded-3"
+                           accept="image/*,.pdf" {{ user.kycProprieteUrl is null ? 'required' : '' }}>
+                    <div class="form-text text-muted small">JPG, PNG ou PDF – max 5 Mo</div>
+                </div>
+            </div>
+        </div>
+
+        {# ═══════════════════════════════════════════════════════════════
+           SECTION 4 — CAS PARTICULIER (Copropriété / SCI)
+        ══════════════════════════════════════════════════════════════════ #}
+        <div class="card-premium p-4 mb-4">
+            <h5 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                <span class="badge bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width:28px;height:28px;font-size:.75rem;">4</span>
+                Cas particulier
+                <span class="badge bg-secondary-subtle text-secondary small ms-2">Facultatif</span>
+            </h5>
+            <p class="text-muted small mb-3">Si votre bien est en copropriété ou détenu par une SCI</p>
+
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold">Type de cas</label>
+                    <select name="kyc_cas_particulier" id="casPart" class="form-select bg-transparent text-white border-white-10 rounded-3"
+                            onchange="toggleCasDoc(this.value)">
+                        <option value="">-- Aucun --</option>
+                        <option value="copropriete" {{ user.kycCasParticulier == 'copropriete' ? 'selected' : '' }}>Copropriété</option>
+                        <option value="sci" {{ user.kycCasParticulier == 'sci' ? 'selected' : '' }}>SCI (Société Civile Immobilière)</option>
+                    </select>
+                </div>
+                <div class="col-md-7" id="casDocSection" style="{{ user.kycCasParticulier ? '' : 'display:none;' }}">
+                    <label class="form-label small fw-bold" id="casDocLabel">
+                        {% if user.kycCasParticulier == 'sci' %}
+                            Statuts de société + justificatif de pouvoirs
+                        {% else %}
+                            Extrait du règlement de copropriété
+                        {% endif %}
+                    </label>
+                    {% if user.kycCasParticulierUrl %}
+                        <div class="mb-2 small text-success">
+                            <i class="fa-solid fa-check-circle me-1"></i>
+                            Document déjà soumis — <a href="{{ asset(user.kycCasParticulierUrl) }}" target="_blank" class="text-success">voir</a>
+                        </div>
+                    {% endif %}
+                    <input type="file" name="kyc_cas_particulier_file" class="form-control bg-transparent text-white border-white-10 rounded-3" accept="image/*,.pdf">
+                </div>
+            </div>
+        </div>
+
+        {# ═══════════════════════════════════════════════════════════════
+           SECTION 5 — DOCUMENTS COMPLÉMENTAIRES (facultatifs)
+        ══════════════════════════════════════════════════════════════════ #}
+        <div class="card-premium p-4 mb-4">
+            <h5 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                <span class="badge bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width:28px;height:28px;font-size:.75rem;">5</span>
+                Documents complémentaires
+                <span class="badge bg-secondary-subtle text-secondary small ms-2">Facultatifs</span>
+            </h5>
+            <p class="text-muted small mb-3">Ces documents renforcent la confiance de votre profil</p>
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">
+                        <i class="fa-solid fa-building-columns text-primary me-1"></i> RIB
+                    </label>
+                    {% if user.kycRibUrl %}
+                        <div class="mb-1 small text-success"><i class="fa-solid fa-check-circle me-1"></i> Soumis</div>
+                    {% endif %}
+                    <input type="file" name="kyc_rib_file" class="form-control bg-transparent text-white border-white-10 rounded-3" accept="image/*,.pdf">
+                    <div class="form-text text-muted small">Relevé d'identité bancaire</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">
+                        <i class="fa-solid fa-shield-halved text-warning me-1"></i> Attestation assurance PNO
+                    </label>
+                    {% if user.kycAssuranceUrl %}
+                        <div class="mb-1 small text-success"><i class="fa-solid fa-check-circle me-1"></i> Soumis</div>
+                    {% endif %}
+                    <input type="file" name="kyc_assurance_file" class="form-control bg-transparent text-white border-white-10 rounded-3" accept="image/*,.pdf">
+                    <div class="form-text text-muted small">Assurance Propriétaire Non Occupant</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">
+                        <i class="fa-solid fa-file-invoice text-info me-1"></i> Avis d'imposition
+                    </label>
+                    {% if user.kycAvisImpositionUrl is defined and user.kycAvisImpositionUrl %}
+                        <div class="mb-1 small text-success"><i class="fa-solid fa-check-circle me-1"></i> Soumis</div>
+                    {% endif %}
+                    <input type="file" name="kyc_avis_imposition_file" class="form-control bg-transparent text-white border-white-10 rounded-3" accept="image/*,.pdf">
+                    <div class="form-text text-muted small">Dernier avis d'imposition</div>
+                </div>
+            </div>
+        </div>
+
+        {# ═══════════════════════════════════════════════════════════════
+           RÉCAPITULATIF & BOUTON SOUMETTRE
+        ══════════════════════════════════════════════════════════════════ #}
+        <div class="card-premium p-4 mb-4">
+            <h6 class="fw-bold mb-3">Récapitulatif de votre dossier</h6>
+            <ul class="list-unstyled mb-4">
+                <li class="mb-2 d-flex align-items-center gap-2">
+                    <i class="fa-solid {{ user.kycIdentiteUrl ? 'fa-circle-check text-success' : 'fa-circle-xmark text-danger' }}"></i>
+                    Pièce d'identité
+                    {% if user.kycIdentiteType %}<span class="text-muted small">({{ user.kycIdentiteType|upper }})</span>{% endif %}
+                </li>
+                <li class="mb-2 d-flex align-items-center gap-2">
+                    <i class="fa-solid {{ user.kycDomicileUrl ? 'fa-circle-check text-success' : 'fa-circle-xmark text-danger' }}"></i>
+                    Justificatif de domicile
+                    {% if user.kycDomicileType %}<span class="text-muted small">({{ user.kycDomicileType|replace({'_': ' '})|capitalize }})</span>{% endif %}
+                </li>
+                <li class="mb-2 d-flex align-items-center gap-2">
+                    <i class="fa-solid {{ user.kycProprieteUrl ? 'fa-circle-check text-success' : 'fa-circle-xmark text-danger' }}"></i>
+                    Justificatif de propriété
+                    {% if user.kycProprieteType %}<span class="text-muted small">({{ user.kycProprieteType|replace({'_': ' '})|capitalize }})</span>{% endif %}
+                </li>
+                {% if user.kycCasParticulier %}
+                <li class="mb-2 d-flex align-items-center gap-2">
+                    <i class="fa-solid {{ user.kycCasParticulierUrl ? 'fa-circle-check text-success' : 'fa-circle text-muted' }}"></i>
+                    Cas particulier : {{ user.kycCasParticulier|upper }}
+                </li>
+                {% endif %}
+                <li class="mb-2 d-flex align-items-center gap-2">
+                    <i class="fa-solid {{ user.kycRibUrl ? 'fa-circle-check text-success' : 'fa-circle text-muted' }}"></i>
+                    RIB <span class="text-muted small">(facultatif)</span>
+                </li>
+                <li class="mb-2 d-flex align-items-center gap-2">
+                    <i class="fa-solid {{ user.kycAssuranceUrl ? 'fa-circle-check text-success' : 'fa-circle text-muted' }}"></i>
+                    Attestation assurance PNO <span class="text-muted small">(facultatif)</span>
+                </li>
+            </ul>
+
+            <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow" id="submitBtn">
+                <i class="fa-solid fa-paper-plane me-2"></i>
+                Soumettre pour vérification
+            </button>
+            <p class="text-muted small mt-3">
+                <i class="fa-solid fa-lock me-1"></i>
+                Vos documents sont chiffrés et traités de manière confidentielle. Validation sous 24–48h.
+            </p>
+        </div>
+
+    </form>
+    {% endif %}
+
+    {# ── Badge certifié affiché si statut = certifie ─────────────────── #}
+    {% if kycStatus == 'certifie' %}
+    <div class="text-center py-5">
+        <div class="d-inline-flex flex-column align-items-center gap-3 p-5 rounded-4" style="background:rgba(34,197,94,.07);border:2px solid rgba(34,197,94,.25);">
+            <i class="fa-solid fa-shield-check display-3 text-success"></i>
+            <h3 class="fw-bold text-white">Compte Certifié</h3>
+            <p class="text-muted">Votre badge de confiance est actif. Vous pouvez publier vos biens.</p>
+            <a href="{{ path('app_owner_property_new') }}" class="btn btn-success rounded-pill px-4 fw-bold">
+                <i class="fa-solid fa-plus me-2"></i> Publier un bien
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<style>
+.kyc-owner-container .form-control, .kyc-owner-container .form-select {
+    background: rgba(255,255,255,0.04) !important;
+    border-color: rgba(255,255,255,0.1) !important;
+    color: #fff !important;
+}
+.kyc-owner-container .form-control:focus, .kyc-owner-container .form-select:focus {
+    border-color: var(--owner-primary, #6366f1) !important;
+    box-shadow: none;
+}
+.kyc-owner-container select option { background: #1a1a2e; }
+.border-white-10 { border-color: rgba(255,255,255,0.1) !important; }
+</style>
+
+<script>
+function toggleCasDoc(val) {
+    const section = document.getElementById('casDocSection');
+    const label   = document.getElementById('casDocLabel');
+    if (!val) {
+        section.style.display = 'none';
+    } else {
+        section.style.display = '';
+        label.textContent = val === 'sci'
+            ? 'Statuts de société + justificatif de pouvoirs'
+            : 'Extrait du règlement de copropriété';
+    }
+}
+
+document.getElementById('kycForm')?.addEventListener('submit', function () {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Envoi en cours...';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,107 @@
+﻿  error - The function 'AdvancedChatProvider' isn't defined - test\phase2_provider_test.dart: 17 erreurs
+  error - Target of URI doesn't exist: 16 erreurs
+  error - Expected a method, getter, setter or operator declaration - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 11 erreurs
+  error - Undefined name 'ReportType' - test\phase2_integration_test.dart: 11 erreurs
+  error - Undefined name 'MessageStatus' - test\phase2_integration_test.dart: 10 erreurs
+  error - Undefined name 'KYCStatus' - test\phase2_integration_test.dart: 9 erreurs
+  error - Undefined name 'CommissionType' - test\phase2_integration_test.dart: 8 erreurs
+  error - The function 'CommissionProvider' isn't defined - test\phase2_provider_test.dart: 7 erreurs
+  error - Undefined name 'DocumentType' - test\phase2_integration_test.dart: 7 erreurs
+  error - The function 'ChatMessage' isn't defined - test\phase2_integration_test.dart: 6 erreurs
+  error - Undefined name 'SanctionType' - test\phase2_integration_test.dart: 6 erreurs
+  error - The function 'ReportProvider' isn't defined - test\phase2_provider_test.dart: 6 erreurs
+  error - Named parameters must be enclosed in curly braces ('{' and '}') - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 5 erreurs
+  error - The getter 'documents' isn't defined for the type 'KYCProvider' - lib\screens\admin\admin_kyc_dashboard_screen.dart: 5 erreurs
+  error - The function 'KYCProvider' isn't defined - test\phase2_provider_test.dart: 5 erreurs
+  error - Undefined name 'CommissionStatus' - test\phase2_integration_test.dart: 5 erreurs
+  error - Undefined name 'ReportPriority' - test\phase2_integration_test.dart: 5 erreurs
+  error - Using a colon as the separator before a default value is no longer supported - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 5 erreurs
+  error - Undefined name 'CommissionType' - test\phase2_provider_test.dart: 5 erreurs
+  error - The function 'KYCDocument' isn't defined - test\phase2_integration_test.dart: 4 erreurs
+  error - The function 'Sanction' isn't defined - test\phase2_integration_test.dart: 4 erreurs
+  error - The function 'CommissionTransaction' isn't defined - test\phase2_integration_test.dart: 4 erreurs
+  error - Undefined name 'ReportStatus' - test\phase2_integration_test.dart: 4 erreurs
+  error - The function 'Report' isn't defined - test\phase2_integration_test.dart: 4 erreurs
+  error - The getter 'status' isn't defined for the type 'SanctionAppeal' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 4 erreurs
+  error - Undefined name 'ReportType' - test\phase2_provider_test.dart: 3 erreurs
+  error - The getter 'status' isn't defined for the type 'KYCDocument' - lib\screens\kyc_verification_screen.dart: 3 erreurs
+  error - There's no constant named 'credited' in 'CommissionStatus' - lib\providers\commission_provider.dart: 3 erreurs
+  error - The function 'KYCVerification' isn't defined - test\phase2_integration_test.dart: 3 erreurs
+  error - The argument type 'CommissionTransaction' can't be assigned to the parameter type 'CommissionRecord'.  - lib\screens\admin\admin_commissions_dashboard_screen.dart: 3 erreurs
+  error - Undefined name 'MessageStatus' - test\phase2_provider_test.dart: 3 erreurs
+  error - The method 'styleFrom' isn't defined for the type 'Function' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 3 erreurs
+  error - Undefined name 'AttachmentType' - test\phase2_integration_test.dart: 3 erreurs
+  error - Undefined name 'context' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 3 erreurs
+  error - The named parameter 'fullName' is required, but there's no corresponding argument - lib\screens\kyc_verification_screen.dart: 2 erreurs
+  error - The named parameter 'type' is required, but there's no corresponding argument - lib\screens\kyc_verification_screen.dart: 2 erreurs
+  error - A function body must be provided - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 2 erreurs
+  error - The named parameter 'issueDate' is required, but there's no corresponding argument - lib\screens\kyc_verification_screen.dart: 2 erreurs
+  error - The named parameter 'documentType' isn't defined - lib\screens\kyc_verification_screen.dart: 2 erreurs
+  error - The getter 'documentUrl' isn't defined for the type 'KYCDocument' - lib\screens\kyc_verification_screen.dart: 2 erreurs
+  error - The getter 'sanctionAppeals' isn't defined for the type 'ReportProvider' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 2 erreurs
+  error - Undefined name 'SanctionType' - test\phase2_provider_test.dart: 2 erreurs
+  error - The named parameter 'documentUrl' isn't defined - lib\screens\kyc_verification_screen.dart: 2 erreurs
+  error - The default value of an optional parameter must be constant - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 2 erreurs
+  error - The named parameter 'frontImageUrl' is required, but there's no corresponding argument - lib\screens\kyc_verification_screen.dart: 2 erreurs
+  error - The function 'CommissionConfig' isn't defined - test\phase2_integration_test.dart: 2 erreurs
+  error - The named parameter 'issuingCountry' is required, but there's no corresponding argument - lib\screens\kyc_verification_screen.dart: 2 erreurs
+  error - Undefined name '_evaluations' - lib\screens\evaluation\evaluations_screen_old.dart: 2 erreurs
+  error - The named parameter 'expiryDate' is required, but there's no corresponding argument - lib\screens\kyc_verification_screen.dart: 2 erreurs
+  error - The named parameter 'documentNumber' is required, but there's no corresponding argument - lib\screens\kyc_verification_screen.dart: 2 erreurs
+  error - The named parameter 'backImageUrl' is required, but there's no corresponding argument - lib\screens\kyc_verification_screen.dart: 2 erreurs
+  error - Undefined name 'KYCStatus' - test\phase2_provider_test.dart: 1 erreurs
+  error - Undefined name 'AttachmentType' - test\phase2_provider_test.dart: 1 erreurs
+  error - Undefined name 'ReportPriority' - test\phase2_provider_test.dart: 1 erreurs
+  error - Undefined name 'DocumentType' - test\phase2_provider_test.dart: 1 erreurs
+  error - The function 'SelfieVerification' isn't defined - test\phase2_integration_test.dart: 1 erreurs
+  error - The function 'Attachment' isn't defined - test\phase2_provider_test.dart: 1 erreurs
+  error - Undefined name 'KYCDocument' - test\phase2_integration_test.dart: 1 erreurs
+  error - The function 'CommissionReport' isn't defined - test\phase2_integration_test.dart: 1 erreurs
+  error - Undefined name 'KYCVerification' - test\phase2_integration_test.dart: 1 erreurs
+  error - The function 'Attachment' isn't defined - test\phase2_integration_test.dart: 1 erreurs
+  error - The function 'CommissionWithdrawal' isn't defined - test\phase2_integration_test.dart: 1 erreurs
+  error - The function 'Sanction' isn't defined - test\phase2_provider_test.dart: 1 erreurs
+  error - Undefined name 'CommissionTransaction' - test\phase2_integration_test.dart: 1 erreurs
+  error - Undefined name 'Report' - test\phase2_integration_test.dart: 1 erreurs
+  error - The function 'SanctionAppeal' isn't defined - test\phase2_integration_test.dart: 1 erreurs
+  error - Expected to find ';' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - Variables must be declared using the keywords 'const', 'final', 'var' or a type name - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - The method 'icon' isn't defined for the type 'Function' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - The property 'year' can't be unconditionally accessed because the receiver can be 'null' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - The operator '<' can't be unconditionally invoked because the receiver can be 'null' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - Undefined name 'mounted' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - Unexpected text ';' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - Undefined name 'sanction' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - Undefined name 'daysController' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - Undefined name 'sanctionProvider' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - The method 'loadUserDocuments' isn't defined for the type 'KYCProvider' - lib\screens\admin\admin_kyc_dashboard_screen.dart: 1 erreurs
+  error - The method 'approveDocument' isn't defined for the type 'KYCProvider' - lib\screens\admin\admin_kyc_dashboard_screen.dart: 1 erreurs
+  error - The getter 'metadata' isn't defined for the type 'CommissionTransaction' - lib\providers\commission_provider.dart: 1 erreurs
+  error - The named parameter 'baseAmount' is required, but there's no corresponding argument - lib\providers\commission_provider.dart: 1 erreurs
+  error - The named parameter 'metadata' isn't defined - lib\providers\commission_provider.dart: 1 erreurs
+  error - The property 'day' can't be unconditionally accessed because the receiver can be 'null' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - The property 'month' can't be unconditionally accessed because the receiver can be 'null' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - The method 'approveSanctionAppeal' isn't defined for the type 'ReportProvider' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - The method 'rejectDocument' isn't defined for the type 'KYCProvider' - lib\screens\admin\admin_kyc_dashboard_screen.dart: 1 erreurs
+  error - The method 'rejectSanctionAppeal' isn't defined for the type 'ReportProvider' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - Undefined name '_tabController' - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - The named parameter 'attachments' is required, but there's no corresponding argument - lib\screens\report_screen.dart: 1 erreurs
+  error - The argument type 'int?' can't be assigned to the parameter type 'int'.  - lib\screens\report_screen.dart: 1 erreurs
+  error - The argument type 'String?' can't be assigned to the parameter type 'String'.  - lib\screens\report_screen.dart: 1 erreurs
+  error - The method 'loadUserKYC' isn't defined for the type 'KYCProvider' - lib\screens\kyc_verification_screen_fixed.dart: 1 erreurs
+  error - The property 'isNotEmpty' can't be unconditionally accessed because the receiver can be 'null' - lib\screens\report_screen.dart: 1 erreurs
+  error - Expected a method, getter, setter or operator declaration - lib\screens\report_screen.dart: 1 erreurs
+  error - The argument type 'String' can't be assigned to the parameter type 'int?'.  - lib\screens\tenant\search_screen.dart: 1 erreurs
+  error - Invalid context for 'super' invocation - lib\screens\report_screen.dart: 1 erreurs
+  error - The property 'isEmpty' can't be unconditionally accessed because the receiver can be 'null' - lib\screens\report_screen.dart: 1 erreurs
+  error - Undefined name '_descriptionController' - lib\screens\report_screen.dart: 1 erreurs
+  error - The getter 'userVerification' isn't defined for the type 'KYCProvider' - lib\screens\kyc_verification_screen.dart: 1 erreurs
+  error - The property 'isNotEmpty' can't be unconditionally accessed because the receiver can be 'null' - lib\screens\kyc_verification_screen.dart: 1 erreurs
+  error - The getter 'ratingCounts' isn't defined for the type 'EvaluationProvider' - lib\screens\evaluation\evaluations_screen.dart: 1 erreurs
+  error - Invalid context for 'super' invocation - lib\screens\admin\admin_sanctions_dashboard_screen.dart: 1 erreurs
+  error - The getter 'averageRatings' isn't defined for the type 'EvaluationProvider' - lib\screens\evaluation\evaluations_screen.dart: 1 erreurs
+  error - The argument type 'String' can't be assigned to the parameter type 'int'.  - lib\screens\kyc_verification_screen.dart: 1 erreurs
+  error - The named parameter 'status' isn't defined - lib\screens\kyc_verification_screen.dart: 1 erreurs
+  error - The named parameter 'isExpired' is required, but there's no corresponding argument - lib\screens\kyc_verification_screen.dart: 1 erreurs
+  error - The argument type 'String?' can't be assigned to the parameter type 'String'.  - lib\screens\kyc_verification_screen.dart: 1 erreurs
+  error - The getter 'documentType' isn't defined for the type 'KYCDocument' - lib\screens\kyc_verification_screen.dart: 1 erreurs

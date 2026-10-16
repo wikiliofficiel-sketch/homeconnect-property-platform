@@ -1,0 +1,329 @@
+{% extends 'tenant/base.html.twig' %}
+
+{% block tenant_content %}
+{% set status = application.statut %}
+
+<div style="max-width: 1000px; margin: 0 auto;">
+
+    {# ── Retour + en-tête ─────────────────────────────────────────── #}
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+        <div>
+            <a href="{{ path('app_tenant_applications') }}" class="d-inline-flex align-items-center gap-2 text-decoration-none mb-3"
+               style="color:#667eea; font-size:14px; font-weight:600;">
+                <i class="fa-solid fa-arrow-left"></i> Retour à mes candidatures
+            </a>
+            <h1 style="font-size:1.6rem; font-weight:800; color:#1a1a2e; margin:0 0 4px;">
+                {{ application.property.title }}
+            </h1>
+            <p style="color:#888; font-size:13px; margin:0;">
+                <i class="fa-solid fa-location-dot me-1" style="color:#667eea;"></i>
+                {{ application.property.city }}{% if application.property.address %}, {{ application.property.address }}{% endif %}
+            </p>
+        </div>
+        {# Badge statut #}
+        <div>
+            {% if status == 'pending' %}
+            <span class="app-badge app-badge-pending"><i class="fa-solid fa-clock"></i> En attente</span>
+            {% elseif status == 'accepted' %}
+            <span class="app-badge app-badge-accepted"><i class="fa-solid fa-circle-check"></i> Acceptée</span>
+            {% elseif status == 'refused' %}
+            <span class="app-badge app-badge-refused"><i class="fa-solid fa-circle-xmark"></i> Refusée</span>
+            {% else %}
+            <span class="app-badge" style="background:#f0f0f0; color:#888;">{{ status|capitalize }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── Timeline processus ───────────────────────────────────────── #}
+    <div class="app-timeline mb-4">
+        <div class="app-timeline-step {{ status in ['pending','accepted','refused'] ? 'done' : '' }}">
+            <div class="app-step-circle"><i class="fa-solid fa-paper-plane"></i></div>
+            <span>Envoyée</span>
+        </div>
+        <div class="app-timeline-line {{ status in ['accepted','refused'] ? 'done' : '' }}"></div>
+        <div class="app-timeline-step {{ status in ['accepted','refused'] ? 'done' : '' }} {{ status == 'pending' ? 'active' : '' }}">
+            <div class="app-step-circle">
+                {% if status == 'pending' %}<i class="fa-solid fa-spinner fa-spin"></i>
+                {% else %}<i class="fa-solid fa-magnifying-glass"></i>{% endif %}
+            </div>
+            <span>Examen</span>
+        </div>
+        <div class="app-timeline-line {{ status in ['accepted','refused'] ? 'done' : '' }}"></div>
+        <div class="app-timeline-step {{ status in ['accepted','refused'] ? 'done' : '' }}">
+            <div class="app-step-circle">
+                {% if status == 'accepted' %}<i class="fa-solid fa-check"></i>
+                {% elseif status == 'refused' %}<i class="fa-solid fa-xmark"></i>
+                {% else %}<i class="fa-solid fa-flag"></i>{% endif %}
+            </div>
+            <span>Décision</span>
+        </div>
+        {% if status == 'accepted' %}
+        <div class="app-timeline-line {{ application.visites|length > 0 ? 'done' : '' }}"></div>
+        <div class="app-timeline-step {{ application.visites|length > 0 ? 'done' : '' }}">
+            <div class="app-step-circle"><i class="fa-solid fa-house-circle-check"></i></div>
+            <span>Visite</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row g-4">
+        {# ══ COLONNE PRINCIPALE ══ #}
+        <div class="col-lg-8">
+
+            {# Alerte statut #}
+            {% if status == 'accepted' %}
+            <div class="app-alert app-alert-success mb-4">
+                <i class="fa-solid fa-party-horn"></i>
+                <div>
+                    <strong>Félicitations ! Votre candidature a été acceptée.</strong>
+                    <p class="mb-0" style="font-size:13px; margin-top:4px;">L'administrateur va planifier une visite. Vous serez notifié dès qu'une date est fixée.</p>
+                </div>
+            </div>
+            {% elseif status == 'refused' %}
+            <div class="app-alert app-alert-danger mb-4">
+                <i class="fa-solid fa-circle-xmark"></i>
+                <div>
+                    <strong>Votre candidature a été refusée.</strong>
+                    {% if application.motifRefus %}
+                    <p class="mb-0" style="font-size:13px; margin-top:4px;">Motif : {{ application.motifRefus }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% elseif status == 'pending' %}
+            <div class="app-alert app-alert-info mb-4">
+                <i class="fa-solid fa-hourglass-half"></i>
+                <div>
+                    <strong>Candidature en cours d'examen.</strong>
+                    <p class="mb-0" style="font-size:13px; margin-top:4px;">Vous recevrez une notification dès qu'une décision sera prise (généralement sous 24-48h).</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {# Récapitulatif #}
+            <div class="app-card mb-4">
+                <div class="app-card-title"><i class="fa-solid fa-clipboard-list"></i> Récapitulatif</div>
+                <div class="app-info-grid">
+                    <div class="app-info-item">
+                        <span class="app-info-label">Bien concerné</span>
+                        <strong>{{ application.property.title }}</strong>
+                    </div>
+                    <div class="app-info-item">
+                        <span class="app-info-label">Loyer</span>
+                        <strong style="color:#667eea;">{{ application.property.pricePerMonth|number_format(0, ',', ' ') }} FCFA/mois</strong>
+                    </div>
+                    <div class="app-info-item">
+                        <span class="app-info-label">Entrée souhaitée</span>
+                        <strong>{{ application.dateDebut ? application.dateDebut|date('d/m/Y') : '—' }}</strong>
+                    </div>
+                    <div class="app-info-item">
+                        <span class="app-info-label">Candidature envoyée le</span>
+                        <strong>{{ application.createdAt|date('d/m/Y à H:i') }}</strong>
+                    </div>
+                    {% if application.respondedAt %}
+                    <div class="app-info-item">
+                        <span class="app-info-label">Décision le</span>
+                        <strong>{{ application.respondedAt|date('d/m/Y à H:i') }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Message envoyé #}
+            {% if application.message %}
+            <div class="app-card mb-4">
+                <div class="app-card-title"><i class="fa-solid fa-comment-dots"></i> Votre message</div>
+                <div style="background:#f8f9ff; border:1px solid #e8ecff; border-radius:12px; padding:16px;">
+                    <p style="color:#555; font-style:italic; margin:0; line-height:1.7;">"{{ application.message }}"</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {# Visites planifiées #}
+            {% if application.visites|length > 0 %}
+            <div class="app-card mb-4">
+                <div class="app-card-title"><i class="fa-solid fa-calendar-check"></i> Visite(s) planifiée(s)</div>
+                {% for visite in application.visites %}
+                <div class="app-visite-card {{ visite.statut == 'completee' ? 'visite-done' : 'visite-planned' }}">
+                    <div class="app-visite-icon">
+                        {% if visite.statut == 'completee' %}
+                        <i class="fa-solid fa-circle-check" style="color:#27ae60;"></i>
+                        {% else %}
+                        <i class="fa-solid fa-calendar" style="color:#667eea;"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div style="font-weight:700; color:#1a1a2e; font-size:15px;">
+                            {{ visite.dateHeureDebut|date('d/m/Y') }}
+                        </div>
+                        <div style="color:#667eea; font-size:14px; font-weight:600;">
+                            <i class="fa-regular fa-clock me-1"></i>
+                            {{ visite.dateHeureDebut|date('H:i') }} → {{ visite.dateHeureFin|date('H:i') }}
+                        </div>
+                        {% if visite.notes %}
+                        <div style="color:#888; font-size:13px; margin-top:4px;">
+                            <i class="fa-solid fa-note-sticky me-1"></i>{{ visite.notes }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <span style="font-size:11px; font-weight:700; padding:4px 12px; border-radius:50px;
+                        {{ visite.statut == 'completee' ? 'background:#e8f8f0; color:#27ae60;' : 'background:#eef2ff; color:#667eea;' }}">
+                        {{ visite.statut == 'completee' ? 'Effectuée' : 'Planifiée' }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+            {% elseif status == 'accepted' %}
+            <div class="app-card mb-4">
+                <div class="app-card-title"><i class="fa-solid fa-calendar-plus"></i> Visite</div>
+                <div style="text-align:center; padding: 1.5rem 0;">
+                    <i class="fa-regular fa-calendar" style="font-size:2.5rem; color:#dee2e6; display:block; margin-bottom:12px;"></i>
+                    <p style="color:#888; font-size:14px; margin:0;">L'administrateur planifiera bientôt une visite.<br>Vous serez notifié par la plateforme.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {# Aperçu du bien #}
+            <div class="app-card">
+                <div class="app-card-title"><i class="fa-solid fa-house"></i> Le bien</div>
+                <div class="d-flex gap-3 align-items-start flex-wrap">
+                    {% if application.property.images and application.property.images|length > 0 %}
+                    {% set img = application.property.images[0] %}
+                    <img src="{{ img starts with 'http' or img starts with 'data:' ? img : asset('uploads/properties/' ~ img) }}"
+                         style="width:120px; height:90px; object-fit:cover; border-radius:12px; flex-shrink:0;" alt="">
+                    {% endif %}
+                    <div class="flex-grow-1">
+                        <div style="font-weight:700; color:#1a1a2e; margin-bottom:4px;">{{ application.property.title }}</div>
+                        <div style="color:#888; font-size:13px; margin-bottom:8px;">
+                            <i class="fa-solid fa-location-dot me-1" style="color:#667eea;"></i>{{ application.property.getFullAddress() }}
+                        </div>
+                        <div style="color:#667eea; font-weight:700;">{{ application.property.pricePerMonth|number_format(0, ',', ' ') }} FCFA/mois</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        {# ══ COLONNE LATÉRALE ══ #}
+        <div class="col-lg-4">
+
+            {# Actions #}
+            <div class="app-card mb-3">
+                <div class="app-card-title"><i class="fa-solid fa-sliders"></i> Actions</div>
+                <div class="d-flex flex-column gap-2">
+                    <a href="{{ path('app_tenant_property_show', {id: application.property.id}) }}" class="app-btn-secondary">
+                        <i class="fa-solid fa-eye me-2"></i> Voir la fiche du bien
+                    </a>
+                    {% if status == 'pending' %}
+                    <form method="POST" action="{{ path('app_tenant_application_cancel', {id: application.id}) }}"
+                          onsubmit="return confirm('Annuler cette candidature ? Cette action est irréversible.')">
+                        <button type="submit" class="app-btn-danger w-100">
+                            <i class="fa-solid fa-xmark me-2"></i> Annuler ma candidature
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Propriétaire #}
+            <div class="app-card mb-3">
+                <div class="app-card-title"><i class="fa-solid fa-user-tie"></i> Propriétaire</div>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div style="width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,#667eea,#764ba2); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.3rem; flex-shrink:0;">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700; color:#1a1a2e;">{{ proprietaire.fullName }}</div>
+                        {% if proprietaire.verificationStatus == 'certifie' %}
+                        <span style="background:#e8f8f0; color:#27ae60; font-size:11px; font-weight:700; padding:2px 10px; border-radius:50px; display:inline-flex; align-items:center; gap:4px;">
+                            <i class="fa-solid fa-circle-check"></i> Certifié
+                        </span>
+                        {% endif %}
+                        {% if avgRating > 0 %}
+                        <div style="font-size:12px; color:#888; margin-top:3px;">
+                            {% for i in 1..5 %}
+                            <i class="fa-{{ i <= avgRating|round ? 'solid' : 'regular' }} fa-star" style="color:#f39c12;"></i>
+                            {% endfor %}
+                            <span style="margin-left:4px;">{{ avgRating|number_format(1) }} ({{ totalReviews }})</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {# Chronologie #}
+            <div class="app-card">
+                <div class="app-card-title"><i class="fa-solid fa-timeline"></i> Chronologie</div>
+                <div class="d-flex flex-column gap-2" style="font-size:13px;">
+                    <div class="d-flex justify-content-between">
+                        <span style="color:#888;">Envoyée</span>
+                        <span style="color:#1a1a2e; font-weight:600;">{{ application.createdAt|date('d/m/Y') }}</span>
+                    </div>
+                    {% if application.respondedAt %}
+                    <div class="d-flex justify-content-between">
+                        <span style="color:#888;">{{ status == 'accepted' ? 'Acceptée' : 'Refusée' }}</span>
+                        <span style="color:#1a1a2e; font-weight:600;">{{ application.respondedAt|date('d/m/Y') }}</span>
+                    </div>
+                    {% endif %}
+                    {% if application.visites|length > 0 %}
+                    <div class="d-flex justify-content-between">
+                        <span style="color:#888;">Visite planifiée</span>
+                        <span style="color:#667eea; font-weight:600;">{{ application.visites|first.dateHeureDebut|date('d/m/Y') }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+/* Badges statut */
+.app-badge { display:inline-flex; align-items:center; gap:6px; padding:8px 18px; border-radius:50px; font-size:13px; font-weight:700; }
+.app-badge-pending  { background:#fff9e6; color:#856404; border:1px solid #f6c84a; }
+.app-badge-accepted { background:#e8f8f0; color:#155724; border:1px solid #b2dfdb; }
+.app-badge-refused  { background:#fdecea; color:#721c24; border:1px solid #f5c6cb; }
+
+/* Timeline */
+.app-timeline { display:flex; align-items:center; padding:20px; background:#fff; border-radius:16px; border:1px solid #eee; box-shadow:0 2px 12px rgba(0,0,0,0.04); }
+.app-timeline-step { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.app-step-circle { width:40px; height:40px; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#aaa; font-size:14px; transition:all .3s; }
+.app-timeline-step.done .app-step-circle { background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; }
+.app-timeline-step.active .app-step-circle { background:linear-gradient(135deg,#f6c84a,#e0a800); color:#fff; box-shadow:0 4px 12px rgba(246,200,74,.4); }
+.app-timeline-step span { font-size:11px; font-weight:600; color:#888; white-space:nowrap; }
+.app-timeline-step.done span, .app-timeline-step.active span { color:#1a1a2e; }
+.app-timeline-line { flex:1; height:3px; background:#f0f0f0; margin:0 8px; margin-bottom:18px; border-radius:2px; transition:all .3s; }
+.app-timeline-line.done { background:linear-gradient(to right, #667eea, #764ba2); }
+
+/* Alertes */
+.app-alert { display:flex; align-items:flex-start; gap:14px; padding:16px; border-radius:14px; }
+.app-alert i { font-size:1.4rem; flex-shrink:0; margin-top:2px; }
+.app-alert strong { display:block; }
+.app-alert-success { background:#e8f8f0; border:1px solid #b2dfdb; color:#155724; }
+.app-alert-danger  { background:#fdecea; border:1px solid #f5c6cb; color:#721c24; }
+.app-alert-info    { background:#e8f0ff; border:1px solid #c5d1ff; color:#2c3e8c; }
+
+/* Cards */
+.app-card { background:#fff; border:1px solid #eee; border-radius:16px; padding:1.25rem; box-shadow:0 2px 12px rgba(0,0,0,0.04); }
+.app-card-title { font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#667eea; margin-bottom:1rem; display:flex; align-items:center; gap:8px; }
+
+/* Info grid */
+.app-info-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:10px; }
+.app-info-item { background:#f8f9ff; border:1px solid #e8ecff; border-radius:10px; padding:12px 14px; }
+.app-info-label { font-size:11px; color:#aaa; text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:3px; }
+.app-info-item strong { font-size:14px; color:#1a1a2e; }
+
+/* Visites */
+.app-visite-card { display:flex; align-items:center; gap:14px; padding:14px; border-radius:12px; margin-bottom:10px; }
+.visite-planned { background:#f0f4ff; border:1px solid #d0d9ff; }
+.visite-done { background:#f0fff8; border:1px solid #b2dfdb; }
+.app-visite-icon { font-size:1.5rem; flex-shrink:0; }
+
+/* Boutons */
+.app-btn-secondary { display:flex; align-items:center; justify-content:center; padding:10px 18px; border-radius:50px; background:#f8f9ff; border:1px solid #e8ecff; color:#667eea; font-size:13px; font-weight:600; text-decoration:none; transition:all .2s; }
+.app-btn-secondary:hover { background:#eef2ff; color:#667eea; }
+.app-btn-danger { display:flex; align-items:center; justify-content:center; padding:10px 18px; border-radius:50px; background:#fdecea; border:1px solid #f5c6cb; color:#e74c3c; font-size:13px; font-weight:600; cursor:pointer; transition:all .2s; }
+.app-btn-danger:hover { background:#f8d7da; }
+</style>
+
+{% endblock %}

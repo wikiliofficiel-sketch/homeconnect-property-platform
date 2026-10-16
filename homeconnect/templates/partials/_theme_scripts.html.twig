@@ -1,0 +1,31 @@
+<script>
+    /* ── Global Theme Management ── */
+    (function() {
+        // Init theme immediately to avoid flash
+        const getT = () => localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', getT());
+        
+        window.syncThemeUI = (theme) => {
+            const isL = theme === 'light';
+            // Update all moon/sun icons globally
+            document.querySelectorAll('#theme-toggle i, #theme-toggle-sidebar i, .theme-icon').forEach(el => {
+                el.className = isL ? 'fa-solid fa-sun fs-5' : 'fa-solid fa-moon fs-5';
+                el.style.color = isL ? '#f39c12' : '#f1c40f';
+            });
+            // Update text labels if they exist
+            document.querySelectorAll('.theme-text').forEach(el => {
+                el.innerText = isL ? 'Mode Sombre' : 'Mode Clair';
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.syncThemeUI(getT());
+            window.toggleTheme = () => {
+                const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                window.syncThemeUI(next);
+            };
+        });
+    })();
+</script>

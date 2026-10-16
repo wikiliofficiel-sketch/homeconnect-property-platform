@@ -1,0 +1,166 @@
+{% extends 'tenant/base.html.twig' %}
+
+{% block tenant_content %}
+<div class="kyc-container-premium">
+    <div class="page-header mb-5 text-center">
+        <h1 class="display-6 fw-bold" style="color: #2c3e50;"><i class="fa-solid fa-shield-check text-success me-2"></i> Vérification d'identité (KYC)</h1>
+        <p class="text-muted">Sécurisez votre compte et augmentez votre Score de Fiabilité de <span class="text-success fw-bold">+30%</span>.</p>
+    </div>
+
+    <div class="kyc-steps-indicator d-flex justify-content-center mb-5 gap-4">
+        <div class="step-item text-center active" id="step-1-indicator">
+            <div class="step-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm mx-auto mb-2" style="width: 45px; height: 45px;">1</div>
+            <span class="small fw-bold">Document</span>
+        </div>
+        <div class="step-line bg-light my-auto" style="height: 2px; width: 60px;"></div>
+        <div class="step-item text-center" id="step-2-indicator">
+            <div class="step-circle bg-light text-muted rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 45px; height: 45px;">2</div>
+            <span class="small text-muted">Photos</span>
+        </div>
+        <div class="step-line bg-light my-auto" style="height: 2px; width: 60px;"></div>
+        <div class="step-item text-center" id="step-3-indicator">
+            <div class="step-circle bg-light text-muted rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 45px; height: 45px;">3</div>
+            <span class="small text-muted">Selfie</span>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg rounded-5 p-5">
+                
+                <!-- ÉTAPE 1 : Type de Document -->
+                <div id="kyc-step-1">
+                    <h4 class="fw-bold mb-4">Choisissez votre pièce d'identité</h4>
+                    <div class="row g-3 mb-5">
+                        <div class="col-md-4">
+                            <label class="doc-type-card p-4 rounded-4 border text-center d-block" style="cursor: pointer;">
+                                <input type="radio" name="doc_type" class="d-none" checked>
+                                <i class="fa-solid fa-id-card display-6 text-primary mb-3"></i>
+                                <h6 class="fw-bold mb-0">CNI / CIP</h6>
+                            </label>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="doc-type-card p-4 rounded-4 border text-center d-block" style="cursor: pointer;">
+                                <input type="radio" name="doc_type" class="d-none">
+                                <i class="fa-solid fa-passport display-6 text-muted mb-3"></i>
+                                <h6 class="fw-bold mb-0">Passeport</h6>
+                            </label>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="doc-type-card p-4 rounded-4 border text-center d-block" style="cursor: pointer;">
+                                <input type="radio" name="doc_type" class="d-none">
+                                <i class="fa-solid fa-address-card display-6 text-muted mb-3"></i>
+                                <h6 class="fw-bold mb-0">Permis</h6>
+                            </label>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-lg rounded-pill px-5 fw-bold w-100 shadow" onclick="nextStep(2)">
+                        Continuer <i class="fa-solid fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+
+                <!-- ÉTAPE 2 : Photos Recto/Verso -->
+                <div id="kyc-step-2" class="d-none">
+                    <h4 class="fw-bold mb-4">Téléchargez les photos du document</h4>
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
+                            <div class="upload-box p-5 border-dashed rounded-4 text-center bg-light" onclick="triggerKYCUpload('recto')">
+                                <i class="fa-solid fa-camera display-4 text-muted mb-3"></i>
+                                <h6 class="fw-bold">Face avant (Recto)</h6>
+                                <p class="small text-muted mb-0">Cliquez pour prendre une photo</p>
+                                <input type="file" id="file-recto" class="d-none">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="upload-box p-5 border-dashed rounded-4 text-center bg-light" onclick="triggerKYCUpload('verso')">
+                                <i class="fa-solid fa-camera display-4 text-muted mb-3"></i>
+                                <h6 class="fw-bold">Face arrière (Verso)</h6>
+                                <p class="small text-muted mb-0">Cliquez pour prendre une photo</p>
+                                <input type="file" id="file-verso" class="d-none">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <button class="btn btn-light rounded-pill px-4 fw-bold border" onclick="nextStep(1)">Retour</button>
+                        <button class="btn btn-primary btn-lg rounded-pill px-5 fw-bold flex-grow-1 shadow" onclick="nextStep(3)">Continuer</button>
+                    </div>
+                </div>
+
+                <!-- ÉTAPE 3 : Selfie -->
+                <div id="kyc-step-3" class="d-none">
+                    <h4 class="fw-bold mb-4">Vérification de Vivacité (Selfie)</h4>
+                    <div class="text-center mb-5">
+                        <div class="selfie-frame mx-auto border border-4 border-primary-subtle rounded-circle d-flex align-items-center justify-content-center bg-light shadow" style="width: 250px; height: 250px; overflow: hidden;">
+                            <i class="fa-solid fa-user display-1 text-muted opacity-25"></i>
+                        </div>
+                        <p class="text-muted mt-3">Placez votre visage au centre du cadre et cliquez sur le bouton.</p>
+                    </div>
+                    <button class="btn btn-success btn-lg rounded-pill px-5 fw-bold w-100 shadow" onclick="finishKYC()">
+                        Prendre le selfie & Valider <i class="fa-solid fa-circle-check ms-2"></i>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function nextStep(step) {
+    // Masquer tout
+    document.getElementById('kyc-step-1').classList.add('d-none');
+    document.getElementById('kyc-step-2').classList.add('d-none');
+    document.getElementById('kyc-step-3').classList.add('d-none');
+    
+    // Afficher l'étape
+    document.getElementById('kyc-step-' + step).classList.remove('d-none');
+    
+    // Mettre à jour l'indicateur
+    for(let i=1; i<=3; i++) {
+        const ind = document.getElementById('step-' + i + '-indicator');
+        const circle = ind.querySelector('.step-circle');
+        if (i < step) {
+            circle.innerHTML = '<i class="fa-solid fa-check"></i>';
+            circle.classList.replace('bg-primary', 'bg-success');
+            circle.classList.replace('bg-light', 'bg-success');
+            circle.classList.add('text-white');
+        } else if (i === step) {
+            circle.innerHTML = i;
+            circle.classList.replace('bg-light', 'bg-primary');
+            circle.classList.add('text-white');
+        } else {
+            circle.innerHTML = i;
+            circle.classList.replace('bg-primary', 'bg-light');
+            circle.classList.replace('bg-success', 'bg-light');
+            circle.classList.remove('text-white');
+        }
+    }
+}
+
+function triggerKYCUpload(side) {
+    document.getElementById('file-' + side).click();
+}
+
+function finishKYC() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Analyse des données...';
+    
+    setTimeout(() => {
+        alert('Félicitations ! Vos documents ont été transmis. La vérification prend généralement moins de 24h.');
+        window.location.href = "{{ path('app_tenant_profile') }}";
+    }, 2500);
+}
+</script>
+
+<style>
+.doc-type-card { transition: all 0.2s; }
+.doc-type-card:hover { border-color: #4834d4 !important; background: #f8f9fa; }
+.doc-type-card:has(input:checked) { border-color: #4834d4 !important; background: #eeebff !important; border-width: 2px !important; }
+
+.upload-box { border-style: dashed !important; border-width: 2px !important; cursor: pointer; transition: all 0.2s; }
+.upload-box:hover { background: #f1f2f6 !important; border-color: #4834d4 !important; }
+
+.border-dashed { border-style: dashed !important; }
+</style>
+{% endblock %}

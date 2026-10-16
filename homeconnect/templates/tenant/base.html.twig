@@ -1,0 +1,221 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Locataire - HomeConnect{% endblock %}
+
+{% block body %}
+<link rel="stylesheet" href="{{ asset('css/premium_global.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+
+<div class="premium-dashboard-wrapper">
+    <!-- Sidebar Premium Tenant -->
+    <aside class="premium-sidebar">
+        <div class="premium-logo">
+            <i class="fa-solid fa-house-circle-check me-2"></i>HomeConnect
+        </div>
+
+        <ul class="premium-nav-list">
+            <li class="premium-nav-item">
+                <a href="{{ path('app_tenant_dashboard') }}" class="premium-nav-link {{ 'dashboard' in app.request.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-house-user"></i> <span>Mon Espace</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_tenant_search') }}" class="premium-nav-link {{ 'search' in app.request.get('_route') or 'property_show' in app.request.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-magnifying-glass-location"></i> <span>Recherche</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_tenant_applications') }}" class="premium-nav-link {{ 'application' in app.request.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-file-signature"></i> <span>Candidatures</span>
+                    {% set pendingCount = app.user.applications|filter(a => a.statut == 'pending')|length %}
+                    {% if pendingCount > 0 %}
+                    <span class="ms-auto badge rounded-pill" style="background:rgba(255,140,0,0.8);font-size:0.6rem;">{{ pendingCount }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_tenant_favorites') }}" class="premium-nav-link {{ 'favorites' in app.request.get('_route') or 'favorite' in app.request.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-heart-pulse"></i> <span>Favoris</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_tenant_messages') }}" class="premium-nav-link {{ 'messages' in app.request.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-message"></i> <span>Messages</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_tenant_reviews') }}" class="premium-nav-link {{ 'reviews' in app.request.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-star-half-stroke"></i> <span>Évaluations</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_tenant_community') }}" class="premium-nav-link {{ 'community' in app.request.get('_route') or 'post' in app.request.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-users"></i> <span>Communauté</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_tenant_partners') }}" class="premium-nav-link {{ 'partners' in app.request.get('_route') or 'partner' in app.request.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-handshake"></i> <span>Partenaires</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_tenant_support') }}" class="premium-nav-link {{ 'support' in app.request.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-headset"></i> <span>Aide</span>
+                </a>
+            </li>
+            <li class="premium-nav-item">
+                <a href="{{ path('app_tenant_profile') }}" class="premium-nav-link {{ 'profile' in app.request.get('_route') ? 'active' : '' }}">
+                    <i class="fa-solid fa-user-gear"></i> <span>Mon profil</span>
+                </a>
+            </li>
+            <li class="premium-nav-item sidebar-logout-item">
+                <a href="{{ path('app_logout') }}" class="premium-nav-link" onclick="logoutConfirm(event)">
+                    <i class="fa-solid fa-door-open"></i> <span>Déconnexion</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <style>
+    .premium-nav-list { padding: 8px 0 !important; }
+    .premium-nav-item { margin-bottom: 3px !important; }
+    .premium-nav-link { padding: 11px 18px !important; font-size: 0.97rem !important; gap: 13px !important; }
+    .premium-nav-link i { font-size: 1.05rem !important; width: 22px; text-align: center; flex-shrink: 0; }
+    .premium-nav-link span { font-size: 0.97rem; }
+    .premium-logo { padding: 18px 20px !important; font-size: 1.15rem !important; }
+    .sidebar-logout-item { margin-top: 8px !important; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px; }
+    .sidebar-logout-item .premium-nav-link { color: #ff4b5c !important; }
+    .sidebar-logout-item .premium-nav-link:hover { background: rgba(255,75,92,0.12) !important; }
+    .premium-sidebar { overflow-y: auto !important; overflow-x: hidden !important; }
+    .premium-sidebar::-webkit-scrollbar { width: 3px; }
+    .premium-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+    </style>
+
+    <div class="premium-main">
+        <!-- Header Tenant -->
+        <header class="d-flex justify-content-between align-items-center mb-5">
+            <div class="d-flex align-items-center gap-3">
+                <div class="sidebar-toggle d-lg-none" style="color: var(--c-text);" onclick="document.querySelector('.premium-sidebar').classList.toggle('sidebar-open')">
+                    <i class="fa-solid fa-bars fs-4 cursor-pointer"></i>
+                </div>
+                <div>
+                    <h1 class="h3 fw-bold mb-0" style="font-family: var(--f-serif); color: var(--c-text);">Bienvenue, {{ app.user.prenom }}</h1>
+                    <div class="text-muted small">Trouvez votre prochain chez-vous</div>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3 gap-lg-4">
+                <!-- Date et Heure -->
+                <div class="d-none d-xl-flex align-items-center gap-2 px-3 py-2 rounded-pill" style="background: rgba(150,150,150,0.1);">
+                    <i class="fa-regular fa-clock text-primary"></i>
+                    <span class="small fw-bold" id="live-clock" style="color: var(--c-text);">{{ 'now'|date('d/m/Y H:i') }}</span>
+                </div>
+
+                <!-- Language Switcher -->
+                <div class="dropdown">
+                    <button class="btn btn-link text-decoration-none dropdown-toggle p-0 d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--c-text);">
+                        <i class="fa-solid fa-globe fs-5"></i>
+                        <span class="small fw-bold text-uppercase d-none d-md-inline">{{ app.request.locale|default('fr') }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg rounded-4 border-0 mt-3" style="background: var(--c-surface);">
+                        <li><a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2" style="color: var(--c-text);" href="{{ path('app_change_locale', {'locale': 'fr'}) }}">
+                            <span class="fs-6">🇧🇯</span> Français
+                        </a></li>
+                        <li><a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2" style="color: var(--c-text);" href="{{ path('app_change_locale', {'locale': 'en'}) }}">
+                            <span class="fs-6">🇺🇸</span> English
+                        </a></li>
+                        <li><a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2" style="color: var(--c-text);" href="{{ path('app_change_locale', {'locale': 'fon'}) }}">
+                            <span class="fs-6">🇧🇯</span> Fon
+                        </a></li>
+                    </ul>
+                </div>
+
+                <!-- Theme Toggle Wrapper -->
+                <div class="theme-switch-wrapper d-flex align-items-center px-3 py-2" style="background: rgba(150,150,150,0.1); border-radius: 12px; cursor: pointer; gap: 10px;" id="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-moon fs-6" id="theme-icon" style="color: #f1c40f;"></i>
+                </div>
+
+                <!-- Messages Icon -->
+                <a href="{{ path('app_tenant_messages') }}" class="position-relative hover-scale cursor-pointer text-decoration-none" style="color: var(--c-text);">
+                    <i class="fa-solid fa-envelope fs-5"></i>
+                </a>
+
+                <!-- Notifications Dropdown -->
+                <div class="dropdown">
+                    {% set unreadNotifCount = app.user.notifications|filter(n => not n.lue)|length %}
+                    <div class="position-relative hover-scale cursor-pointer" style="color: var(--c-text);" data-bs-toggle="dropdown">
+                        <i class="fa-solid fa-bell fs-5"></i>
+                        {% if unreadNotifCount > 0 %}
+                            <span class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle" style="font-size: 0.6rem;">{{ unreadNotifCount }}</span>
+                        {% endif %}
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg rounded-4 border-0 mt-3 p-0 overflow-hidden" style="width: 300px; background: var(--c-surface);">
+                        <li class="p-3 border-bottom border-white-10 d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold" style="color: var(--c-text);">Notifications</h6>
+                        </li>
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            {% set recentNotifs = app.user.notifications|slice(0, 5) %}
+                            {% for notif in recentNotifs %}
+                            <li class="p-3 border-bottom border-white-10 hover-white-10">
+                                <div class="d-flex gap-3">
+                                    <div class="bg-primary-subtle p-2 rounded-circle text-primary" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fa-solid fa-info-circle"></i>
+                                    </div>
+                                    <div>
+                                        <p class="mb-0 small fw-bold" style="color: var(--c-text);">{{ notif.message|slice(0, 30) }}...</p>
+                                        <p class="mb-0 tiny text-muted">{{ notif.createdAt|date('d/m/Y') }}</p>
+                                    </div>
+                                </div>
+                            </li>
+                            {% else %}
+                            <li class="p-4 text-center small text-muted">Aucune notification</li>
+                            {% endfor %}
+                        </div>
+                    </ul>
+                </div>
+
+                <!-- User Profile Dropdown -->
+                <div class="dropdown">
+                    <button type="button" class="user-profile d-flex align-items-center gap-3 p-2 rounded-pill cursor-pointer" style="background: rgba(150,150,150,0.1); padding-right: 20px !important; border: none;" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white shadow-sm" style="width: 35px; height: 35px;">
+                            <i class="fa-solid fa-user small"></i>
+                        </div>
+                        <span class="fw-bold small d-none d-md-inline" style="color: var(--c-text);">{{ app.user.prenom }} <i class="fa-solid fa-chevron-down ms-2" style="font-size: 0.8em;"></i></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg rounded-4 border-0 mt-3 p-2" style="background: var(--c-surface); width: 220px;">
+                        <li class="px-3 py-2 border-bottom border-white-10 mb-2">
+                            <div class="fw-bold small" style="color: var(--c-text);">{{ app.user.fullName }}</div>
+                            <div style="font-size: 0.7rem; color: var(--c-text-muted);">{{ app.user.email }}</div>
+                        </li>
+                        <li><a class="dropdown-item rounded-3 py-2" style="color: var(--c-text);" href="{{ path('app_tenant_profile') }}">
+                            <i class="fa-solid fa-user-pen me-2"></i> Mon profil
+                        </a></li>
+                        <li><hr class="dropdown-divider border-white-10"></li>
+                        <li><a class="dropdown-item rounded-3 py-2 text-danger" href="{{ path('app_logout') }}" onclick="logoutConfirm(event)">
+                            <i class="fa-solid fa-right-from-bracket me-2"></i> Déconnexion
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <script>
+                function updateClock() {
+                    const clock = document.getElementById('live-clock');
+                    if(clock) {
+                        const now = new Date();
+                        clock.textContent = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + 
+                                           now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    }
+                }
+                setInterval(updateClock, 60000);
+                updateClock();
+            </script>
+        </header>
+
+        <!-- Page Content -->
+        <div class="page-fade-in">
+            {% block tenant_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

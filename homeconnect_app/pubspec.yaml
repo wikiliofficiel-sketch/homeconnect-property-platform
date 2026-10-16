@@ -1,0 +1,52 @@
+name: homeconnect
+description: Plateforme immobilière pour le Bénin - Version Locale
+publish_to: 'none'
+version: 2.1.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State Management
+  provider: ^6.1.1
+
+  # Local Storage (SharedPreferences)
+  shared_preferences: ^2.2.2
+
+  # Reseau (API)
+  http: ^1.6.0
+  url_launcher: ^6.3.2
+
+  # Utils
+  intl: ^0.20.2
+  cached_network_image: ^3.3.1
+  image_picker: ^1.0.4
+  geolocator: ^10.1.1
+
+  # UI Components
+  flutter_chat_ui: ^1.6.10
+  flutter_chat_types: ^3.6.2
+
+  # Notifications locales
+  flutter_local_notifications: ^17.1.2
+  timezone: ^0.9.4
+  feda_flutter: ^1.0.1
+  pdf: ^3.12.0
+  printing: ^5.14.3
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icons/
+    - assets/images/

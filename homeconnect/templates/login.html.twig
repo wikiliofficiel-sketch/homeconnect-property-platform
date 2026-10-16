@@ -1,0 +1,817 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion — HomeConnect Bénin
+{% endblock %}
+
+{% block stylesheets %}
+	<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+	<style>
+		:root {
+			--wine: #6c5ce7;
+			--wine-dark: #5b4bc4;
+			--wine-mid: #8275e9;
+			--wine-light: #a29bfe;
+			--wine-pale: rgba(108, 92, 231, 0.1);
+			--wine-mist: rgba(108, 92, 231, 0.2);
+			--black: #ffffff;
+			--black-2: #e0e0e0;
+			--gray-dark: #d1d1d1;
+			--gray-mid: #a0a0a0;
+			--gray-light: #707070;
+			--gray-bg: #0D0D1A;
+			--gray-line: rgba(255,255,255,0.1);
+			--white: #12121F;
+			--accent: #ff7675;
+			--admin: #6c5ce7;
+			--c-surface: #1C1C2E; --c-white: #ffffff; --c-border: rgba(255,255,255,0.07); --c-indigo-pale: rgba(108, 92, 231, 0.1);
+		}
+
+		[data-theme="light"] {
+			--black: #1a1a1a;
+			--black-2: #2d3436;
+			--gray-dark: #2d3436;
+			--gray-mid: #636e72;
+			--gray-light: #b2bec3;
+			--gray-bg: #f8f9fa;
+			--gray-line: rgba(0,0,0,0.1);
+			--white: #ffffff;
+			--c-surface: #ffffff; --c-white: #1a1a1a; --c-border: rgba(0,0,0,0.07); --c-indigo-pale: rgba(108, 92, 231, 0.05);
+		}
+
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+	}
+
+	body {
+		font-family: 'Poppins', sans-serif;
+		background: var(--gray-bg);
+		color: var(--black);
+		min-height: 100vh;
+	}
+
+
+
+	/* ── PAGE HERO ── */
+	.page-hero {
+		margin-top: 72px;
+		background: linear-gradient(135deg, var(--wine-dark) 0%, var(--wine) 60%, var(--wine-light) 100%);
+		padding: 48px 5% 52px;
+		position: relative;
+		overflow: hidden;
+	}
+	.page-hero::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: url("data:image/svg+xml, %3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+	}
+	.hero-content {
+		position: relative;
+		z-index: 1;
+	}
+	.hero-breadcrumb {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 12px;
+	}
+	.hero-breadcrumb a {
+		color: rgba(255, 255, 255, 0.7);
+		font-size: 13px;
+		text-decoration: none;
+		transition: color 0.2s;
+	}
+	.hero-breadcrumb a:hover {
+		color: #fff;
+	}
+	.hero-breadcrumb i {
+		color: rgba(255, 255, 255, 0.4);
+		font-size: 10px;
+	}
+	.hero-breadcrumb span {
+		color: rgba(255, 255, 255, 0.95);
+		font-size: 13px;
+		font-weight: 500;
+	}
+	.hero-title {
+		font-size: clamp(24px, 4vw, 36px);
+		font-weight: 800;
+		color: #fff;
+		letter-spacing: -0.5px;
+	}
+	.hero-subtitle {
+		margin-top: 6px;
+		color: rgba(255, 255, 255, 0.75);
+		font-size: 15px;
+	}
+
+	/* ── MAIN LAYOUT ── */
+	.login-section {
+		padding: 60px 5% 80px;
+		display: flex;
+		justify-content: center;
+		align-items: flex-start;
+		gap: 40px;
+	}
+
+	/* ── INFO PANEL ── */
+	.info-panel {
+		flex: 0 0 320px;
+		background: linear-gradient(160deg, var(--wine-dark), var(--wine), var(--wine-mid));
+		border-radius: 20px;
+		padding: 36px 28px;
+		color: #fff;
+		position: relative;
+		overflow: hidden;
+		animation: fadeRight 0.7s ease both;
+	}
+	.info-panel::before {
+		content: '';
+		position: absolute;
+		top: -60px;
+		right: -60px;
+		width: 200px;
+		height: 200px;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.06);
+	}
+	.info-panel::after {
+		content: '';
+		position: absolute;
+		bottom: -40px;
+		left: -40px;
+		width: 160px;
+		height: 160px;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.04);
+	}
+	.info-icon {
+		font-size: 38px;
+		margin-bottom: 18px;
+	}
+	.info-panel h2 {
+		font-size: 20px;
+		font-weight: 800;
+		margin-bottom: 10px;
+		letter-spacing: -0.3px;
+	}
+	.info-panel p {
+		font-size: 13px;
+		color: rgba(255, 255, 255, 0.8);
+		line-height: 1.7;
+	}
+	.info-stats {
+		display: flex;
+		gap: 0;
+		margin: 24px 0;
+	}
+	.stat-item {
+		flex: 1;
+		text-align: center;
+		padding: 0 6px;
+		border-right: 1px solid rgba(255, 255, 255, 0.15);
+	}
+	.stat-item:last-child {
+		border-right: none;
+	}
+	.stat-num {
+		font-size: 20px;
+		font-weight: 800;
+		color: #fff;
+	}
+	.stat-label {
+		font-size: 10px;
+		color: rgba(255, 255, 255, 0.65);
+		margin-top: 2px;
+	}
+	.info-features {
+		list-style: none;
+		margin-top: 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 11px;
+	}
+	.info-features li {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		font-size: 13px;
+		color: rgba(255, 255, 255, 0.85);
+	}
+	.info-features li i {
+		color: var(--wine-mist);
+		font-size: 13px;
+		width: 16px;
+		text-align: center;
+	}
+	.testimonial {
+		margin-top: 24px;
+		background: rgba(255, 255, 255, 0.1);
+		border-radius: 12px;
+		padding: 14px;
+		position: relative;
+		z-index: 1;
+	}
+	.testimonial p {
+		font-size: 12px;
+		color: rgba(255, 255, 255, 0.9);
+		line-height: 1.65;
+		font-style: italic;
+	}
+	.testimonial-author {
+		margin-top: 10px;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+	.testimonial-avatar {
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background: linear-gradient(135deg, var(--wine-light), var(--accent));
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 12px;
+		font-weight: 700;
+		color: #fff;
+		flex-shrink: 0;
+	}
+	.testimonial-author-info .name {
+		font-size: 12px;
+		font-weight: 600;
+		color: #fff;
+	}
+	.testimonial-author-info .role {
+		font-size: 11px;
+		color: rgba(255, 255, 255, 0.6);
+	}
+
+	/* ── FORM CARD ── */
+	.form-card {
+		flex: 0 0 460px;
+		background: var(--white);
+		border-radius: 20px;
+		padding: 40px;
+		box-shadow: 0 4px 40px rgba(123, 29, 46, 0.1);
+		animation: fadeUp 0.7s ease both 0.1s;
+	}
+	.form-card-header {
+		margin-bottom: 28px;
+	}
+	.form-card-header h3 {
+		font-size: 24px;
+		font-weight: 800;
+		color: var(--black);
+		letter-spacing: -0.4px;
+	}
+	.form-card-header p {
+		color: var(--gray-mid);
+		font-size: 14px;
+		margin-top: 4px;
+	}
+
+	/* ── TABS ── */
+	.auth-tabs {
+		display: flex;
+		gap: 4px;
+		background: var(--gray-bg);
+		border-radius: 10px;
+		padding: 4px;
+		margin-bottom: 28px;
+	}
+	.auth-tab {
+		flex: 1;
+		text-align: center;
+		padding: 9px;
+		border-radius: 7px;
+		font-size: 13px;
+		font-weight: 600;
+		cursor: pointer;
+		border: none;
+		background: none;
+		color: var(--gray-mid);
+		transition: all 0.25s;
+		font-family: 'Poppins', sans-serif;
+	}
+	.auth-tab.active {
+		background: #12121F;
+		color: var(--wine);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	}
+	.auth-tab i {
+		margin-right: 6px;
+	}
+
+	/* ── SOCIAL BUTTONS ── */
+	.social-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		gap: 10px;
+		margin-bottom: 22px;
+	}
+	.social-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 7px;
+		padding: 10px 8px;
+		border-radius: 9px;
+		border: 1.5px solid var(--gray-line);
+		background: #12121F;
+		cursor: pointer;
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--gray-dark);
+		transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+		text-decoration: none;
+	}
+	.social-btn:hover {
+		border-color: var(--wine-light);
+		box-shadow: 0 2px 10px rgba(123, 29, 46, 0.1);
+		transform: translateY(-1px);
+	}
+	.fb-icon {
+		color: #1877F2;
+		font-size: 17px;
+	}
+	.tiktok-icon {
+		font-size: 15px;
+		color: var(--black);
+	}
+	.apple-icon {
+		font-size: 17px;
+		color: var(--black);
+	}
+	.linkedin-icon {
+		color: #0A66C2;
+		font-size: 16px;
+	}
+	.whatsapp-icon {
+		color: #25D366;
+		font-size: 17px;
+	}
+
+	/* ── DIVIDER ── */
+	.or-divider {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin-bottom: 22px;
+	}
+	.or-divider::before,
+	.or-divider::after {
+		content: '';
+		flex: 1;
+		height: 1px;
+		background: var(--gray-line);
+	}
+	.or-divider span {
+		font-size: 12px;
+		color: var(--gray-light);
+		font-weight: 500;
+		white-space: nowrap;
+	}
+
+	/* ── FORM FIELDS ── */
+	.field {
+		margin-bottom: 18px;
+	}
+	.field label {
+		display: block;
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--gray-dark);
+		margin-bottom: 6px;
+	}
+	.field label .req {
+		color: var(--accent);
+		margin-left: 2px;
+	}
+	.input-wrap {
+		position: relative;
+	}
+	.input-wrap i.prefix {
+		position: absolute;
+		left: 14px;
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--gray-light);
+		font-size: 15px;
+		pointer-events: none;
+	}
+	.input-wrap input {
+		width: 100%;
+		padding: 11px 14px 11px 40px;
+		border: 1.5px solid var(--gray-line);
+		border-radius: 10px;
+		font-family: 'Poppins', sans-serif;
+		font-size: 14px;
+		color: var(--black);
+		background: var(--gray-bg);
+		outline: none;
+		transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+	}
+	.input-wrap input:focus {
+		border-color: var(--wine);
+		background: #12121F;
+		box-shadow: 0 0 0 3px rgba(123, 29, 46, 0.08);
+	}
+	.input-wrap input::placeholder {
+		color: var(--gray-light);
+	}
+	.input-wrap .toggle-pw {
+		position: absolute;
+		right: 14px;
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--gray-light);
+		cursor: pointer;
+		background: none;
+		border: none;
+		font-size: 15px;
+		transition: color 0.2s;
+	}
+	.input-wrap .toggle-pw:hover {
+		color: var(--wine);
+	}
+
+	/* ── REMEMBER / FORGOT ── */
+	.row-remember {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 22px;
+		margin-top: -4px;
+	}
+	.checkbox-label {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		cursor: pointer;
+		font-size: 13px;
+		color: var(--gray-dark);
+	}
+	.checkbox-label input[type="checkbox"] {
+		accent-color: var(--wine);
+		width: 15px;
+		height: 15px;
+	}
+	.forgot-link {
+		font-size: 13px;
+		color: var(--wine);
+		font-weight: 500;
+		text-decoration: none;
+	}
+	.forgot-link:hover {
+		text-decoration: underline;
+	}
+
+	/* ── SUBMIT BTN ── */
+	.btn-submit {
+		width: 100%;
+		padding: 13px;
+		background: linear-gradient(135deg, var(--wine-dark), var(--wine-light));
+		color: #fff;
+		border: none;
+		border-radius: 10px;
+		font-family: 'Poppins', sans-serif;
+		font-size: 15px;
+		font-weight: 700;
+		cursor: pointer;
+		letter-spacing: 0.3px;
+		transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+		box-shadow: 0 4px 16px rgba(123, 29, 46, 0.35);
+		position: relative;
+		overflow: hidden;
+	}
+	.btn-submit:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 6px 22px rgba(123, 29, 46, 0.45);
+	}
+	.btn-submit:active {
+		transform: translateY(0);
+	}
+	.btn-admin {
+		background: linear-gradient(135deg, var(--admin), #2D5F8A) !important;
+		box-shadow: 0 4px 16px rgba(30, 58, 95, 0.35) !important;
+	}
+
+	/* ── SWITCH LINK ── */
+	.switch-auth {
+		text-align: center;
+		margin-top: 20px;
+		font-size: 13px;
+		color: var(--gray-mid);
+	}
+	.switch-auth a {
+		color: var(--wine);
+		font-weight: 600;
+		text-decoration: none;
+	}
+	.switch-auth a:hover {
+		text-decoration: underline;
+	}
+
+	/* ── ALERT ── */
+	.alert-error {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		background: #FFF0F2;
+		border: 1.5px solid #FCCDD5;
+		border-radius: 10px;
+		padding: 12px 16px;
+		color: var(--accent);
+		font-size: 13px;
+		margin-bottom: 20px;
+	}
+	.alert-success {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		background: #E8F5E9;
+		border: 1.5px solid #A5D6A7;
+		border-radius: 10px;
+		padding: 12px 16px;
+		color: #2E7D32;
+		font-size: 13px;
+		margin-bottom: 20px;
+	}
+	.alert-error i,
+	.alert-success i {
+		margin-top: 1px;
+		flex-shrink: 0;
+	}
+
+	/* ── PANELS ── */
+	.auth-panel {
+		display: none;
+	}
+	.auth-panel.active {
+		display: block;
+	}
+
+	/* ── ANIMATIONS ── */
+	@keyframes fadeUp {
+		from {
+			opacity: 0;
+			transform: translateY(30px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+	@keyframes fadeRight {
+		from {
+			opacity: 0;
+			transform: translateX(-30px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
+
+
+
+	/* ── RESPONSIVE ── */
+	@media(max-width: 900px) {
+		.info-panel {
+			display: none;
+		}
+		.form-card {
+			flex: 0 0 100%;
+			max-width: 500px;
+		}
+		.login-section {
+			padding: 40px 5% 60px;
+		}
+	}
+	@media(max-width: 600px) {
+		.nav-links {
+			display: none;
+			flex-direction: column;
+			position: absolute;
+			top: 72px;
+			left: 0;
+			right: 0;
+			background: #12121F;
+			padding: 20px 5%;
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+		}
+		.nav-links.open {
+			display: flex;
+		}
+		.nav-burger {
+			display: flex;
+		}
+		.social-grid {
+			grid-template-columns: 1fr 1fr;
+		}
+		.form-card {
+			padding: 28px 22px;
+		}
+		.footer-grid {
+			grid-template-columns: 1fr 1fr;
+		}
+	}
+</style>{% endblock %}{% block body %}
+
+{% include 'partials/_navbar.html.twig' %}
+
+<!-- ── PAGE HERO ── -->
+<section class="page-hero">
+	<div class="hero-content">
+		<div class="hero-breadcrumb">
+			<a href="{{ path('app_home') }}">
+				<i class="fa-solid fa-house"></i>
+				{{ 'public.nav.home'|trans|default('Accueil') }}</a>
+			<i class="fa-solid fa-chevron-right"></i>
+			<span>{{ 'public.nav.login'|trans }}</span>
+		</div>
+		<div class="form-header" style="margin-top:20px;">
+			<h1 class="form-title" style="color:#fff; font-size:32px; font-weight:800; margin:0;">{{ 'public.login.title'|trans }}</h1>
+			<p class="form-subtitle" style="color:rgba(255,255,255,0.7); font-size:16px; margin-top:8px;">{{ 'public.login.welcome_sub'|trans }}</p>
+		</div>
+	</div>
+</section>
+
+<!-- ── MAIN ── -->
+<section
+	class="login-section">
+
+	<!-- INFO PANEL (gauche) -->
+	<aside class="info-panel">
+		<div class="info-icon">🏠</div>
+		<h2>{{ 'public.login.info_title'|trans }}</h2>
+		<p>{{ 'public.login.info_desc'|trans }}</p>
+		<div class="info-stats">
+			<div class="stat-item">
+				<div class="stat-num">2 400+</div>
+				<div class="stat-label">{{ 'public.login.stats_active'|trans }}</div>
+			</div>
+			<div class="stat-item">
+				<div class="stat-num">98%</div>
+				<div class="stat-label">{{ 'public.login.stats_satisfaction'|trans }}</div>
+			</div>
+			<div class="stat-item">
+				<div class="stat-num">KYC</div>
+				<div class="stat-label">{{ 'public.login.stats_verified'|trans }}</div>
+			</div>
+		</div>
+		<ul class="info-features">
+			<li>
+				<i class="fa-solid fa-shield-halved"></i>
+				{{ 'public.login.feature_kyc'|trans }}</li>
+			<li>
+				<i class="fa-solid fa-file-signature"></i>
+				{{ 'public.login.feature_contracts'|trans }}</li>
+			<li>
+				<i class="fa-solid fa-mobile-screen-button"></i>
+				{{ 'public.login.feature_payment'|trans }}</li>
+			<li>
+				<i class="fa-solid fa-star"></i>
+				{{ 'public.login.feature_rating'|trans }}</li>
+			<li>
+				<i class="fa-solid fa-headset"></i>
+				{{ 'public.login.feature_support'|trans }}</li>
+		</ul>
+		<div class="testimonial">
+			<p>{{ 'public.login.testimonial_text'|trans }}</p>
+			<div class="testimonial-author">
+				<div class="testimonial-avatar">AK</div>
+				<div class="testimonial-author-info">
+					<div class="name">{{ 'public.login.testimonial_author'|trans }}</div>
+					<div class="role">{{ 'public.login.testimonial_role'|trans }}</div>
+				</div>
+			</div>
+		</div>
+	</aside>
+
+	<!-- FORM CARD (droite) -->
+	<div class="form-card">
+		<div class="form-card-header">
+			<h3>{{ 'public.login.form_title'|trans }}</h3>
+			<p>{{ 'public.login.form_subtitle'|trans }}</p>
+		</div>
+
+		<!-- Messages flash (inscription, etc.) -->
+		{% for msg in app.flashes('success') %}
+			<div class="alert-success" style="margin-bottom:12px;">
+				<i class="fa-solid fa-circle-check"></i>
+				<span>{{ msg }}</span>
+			</div>
+		{% endfor %}
+		{% for msg in app.flashes('error') %}
+			<div class="alert-error" style="margin-bottom:12px;">
+				<i class="fa-solid fa-circle-exclamation"></i>
+				<span>{{ msg }}</span>
+			</div>
+		{% endfor %}
+		{% for msg in app.flashes('warning') %}
+			<div class="alert-error" style="margin-bottom:12px;background:rgba(255,193,7,.1);border-color:rgba(255,193,7,.3);">
+				<i class="fa-solid fa-triangle-exclamation" style="color:#ffc107;"></i>
+				<span style="color:#ffc107;">{{ msg }}</span>
+			</div>
+		{% endfor %}
+
+		<!-- Erreur de connexion -->
+		{% if error %}
+			<div class="alert-error">
+				<i class="fa-solid fa-circle-exclamation"></i>
+				<span>{{ error.messageKey|trans(error.messageData, 'security') }}</span>
+			</div>
+		{% endif %}
+
+		{% if app.user %}
+			<div class="alert-success">
+				<i class="fa-solid fa-circle-check"></i>
+				<span>{{ 'public.login.connected_as'|trans }}
+					<strong>{{ app.user.userIdentifier }}</strong>.
+				</span>
+			</div>
+			{% endif %}
+
+			<form method="post" action="{{ path('app_login') }}">
+				<div class="field">
+					<label for="inputEmail">{{ 'public.login.email'|trans }}</label>
+					<div class="input-wrap">
+						<i class="fa-regular fa-envelope prefix"></i>
+						<input type="email" value="{{ last_username }}" name="email" id="inputEmail" placeholder="exemple@mail.com" required autofocus>
+					</div>
+				</div>
+
+				<div class="field">
+					<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+						<label style="margin-bottom:0;" for="inputPassword">{{ 'public.login.password'|trans }}</label>
+						<a href="#" class="forgot-link" style="font-size:12px;">{{ 'public.login.forgot_password'|trans }}</a>
+					</div>
+					<div class="input-wrap">
+						<i class="fa-solid fa-lock prefix"></i>
+						<input type="password" name="password" id="inputPassword" placeholder="••••••••" autocomplete="current-password" required>
+						<button type="button" class="toggle-pw" onclick="togglePw('inputPassword',this)">
+							<i class="fa-regular fa-eye"></i>
+						</button>
+					</div>
+				</div>
+
+				<input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+				<div class="row-remember">
+					<label class="checkbox-label">
+						<input type="checkbox" name="_remember_me">
+						<span>{{ 'public.login.remember_me'|trans }}</span>
+					</label>
+				</div>
+
+				<button class="btn-submit" type="submit">
+					{{ 'public.login.submit'|trans }} <i class="fa-solid fa-arrow-right" style="margin-left:8px;"></i>
+				</button>
+
+				<div class="switch-auth" style="margin-top:20px; text-align:center;">
+					{{ 'public.login.no_account'|trans }} <a href="{{ path('app_register') }}">{{ 'public.nav.register'|trans }}</a>
+				</div>
+			</form>
+
+		</div>
+		<!-- /form-card -->
+	</section>
+
+	<!-- ── FOOTER ── -->
+{% include 'partials/_footer.html.twig' %}
+
+	<script>
+
+
+// Tabs
+document.querySelectorAll('.auth-tab').forEach(tab => {
+tab.addEventListener('click', () => {
+document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+tab.classList.add('active');
+document.getElementById(tab.dataset.panel).classList.add('active');
+});
+});
+
+// Toggle mot de passe
+function togglePw(id, btn) {
+const input = document.getElementById(id);
+const icon = btn.querySelector('i');
+if (input.type === 'password') {
+input.type = 'text';
+icon.classList.replace('fa-eye', 'fa-eye-slash');
+} else {
+input.type = 'password';
+icon.classList.replace('fa-eye-slash', 'fa-eye');
+}
+}
+	</script>
+
+{% endblock %}

@@ -1,0 +1,228 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'contact.title'|trans }} — HomeConnect Bénin{% endblock %}
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --wine:#6c5ce7;--wine-dark:#5b4bc4;--wine-mid:#8275e9;--wine-light:#a29bfe;
+    --wine-pale:rgba(108, 92, 231, 0.1);--wine-mist:rgba(108, 92, 231, 0.2);
+    --black:#ffffff;--gray-dark:#d1d1d1;
+    --gray-mid:#a0a0a0;--gray-light:#707070;--gray-bg:#12121F;--gray-line:rgba(255,255,255,0.1);
+    --white:#0D0D1A;--accent:#ff7675;--success:#00d2d3;
+    --c-surface: #1C1C2E; --c-white: #ffffff; --c-border: rgba(255,255,255,0.07); --c-indigo-pale: rgba(108, 92, 231, 0.1);
+  }
+  [data-theme="light"] {
+    --black:#1a1a1a;
+    --gray-dark:#2d3436;
+    --gray-mid:#636e72;
+    --gray-light:#b2bec3;
+    --gray-bg:#ffffff;
+    --gray-line:rgba(0,0,0,0.1);
+    --white:#f8f9fa;
+    --c-surface: #ffffff; --c-white: #1a1a1a; --c-border: rgba(0,0,0,0.07); --c-indigo-pale: rgba(108, 92, 231, 0.05);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Poppins',sans-serif;background:var(--white);color:var(--black);min-height:100vh;}
+  .page-hero{margin-top:72px;background:linear-gradient(135deg,var(--wine-dark) 0%,var(--wine) 60%,var(--wine-light) 100%);padding:60px 5% 80px;position:relative;overflow:hidden;}
+  .page-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+  .hero-content{position:relative;z-index:1;}
+  .hero-breadcrumb{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+  .hero-breadcrumb a{color:rgba(255,255,255,.7);font-size:13px;text-decoration:none;}
+  .hero-breadcrumb a:hover{color:#fff;}
+  .hero-breadcrumb i{color:rgba(255,255,255,.4);font-size:10px;}
+  .hero-breadcrumb span{color:rgba(255,255,255,.95);font-size:13px;font-weight:500;}
+  .hero-title{font-size:clamp(32px,5vw,48px);font-weight:800;color:#fff;letter-spacing:-.5px;}
+  .hero-subtitle{margin-top:8px;color:rgba(255,255,255,.8);font-size:16px;max-width:600px;}
+
+  .content-section{padding:60px 5% 80px;}
+  .contact-layout{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:flex-start;max-width:1200px;margin:0 auto;}
+  .contact-info h2{font-size:28px;font-weight:800;color:var(--black);margin-bottom:12px;}
+  .contact-info p{font-size:15px;color:var(--gray-mid);margin-bottom:40px;line-height:1.7;}
+  .contact-method{background:var(--gray-bg);border-radius:14px;padding:24px;margin-bottom:20px;border:1px solid var(--gray-line);transition:all .3s;}
+  .contact-method:hover{border-color:var(--wine-light);box-shadow:0 4px 16px rgba(123,29,46,.1);}
+  .contact-method .icon{width:48px;height:48px;border-radius:12px;background:var(--wine-pale);display:flex;align-items:center;justify-content:center;color:var(--wine);font-size:20px;margin-bottom:12px;}
+  .contact-method h4{font-size:16px;font-weight:700;color:var(--black);margin-bottom:4px;}
+  .contact-method p{font-size:13px;color:var(--gray-mid);margin-bottom:8px;}
+  .contact-method a{color:var(--wine);font-weight:600;text-decoration:none;font-size:14px;}
+  .contact-method a:hover{text-decoration:underline;}
+  .response-time{font-size:12px;color:var(--gray-light);margin-top:8px;font-style:italic;}
+
+  .contact-form-card{background:var(--white);border:1.5px solid var(--gray-line);border-radius:16px;padding:40px;box-shadow:0 4px 40px rgba(123,29,46,.08);}
+  .form-header{margin-bottom:28px;}
+  .form-header h3{font-size:22px;font-weight:800;color:var(--black);margin-bottom:8px;}
+  .form-header p{font-size:13px;color:var(--gray-mid);}
+  .form-group{margin-bottom:18px;}
+  .form-group label{display:block;font-size:13px;font-weight:600;color:var(--gray-dark);margin-bottom:6px;}
+  .form-group input,.form-group textarea,.form-group select{width:100%;padding:11px 14px;border:1.5px solid var(--gray-line);border-radius:10px;font-family:'Poppins',sans-serif;font-size:13px;color:var(--black);background:var(--gray-bg);outline:none;transition:border-color .2s,background .2s;resize:vertical;}
+  .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--wine);background:#fff;box-shadow:0 0 0 3px rgba(123,29,46,.08);}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .form-actions{display:flex;gap:10px;margin-top:28px;}
+  .btn-submit{flex:1;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--wine-dark),var(--wine-light));color:#fff;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(123,29,46,.3);transition:all .2s;}
+  .btn-submit:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(123,29,46,.4);}
+  .btn-reset{flex:0 0 auto;padding:12px 24px;border:1.5px solid var(--gray-line);background:#fff;border-radius:10px;color:var(--gray-dark);font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+  .btn-reset:hover{border-color:var(--wine);color:var(--wine);}
+
+  .social-links{margin-top:40px;padding-top:30px;border-top:1px solid var(--gray-line);}
+  .social-links h4{font-size:14px;font-weight:700;color:var(--black);margin-bottom:12px;}
+  .social-list{display:flex;gap:8px;flex-wrap:wrap;}
+  .social-list a{width:40px;height:40px;border-radius:10px;background:var(--gray-bg);border:1.5px solid var(--gray-line);display:flex;align-items:center;justify-content:center;color:var(--wine);font-size:16px;text-decoration:none;transition:all .2s;}
+  .social-list a:hover{background:var(--wine-pale);border-color:var(--wine);}
+
+  footer{background:var(--black);padding:60px 5% 28px;color:rgba(255,255,255,.6);}
+  .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px;}
+  .footer-brand .logo-name{color:#fff;}
+  .footer-brand p{margin-top:14px;font-size:13px;line-height:1.7;color:rgba(255,255,255,.55);max-width:260px;}
+  .footer-socials{display:flex;gap:10px;margin-top:20px;}
+  .footer-socials a{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);font-size:14px;text-decoration:none;transition:background .2s,color .2s;}
+  .footer-socials a:hover{background:var(--wine);color:#fff;}
+  .footer-col h4{font-size:13px;font-weight:700;color:#fff;margin-bottom:16px;letter-spacing:.3px;text-transform:uppercase;}
+  .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
+  .footer-col ul li a{font-size:13px;color:rgba(255,255,255,.5);text-decoration:none;transition:color .2s;}
+  .footer-col ul li a:hover{color:var(--wine-light);}
+  .footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .footer-bottom p{font-size:12px;}
+  .footer-bottom-links{display:flex;gap:20px;}
+  .footer-bottom-links a{font-size:12px;color:rgba(255,255,255,.4);text-decoration:none;}
+  .footer-bottom-links a:hover{color:var(--wine-light);}
+  @media(max-width:900px){.contact-layout{grid-template-columns:1fr;}}.
+  @media(max-width:600px){.nav-links{display:none;}.nav-burger{display:flex;}.form-row{grid-template-columns:1fr;}.footer-grid{grid-template-columns:1fr 1fr;}}
+</style>
+{% endblock %}
+
+{% block body %}
+
+{% include 'partials/_navbar.html.twig' %}
+
+<section class="page-hero">
+  <div class="hero-content">
+    <div class="hero-breadcrumb">
+      <a href="{{ path('app_home') }}"><i class="fa-solid fa-house"></i> {{ 'public.nav.home'|trans|default('Accueil') }}</a>
+      <i class="fa-solid fa-chevron-right"></i>
+      <span>{{ 'public.nav.contact'|trans }}</span>
+    </div>
+    <h1 class="hero-title">{{ 'contact.title'|trans }} 📞</h1>
+    <p class="hero-subtitle">{{ 'contact.subtitle'|trans }}</p>
+  </div>
+</section>
+
+<section class="content-section">
+  <div class="contact-layout">
+    <!-- Colonne gauche : Informations de contact -->
+    <div class="contact-info">
+      <h2>{{ 'contact.methods_title'|trans }}</h2>
+      <p>{{ 'contact.subtitle'|trans }}</p>
+
+      <div class="contact-method">
+        <div class="icon"><i class="fa-solid fa-envelope"></i></div>
+        <h4>{{ 'contact.method_email'|trans }}</h4>
+        <p>{{ 'public.login.form_subtitle'|trans|default('Email') }}</p>
+        <a href="mailto:contact@immosecure.bj">contact@immosecure.bj</a>
+        <p class="response-time">⏱️ Réponse dans les 24h</p>
+      </div>
+
+      <div class="contact-method">
+        <div class="icon"><i class="fa-solid fa-phone"></i></div>
+        <h4>{{ 'contact.method_phone'|trans }}</h4>
+        <p>Support prioritaire</p>
+        <a href="tel:+22997000000">+229 97 00 00 00</a>
+        <p class="response-time">⏱️ Lun-Ven 8h-18h (GMT+1)</p>
+      </div>
+
+      <div class="contact-method">
+        <div class="icon"><i class="fa-brands fa-whatsapp"></i></div>
+        <h4>{{ 'contact.method_whatsapp'|trans }}</h4>
+        <p>Chat instantané</p>
+        <a href="https://wa.me/22997000000" target="_blank">+229 97 00 00 00</a>
+        <p class="response-time">⏱️ Réponse en moins d'1h</p>
+      </div>
+
+      <div class="contact-method">
+        <div class="icon"><i class="fa-solid fa-location-dot"></i></div>
+        <h4>{{ 'contact.method_visit'|trans }}</h4>
+        <p>Bureau à Cotonou</p>
+        <a href="#">Voir notre adresse</a>
+        <p class="response-time">📍 Quartier du Plateau</p>
+      </div>
+
+      <div class="social-links">
+        <h4>Suivez-nous</h4>
+        <div class="social-list">
+          <a href="#" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+          <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+          <a href="#" title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+          <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne droite : Formulaire de contact -->
+    <div class="contact-form-card">
+      <div class="form-header">
+        <h3>{{ 'contact.form_title'|trans }}</h3>
+        <p>{{ 'contact.form_sub'|trans }}</p>
+      </div>
+
+      <form method="POST" action="#">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fname">Prénom *</label>
+            <input type="text" id="fname" name="firstname" required>
+          </div>
+          <div class="form-group">
+            <label for="lname">Nom *</label>
+            <input type="text" id="lname" name="lastname" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Adresse email *</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Téléphone</label>
+          <input type="tel" id="phone" name="phone" placeholder="+229 97 00 00 00">
+        </div>
+
+        <div class="form-group">
+          <label for="subject">Objet *</label>
+          <select id="subject" name="subject" required>
+            <option value="">-- Sélectionnez un sujet --</option>
+            <option value="general">Question générale</option>
+            <option value="technical">Problème technique</option>
+            <option value="billing">Question de facturation</option>
+            <option value="kyc">Vérification KYC</option>
+            <option value="partnership">Partenariat</option>
+            <option value="other">Autre</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="message">Message *</label>
+          <textarea id="message" name="message" rows="5" placeholder="Dites-nous comment nous pouvons vous aider..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" name="privacy" required style="width:auto;">
+            <span style="font-size:12px;">J'accepte la <a href="#" style="color:var(--wine);text-decoration:none;">politique de confidentialité</a></span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-submit">{{ 'contact.form_btn'|trans }}</button>
+          <button type="reset" class="btn-reset">Réinitialiser</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+{% include 'partials/_footer.html.twig' %}
+
+
+{% endblock %}

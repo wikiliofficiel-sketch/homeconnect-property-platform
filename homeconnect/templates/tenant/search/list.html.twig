@@ -1,0 +1,193 @@
+{% extends 'tenant/base.html.twig' %}
+
+{% block tenant_content %}
+<div class="search-container">
+    <div class="search-hero mb-5 p-5 rounded-5 text-white shadow-lg" style="background: linear-gradient(135deg, #4834d4 0%, #686de0 100%);">
+        <h1 class="display-5 fw-bold mb-3">Votre nouvelle adresse commence ici</h1>
+        <p class="fs-5 opacity-75">Explorez les meilleures offres immobilières sélectionnées pour vous au Bénin.</p>
+    </div>
+
+    <div class="row">
+        <!-- Sidebar Filtres Dynamiques -->
+        <div class="col-lg-3">
+            <div class="filters-sidebar bg-white p-4 rounded-4 shadow-sm border mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold m-0 text-dark">Filtres</h4>
+                    <button type="button" class="btn btn-link btn-sm text-decoration-none fw-bold p-0" onclick="resetFilters()">Réinitialiser</button>
+                </div>
+
+                <form id="filterForm">
+                    <!-- Ville Dropdown -->
+                    <div class="filter-section mb-4">
+                        <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Localisation</label>
+                        <select class="form-select rounded-pill border-light bg-light py-2 px-3" name="ville">
+                            <option value="">Toutes les villes</option>
+                            <option>Cotonou</option>
+                            <option>Porto-Novo</option>
+                            <option>Parakou</option>
+                            <option>Abomey-Calavi</option>
+                        </select>
+                    </div>
+
+                    <!-- Type Checkboxes -->
+                    <div class="filter-section mb-4">
+                        <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Type de bien</label>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="type[]" value="appartement" id="t1" checked>
+                                <label class="form-check-label small" for="t1">Appartement</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="type[]" value="villa" id="t2">
+                                <label class="form-check-label small" for="t2">Villa</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="type[]" value="studio" id="t3">
+                                <label class="form-check-label small" for="t3">Studio / Chambre</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Price Slider (Simulated with Input Range) -->
+                    <div class="filter-section mb-4">
+                        <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Budget Max (FCFA)</label>
+                        <input type="range" class="form-range" min="20000" max="1000000" step="5000" id="budgetRange" oninput="updateBudgetText(this.value)">
+                        <div class="d-flex justify-content-between mt-2">
+                            <span class="small text-muted">20k</span>
+                            <span class="fw-bold text-primary" id="budgetValue">250 000 FCFA</span>
+                            <span class="small text-muted">1M</span>
+                        </div>
+                    </div>
+
+                    <!-- Équipements Checkboxes -->
+                    <div class="filter-section mb-4">
+                        <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Équipements</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="form-check border rounded-pill p-2 ps-5 small bg-light-hover">
+                                    <input class="form-check-input ms-2" type="checkbox" id="e1" checked>
+                                    <label class="form-check-label" for="e1">Wi-Fi</label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-check border rounded-pill p-2 ps-5 small bg-light-hover">
+                                    <input class="form-check-input ms-2" type="checkbox" id="e2">
+                                    <label class="form-check-label" for="e2">Clim</label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-check border rounded-pill p-2 ps-5 small bg-light-hover">
+                                    <input class="form-check-input ms-2" type="checkbox" id="e3">
+                                    <label class="form-check-label" for="e3">Parking</label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-check border rounded-pill p-2 ps-5 small bg-light-hover">
+                                    <input class="form-check-input ms-2" type="checkbox" id="e4">
+                                    <label class="form-check-label" for="e4">Piscine</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm mt-3">Appliquer les filtres</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Résultats en Grille (3 Colonnes) -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <p class="text-muted mb-0"><strong class="text-dark">{{ properties|length|default(24) }}</strong> biens disponibles trouvés</p>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="small text-muted">Trier par:</span>
+                    <select class="form-select form-select-sm border-0 bg-white shadow-sm rounded-pill" style="width: 150px;">
+                        <option>Prix croissant</option>
+                        <option>Prix décroissant</option>
+                        <option>Plus récents</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                {% for property in properties %}
+                    <div class="col-md-6 col-xl-4">
+                        <div class="property-grid-card bg-white rounded-5 shadow-sm border overflow-hidden h-100 position-relative">
+                            <!-- Image -->
+                            <div class="position-relative" style="height: 220px; overflow: hidden;">
+                                {% if property.images and property.images|length > 0 %}
+                                    {% set imgPath = property.images[0] %}
+                                    <img src="{{ (imgPath starts with 'http' or imgPath starts with 'data:') ? imgPath : asset('uploads/properties/' ~ imgPath) }}" class="w-100 h-100" style="object-fit: cover;" alt="{{ property.title }}">
+                                {% else %}
+                                    <div class="w-100 h-100 d-flex align-items-center justify-content-center text-secondary" style="background: rgba(255,255,255,0.05);">
+                                        <i class="fa-solid fa-house fs-1 opacity-25"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="position-absolute top-0 start-0 m-3 d-flex flex-column gap-2">
+                                    <span class="badge bg-success shadow-sm rounded-pill px-3 py-2 fw-bold"><i class="fa-solid fa-check-circle"></i> Vérifié</span>
+                                </div>
+                                <button class="btn btn-white rounded-circle shadow-sm position-absolute top-0 end-0 m-3 border-0" style="width: 35px; height: 35px;"><i class="fa-solid fa-heart text-danger"></i></button>
+                            </div>
+
+                            <!-- Contenu -->
+                            <div class="card-body p-4">
+                                <div class="h5 fw-bold text-dark mb-1 text-truncate">{{ property.title }}</div>
+                                <p class="text-muted small mb-3"><i class="fa-solid fa-location-dot"></i> {{ property.city }}, Bénin</p>
+                                
+                                <div class="d-flex gap-3 border-top pt-3 mb-4">
+                                    <div class="small"><i class="fa-solid fa-bed text-primary"></i> {{ property.bedrooms }} ch.</div>
+                                    <div class="small"><i class="fa-solid fa-bath text-primary"></i> 2 sdb.</div>
+                                    <div class="small"><i class="fa-solid fa-ruler text-primary"></i> {{ property.surface }} m²</div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="price fw-bold text-primary fs-5">{{ property.pricePerMonth|number_format(0, ',', ' ') }} <small class="fw-normal text-muted" style="font-size: 0.7rem;">FCFA/m</small></div>
+                                    <a href="{{ path('app_tenant_property_show', {id: property.id}) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold">Détails</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination Modernisée -->
+            <nav class="mt-5 pt-4">
+                <ul class="pagination justify-content-center gap-2">
+                    <li class="page-item"><a class="page-link rounded-circle border-0 bg-light" href="#"><i class="fa-solid fa-chevron-left"></i></a></li>
+                    <li class="page-item active"><a class="page-link rounded-circle border-0" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link rounded-circle border-0 bg-light" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link rounded-circle border-0 bg-light" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link rounded-circle border-0 bg-light" href="#"><i class="fa-solid fa-chevron-right"></i></a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateBudgetText(val) {
+    document.getElementById('budgetValue').innerText = new Intl.NumberFormat().format(val) + ' FCFA';
+}
+
+function resetFilters() {
+    document.getElementById('filterForm').reset();
+    updateBudgetText(document.getElementById('budgetRange').value);
+    // Optionnel: Recharger les résultats ou décocher les classes "active"
+}
+</script>
+
+<style>
+.filters-sidebar { position: sticky; top: 20px; }
+.bg-light-hover:hover { background: #f8f9fa !important; border-color: #686de0 !important; cursor: pointer; }
+
+.property-grid-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.property-grid-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important; border-color: #686de0 !important; }
+
+.page-link { color: #686de0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.page-item.active .page-link { background: #686de0 !important; color: white; }
+.page-link:hover { background: #e0e0ff !important; }
+
+.form-range::-webkit-slider-thumb { background: #686de0; }
+.form-range::-moz-range-thumb { background: #686de0; }
+</style>
+{% endblock %}

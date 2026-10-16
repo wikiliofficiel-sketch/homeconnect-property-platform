@@ -1,0 +1,297 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'public.pricing.title'|trans }} — HomeConnect Bénin{% endblock %}
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --wine:#6c5ce7;--wine-dark:#5b4bc4;--wine-mid:#8275e9;--wine-light:#a29bfe;
+    --wine-pale:rgba(108, 92, 231, 0.1);--wine-mist:rgba(108, 92, 231, 0.2);
+    --black:#ffffff;--gray-dark:#d1d1d1;
+    --gray-mid:#a0a0a0;--gray-light:#707070;--gray-bg:#12121F;--gray-line:rgba(255,255,255,0.1);
+    --white:#0D0D1A;--accent:#ff7675;--success:#00d2d3;
+    --c-surface: #1C1C2E; --c-white: #ffffff; --c-border: rgba(255,255,255,0.07); --c-indigo-pale: rgba(108, 92, 231, 0.1);
+  }
+  [data-theme="light"] {
+    --black:#1a1a1a;
+    --gray-dark:#2d3436;
+    --gray-mid:#636e72;
+    --gray-light:#b2bec3;
+    --gray-bg:#ffffff;
+    --gray-line:rgba(0,0,0,0.1);
+    --white:#f8f9fa;
+    --c-surface: #ffffff; --c-white: #1a1a1a; --c-border: rgba(0,0,0,0.07); --c-indigo-pale: rgba(108, 92, 231, 0.05);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Poppins',sans-serif;background:var(--white);color:var(--black);min-height:100vh;}
+  .page-hero{margin-top:72px;background:linear-gradient(135deg,var(--wine-dark) 0%,var(--wine) 60%,var(--wine-light) 100%);padding:60px 5% 80px;position:relative;overflow:hidden;}
+  .page-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+  .hero-content{position:relative;z-index:1;}
+  .hero-breadcrumb{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+  .hero-breadcrumb a{color:rgba(255,255,255,.7);font-size:13px;text-decoration:none;}
+  .hero-breadcrumb a:hover{color:#fff;}
+  .hero-breadcrumb i{color:rgba(255,255,255,.4);font-size:10px;}
+  .hero-breadcrumb span{color:rgba(255,255,255,.95);font-size:13px;font-weight:500;}
+  .hero-title{font-size:clamp(32px,5vw,48px);font-weight:800;color:#fff;letter-spacing:-.5px;}
+  .hero-subtitle{margin-top:8px;color:rgba(255,255,255,.8);font-size:16px;max-width:600px;}
+
+  .content-section{padding:60px 5% 80px;}
+  .section-header{margin-bottom:50px;text-align:center;}
+  .section-header h2{font-size:clamp(28px,4vw,40px);font-weight:800;color:var(--black);letter-spacing:-.5px;margin-bottom:12px;}
+  .section-header p{font-size:16px;color:var(--gray-mid);max-width:600px;margin:0 auto;}
+
+  .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px;max-width:1200px;margin:0 auto;}
+  .pricing-card{background:var(--white);border:1.5px solid var(--gray-line);border-radius:16px;padding:32px 24px;position:relative;transition:all .3s;display:flex;flex-direction:column;}
+  .pricing-card:hover{border-color:var(--wine-light);box-shadow:0 12px 40px rgba(123,29,46,.15);transform:translateY(-4px);}
+  .pricing-card.featured{border-color:var(--wine);box-shadow:0 8px 32px rgba(123,29,46,.2);background:var(--wine-pale);}
+  .featured-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--wine);color:#fff;padding:4px 16px;border-radius:20px;font-size:12px;font-weight:700;}
+  .price-name{font-size:18px;font-weight:700;color:var(--black);margin-bottom:8px;}
+  .price-desc{font-size:13px;color:var(--gray-mid);margin-bottom:20px;min-height:40px;}
+  .price-amount{font-size:32px;font-weight:800;color:var(--wine);margin-bottom:4px;}
+  .price-period{font-size:12px;color:var(--gray-mid);margin-bottom:24px;}
+  .price-features{list-style:none;margin-bottom:28px;display:flex;flex-direction:column;gap:10px;flex-grow:1;}
+  .price-features li{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--gray-dark);}
+  .price-features li i{color:var(--success);width:16px;}
+  .price-features li.unavailable{color:var(--gray-light);}
+  .price-features li.unavailable i{color:var(--gray-light);}
+  .price-btn{padding:12px 24px;border:none;border-radius:10px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;width:100%;}
+  .price-btn-primary{background:linear-gradient(135deg,var(--wine-dark),var(--wine-light));color:#fff;box-shadow:0 4px 16px rgba(123,29,46,.3);}
+  .price-btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(123,29,46,.4);}
+  .price-btn-secondary{background:var(--gray-bg);color:var(--wine);border:1.5px solid var(--gray-line);}
+  .price-btn-secondary:hover{border-color:var(--wine);background:#fff;}
+
+  .comparison-table{width:100%;border-collapse:collapse;margin-top:40px;}
+  .comparison-table th{background:var(--gray-bg);padding:16px;text-align:left;font-weight:700;color:var(--black);border-bottom:2px solid var(--gray-line);}
+  .comparison-table td{padding:12px 16px;border-bottom:1px solid var(--gray-line);color:var(--gray-dark);font-size:13px;}
+  .comparison-table tr:hover{background:var(--wine-pale);}
+  .comparison-table i.fa-check{color:var(--success);}
+  .comparison-table i.fa-times{color:var(--accent);}
+
+  .faq-section{background:var(--gray-bg);border-radius:16px;padding:40px;margin-top:60px;}
+  .faq-section h3{font-size:22px;font-weight:800;color:var(--black);margin-bottom:24px;}
+  .faq-item{background:#fff;border-radius:10px;margin-bottom:12px;overflow:hidden;}
+  .faq-header{padding:16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:#fff;transition:background .2s;}
+  .faq-header:hover{background:var(--wine-pale);}
+  .faq-header h4{font-size:14px;font-weight:600;color:var(--black);}
+  .faq-header i{color:var(--gray-mid);transition:transform .2s;}
+  .faq-item.open .faq-header i{transform:rotate(180deg);color:var(--wine);}
+  .faq-content{display:none;padding:0 16px 16px;color:var(--gray-mid);font-size:13px;line-height:1.7;}
+  .faq-item.open .faq-content{display:block;}
+
+  footer{background:var(--black);padding:60px 5% 28px;color:rgba(255,255,255,.6);}
+  .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px;}
+  .footer-brand .logo-name{color:#fff;}
+  .footer-brand p{margin-top:14px;font-size:13px;line-height:1.7;color:rgba(255,255,255,.55);max-width:260px;}
+  .footer-socials{display:flex;gap:10px;margin-top:20px;}
+  .footer-socials a{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);font-size:14px;text-decoration:none;transition:background .2s,color .2s;}
+  .footer-socials a:hover{background:var(--wine);color:#fff;}
+  .footer-col h4{font-size:13px;font-weight:700;color:#fff;margin-bottom:16px;letter-spacing:.3px;text-transform:uppercase;}
+  .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
+  .footer-col ul li a{font-size:13px;color:rgba(255,255,255,.5);text-decoration:none;transition:color .2s;}
+  .footer-col ul li a:hover{color:var(--wine-light);}
+  .footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .footer-bottom p{font-size:12px;}
+  .footer-bottom-links{display:flex;gap:20px;}
+  .footer-bottom-links a{font-size:12px;color:rgba(255,255,255,.4);text-decoration:none;}
+  .footer-bottom-links a:hover{color:var(--wine-light);}
+  @media(max-width:600px){.nav-links{display:none;}.nav-burger{display:flex;}.footer-grid{grid-template-columns:1fr 1fr;}}
+</style>
+{% endblock %}
+
+{% block body %}
+
+{% include 'partials/_navbar.html.twig' %}
+
+<section class="page-hero">
+  <div class="hero-content">
+    <div class="hero-breadcrumb">
+      <a href="{{ path('app_home') }}"><i class="fa-solid fa-house"></i> {{ 'public.nav.home'|trans|default('Accueil') }}</a>
+      <i class="fa-solid fa-chevron-right"></i>
+      <span>{{ 'public.pricing.title'|trans }}</span>
+    </div>
+    <h1 class="hero-title">{{ 'public.pricing.title'|trans }} 💰</h1>
+    <p class="hero-subtitle">{{ 'public.pricing.subtitle'|trans }}</p>
+  </div>
+</section>
+
+<section class="content-section">
+  <div class="section-header">
+    <h2>{{ 'public.pricing.header'|trans }}</h2>
+    <p>{{ 'public.pricing.sub'|trans }}</p>
+  </div>
+
+  <div class="pricing-grid">
+    <!-- Gratuit -->
+    <div class="pricing-card">
+      <div class="price-name">💚 {{ 'public.pricing.plan1_name'|trans }}</div>
+      <p class="price-desc">{{ 'public.pricing.plan1_desc'|trans }}</p>
+      <div class="price-amount">0 XOF</div>
+      <div class="price-period">{{ 'public.pricing.plan1_period'|trans }}</div>
+      <ul class="price-features">
+        <li><i class="fa-solid fa-check"></i> Profil illimité</li>
+        <li><i class="fa-solid fa-check"></i> Annonces illimitées</li>
+        <li><i class="fa-solid fa-check"></i> 5 candidatures/mois</li>
+        <li><i class="fa-solid fa-check"></i> Chat basique</li>
+        <li class="unavailable"><i class="fa-solid fa-times"></i> Mise en avant</li>
+        <li class="unavailable"><i class="fa-solid fa-times"></i> Statistiques avancées</li>
+      </ul>
+      <button class="price-btn price-btn-secondary">{{ 'public.pricing.btn_choice'|trans }}</button>
+    </div>
+
+    <!-- Premium -->
+    <div class="pricing-card featured">
+      <div class="featured-badge">⭐ POPULAIRE</div>
+      <div class="price-name">🚀 {{ 'public.pricing.plan2_name'|trans }}</div>
+      <p class="price-desc">{{ 'public.pricing.plan2_desc'|trans }}</p>
+      <div class="price-amount">9 999 XOF</div>
+      <div class="price-period">{{ 'public.pricing.plan2_period'|trans }}</div>
+      <ul class="price-features">
+        <li><i class="fa-solid fa-check"></i> Tout du plan Gratuit</li>
+        <li><i class="fa-solid fa-check"></i> 50 candidatures/mois</li>
+        <li><i class="fa-solid fa-check"></i> Chat prioritaire 24/7</li>
+        <li><i class="fa-solid fa-check"></i> 10 mises en avant/mois</li>
+        <li><i class="fa-solid fa-check"></i> Statistiques détaillées</li>
+        <li><i class="fa-solid fa-check"></i> Badge "Vérifié Premium"</li>
+      </ul>
+      <button class="price-btn price-btn-primary" onclick="location.href='{{ path('app_register') }}'">{{ 'public.pricing.btn_activate'|trans }}</button>
+    </div>
+
+    <!-- Professionnel -->
+    <div class="pricing-card">
+      <div class="price-name">🏢 {{ 'public.pricing.plan3_name'|trans }}</div>
+      <p class="price-desc">{{ 'public.pricing.plan3_desc'|trans }}</p>
+      <div class="price-amount">49 999 XOF</div>
+      <div class="price-period">{{ 'public.pricing.plan3_period'|trans }}</div>
+      <ul class="price-features">
+        <li><i class="fa-solid fa-check"></i> Tout du plan Premium</li>
+        <li><i class="fa-solid fa-check"></i> Annonces illimitées</li>
+        <li><i class="fa-solid fa-check"></i> Candidatures illimitées</li>
+        <li><i class="fa-solid fa-check"></i> API pour intégration</li>
+        <li><i class="fa-solid fa-check"></i> Support dédié</li>
+        <li><i class="fa-solid fa-check"></i> Portail partenaire</li>
+      </ul>
+      <button class="price-btn price-btn-secondary">{{ 'public.pricing.btn_contact'|trans }}</button>
+    </div>
+  </div>
+</section>
+
+<section class="content-section">
+  <h2 style="font-size:28px;font-weight:800;margin-bottom:30px;text-align:center;color:var(--black);">Comparaison détaillée</h2>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Fonctionnalité</th>
+        <th>Gratuit</th>
+        <th>Premium</th>
+        <th>Professionnel</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Annonces/mois</strong></td>
+        <td><i class="fa-solid fa-check"></i> Illimitées</td>
+        <td><i class="fa-solid fa-check"></i> Illimitées</td>
+        <td><i class="fa-solid fa-check"></i> Illimitées</td>
+      </tr>
+      <tr>
+        <td><strong>Candidatures/mois</strong></td>
+        <td>5</td>
+        <td>50</td>
+        <td>Illimitées</td>
+      </tr>
+      <tr>
+        <td><strong>Mises en avant</strong></td>
+        <td><i class="fa-solid fa-times"></i></td>
+        <td><i class="fa-solid fa-check"></i> 10/mois</td>
+        <td><i class="fa-solid fa-check"></i> Illimitées</td>
+      </tr>
+      <tr>
+        <td><strong>Chat & support</strong></td>
+        <td>Basique</td>
+        <td>24/7 prioritaire</td>
+        <td>Dédié</td>
+      </tr>
+      <tr>
+        <td><strong>Statistiques</strong></td>
+        <td><i class="fa-solid fa-times"></i></td>
+        <td><i class="fa-solid fa-check"></i> Avancées</td>
+        <td><i class="fa-solid fa-check"></i> Complètes</td>
+      </tr>
+      <tr>
+        <td><strong>API & intégration</strong></td>
+        <td><i class="fa-solid fa-times"></i></td>
+        <td><i class="fa-solid fa-times"></i></td>
+        <td><i class="fa-solid fa-check"></i> Oui</td>
+      </tr>
+      <tr>
+        <td><strong>Badge de confiance</strong></td>
+        <td><i class="fa-solid fa-times"></i></td>
+        <td><i class="fa-solid fa-check"></i> Vérifié</td>
+        <td><i class="fa-solid fa-check"></i> Premium</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="content-section">
+  <div class="faq-section">
+    <h3>Questions fréquentes</h3>
+
+    <div class="faq-item">
+      <div class="faq-header" onclick="this.parentElement.classList.toggle('open')">
+        <h4>Puis-je changer d'offre à tout moment ?</h4>
+        <i class="fa-solid fa-chevron-down"></i>
+      </div>
+      <div class="faq-content">
+        Oui, vous pouvez upgrader ou downgrader votre abonnement à tout moment. Les modifications prennent effet immédiatement et vous serez facturé au prorata.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-header" onclick="this.parentElement.classList.toggle('open')">
+        <h4>Est-ce qu'il y a des frais cachés ?</h4>
+        <h4>Non, jamais. Nos tarifs incluent tout. Les seules charges additionnelles sont les frais de paiement mobiles (MTN/Moov) selon votre opérateur.</h4>
+      </div>
+      <div class="faq-content">
+        La transparence est l'une de nos valeurs fondamentales. Vous voyez toujours le prix final avant de payer.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-header" onclick="this.parentElement.classList.toggle('open')">
+        <h4>Puis-je résilier mon abonnement ?</h4>
+        <i class="fa-solid fa-chevron-down"></i>
+      </div>
+      <div class="faq-content">
+        Bien sûr. Vous pouvez résilier votre abonnement à tout moment sans pénalité. Vous conserverez l'accès jusqu'à la fin de votre période de facturation.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-header" onclick="this.parentElement.classList.toggle('open')">
+        <h4>Comment fonctionnent les mises en avant ?</h4>
+        <i class="fa-solid fa-chevron-down"></i>
+      </div>
+      <div class="faq-content">
+        Votre annonce remonte en haut des résultats de recherche pendant 7 jours. Parfait pour attirer plus d'attention sur vos biens premium !
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-header" onclick="this.parentElement.classList.toggle('open')">
+        <h4>Les entreprises ont-elles des tarifs spéciaux ?</h4>
+        <i class="fa-solid fa-chevron-down"></i>
+      </div>
+      <div class="faq-content">
+        Oui ! Nous proposons des tarifs dégressifs pour les agences immobilières et les bailleurs importants. Contactez-nous pour une devis personnalisé.
+      </div>
+    </div>
+  </div>
+</section>
+
+{% include 'partials/_footer.html.twig' %}
+
+
+{% endblock %}

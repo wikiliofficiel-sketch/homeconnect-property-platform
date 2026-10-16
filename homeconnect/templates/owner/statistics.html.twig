@@ -1,0 +1,363 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Statistiques - Espace Propriétaire{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active" style="color: var(--c-text);">Statistiques</li>
+{% endblock %}
+
+{% block content %}
+<div class="stats-wrap">
+
+    {# ── En-tête ──────────────────────────────────────────────────── #}
+    <div class="d-flex justify-content-between align-items-start mb-5 flex-wrap gap-3">
+        <div>
+            <h1 style="font-family:var(--f-serif); font-size:2rem; color:var(--c-text); margin:0 0 4px;">
+                <i class="fa-solid fa-chart-line me-2" style="color:var(--c-primary);"></i>Statistiques
+            </h1>
+            <p style="color:var(--c-text-muted); font-size:14px; margin:0;">
+                Analysez les performances de vos {{ properties|length }} bien(s)
+            </p>
+        </div>
+        <select class="stats-select" id="timeRange">
+            <option value="7">7 derniers jours</option>
+            <option value="30" selected>30 derniers jours</option>
+            <option value="90">3 derniers mois</option>
+            <option value="365">Cette année</option>
+        </select>
+    </div>
+
+    {# ── KPIs ─────────────────────────────────────────────────────── #}
+    <div class="kpi-grid mb-5">
+
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(102,126,234,0.15); color:#667eea;">
+                <i class="fa-solid fa-eye"></i>
+            </div>
+            <div class="kpi-body">
+                <div class="kpi-label">Vues totales</div>
+                <div class="kpi-value">{{ totalViews|number_format(0, ',', ' ') }}</div>
+                <div class="kpi-sub">
+                    <i class="fa-solid fa-building me-1"></i>{{ properties|length }} bien(s) actif(s)
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(0,230,118,0.12); color:#00e676;">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="kpi-body">
+                <div class="kpi-label">Taux de conversion</div>
+                <div class="kpi-value">{{ conversionRate }}%</div>
+                <div class="kpi-sub {{ conversionRate > 3 ? 'kpi-sub-good' : '' }}">
+                    <i class="fa-solid fa-{{ conversionRate > 3 ? 'arrow-trend-up' : 'minus' }} me-1"></i>
+                    {{ totalApps }} candidature(s)
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(255,193,7,0.12); color:#ffc107;">
+                <i class="fa-solid fa-sack-dollar"></i>
+            </div>
+            <div class="kpi-body">
+                <div class="kpi-label">Revenus actifs</div>
+                <div class="kpi-value">{{ totalRevenue|number_format(0, ',', ' ') }} <span style="font-size:14px; font-weight:500; color:var(--c-text-muted);">FCFA</span></div>
+                <div class="kpi-sub">
+                    <i class="fa-solid fa-house me-1"></i>Locations en cours
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {# ── Graphiques ───────────────────────────────────────────────── #}
+    <div class="charts-grid mb-5">
+
+        <div class="chart-card chart-large">
+            <div class="chart-head">
+                <i class="fa-solid fa-chart-area me-2" style="color:var(--c-primary);"></i>
+                Évolution des Vues & Candidatures
+            </div>
+            <div class="chart-body">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-head">
+                <i class="fa-solid fa-chart-pie me-2" style="color:#8B5CF6;"></i>
+                Performances par bien
+            </div>
+            <div class="chart-body" style="display:flex; align-items:center; justify-content:center;">
+                <canvas id="propertyDoughnut"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    {# ── Tableau biens ────────────────────────────────────────────── #}
+    {% if properties|length > 0 %}
+    <div class="chart-card mb-5">
+        <div class="chart-head">
+            <i class="fa-solid fa-table me-2" style="color:var(--c-secondary,#00D2FF);"></i>
+            Détail par bien
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>Bien</th>
+                        <th>Statut</th>
+                        <th>Vues</th>
+                        <th>Candidatures</th>
+                        <th>Locations</th>
+                        <th>Loyer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prop in properties %}
+                    <tr>
+                        <td>
+                            <div style="font-weight:600; color:var(--c-text);">{{ prop.title|slice(0,32) }}{% if prop.title|length > 32 %}…{% endif %}</div>
+                            <div style="font-size:12px; color:var(--c-text-muted);">{{ prop.city }}</div>
+                        </td>
+                        <td>
+                            {% if prop.statut == 'active' %}
+                                <span class="stat-badge stat-active">Actif</span>
+                            {% elseif prop.statut == 'pending' %}
+                                <span class="stat-badge stat-pending">En attente</span>
+                            {% elseif prop.statut == 'suspended' %}
+                                <span class="stat-badge stat-suspended">Suspendu</span>
+                            {% else %}
+                                <span class="stat-badge stat-draft">{{ prop.statut }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-weight:700; color:var(--c-text);">{{ prop.views }}</td>
+                        <td style="font-weight:700; color:var(--c-text);">{{ prop.applications|length }}</td>
+                        <td style="font-weight:700; color:var(--c-text);">{{ prop.rentals|length }}</td>
+                        <td style="font-weight:700; color:var(--c-primary);">{{ prop.pricePerMonth|number_format(0, ',', ' ') }} <span style="font-size:11px; color:var(--c-text-muted);">FCFA</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Détecter le thème pour Chart.js
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    const textColor   = isDark ? '#94A3B8' : '#64748B';
+    const gridColor   = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    const tooltipBg   = isDark ? '#1E293B' : '#fff';
+    const tooltipText = isDark ? '#E2E8F0' : '#1E293B';
+
+    Chart.defaults.color = textColor;
+
+    // ── Graphique 1 : Ligne + Barres ──────────────────────────────
+    const perfCtx = document.getElementById('performanceChart').getContext('2d');
+    const viewGrad = perfCtx.createLinearGradient(0, 0, 0, 350);
+    viewGrad.addColorStop(0, 'rgba(102,126,234,0.35)');
+    viewGrad.addColorStop(1, 'rgba(102,126,234,0.0)');
+
+    new Chart(perfCtx, {
+        type: 'line',
+        data: {
+            labels: ['S1','S2','S3','S4','S5','S6','S7'],
+            datasets: [
+                {
+                    label: 'Vues',
+                    data: [{{ totalViews > 0 ? [totalViews*0.3, totalViews*0.45, totalViews*0.35, totalViews*0.55, totalViews*0.5, totalViews*0.7, totalViews]|join(',') : '40,60,50,80,70,100,90' }}],
+                    borderColor: '#667eea',
+                    backgroundColor: viewGrad,
+                    borderWidth: 3, tension: 0.4, fill: true,
+                    pointBackgroundColor: isDark ? '#12182B' : '#fff',
+                    pointBorderColor: '#667eea',
+                    pointRadius: 4, yAxisID: 'y'
+                },
+                {
+                    type: 'bar',
+                    label: 'Candidatures',
+                    data: [{{ totalApps > 0 ? [1, totalApps*0.2, totalApps*0.1, totalApps*0.3, totalApps*0.2, totalApps*0.5, totalApps]|join(',') : '1,3,2,5,3,7,4' }}],
+                    backgroundColor: 'rgba(0,230,118,0.6)',
+                    borderRadius: 6, barThickness: 14, yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { usePointStyle: true, boxWidth: 8, padding: 20, color: textColor }
+                },
+                tooltip: {
+                    backgroundColor: tooltipBg,
+                    titleColor: tooltipText, bodyColor: tooltipText,
+                    borderColor: gridColor, borderWidth: 1,
+                    padding: 12, cornerRadius: 10
+                }
+            },
+            scales: {
+                x: { grid: { color: gridColor }, ticks: { color: textColor } },
+                y: {
+                    type: 'linear', position: 'left',
+                    title: { display: true, text: 'Vues', color: textColor },
+                    grid: { color: gridColor }, ticks: { color: textColor }
+                },
+                y1: {
+                    type: 'linear', position: 'right',
+                    title: { display: true, text: 'Candidatures', color: textColor },
+                    grid: { drawOnChartArea: false }, ticks: { color: textColor }
+                }
+            }
+        }
+    });
+
+    // ── Graphique 2 : Doughnut ────────────────────────────────────
+    const doughCtx = document.getElementById('propertyDoughnut').getContext('2d');
+    const propLabels = [{% for p in properties %}'{{ p.title|slice(0,18)|escape("js") }}'{% if not loop.last %},{% endif %}{% endfor %}];
+    const propData   = [{% for p in properties %}{{ p.views }}{% if not loop.last %},{% endif %}{% endfor %}];
+    const propColors = ['#667eea','#8B5CF6','#00D2FF','#FF8C00','#00e676','#FF4B5C','#f59e0b'];
+
+    new Chart(doughCtx, {
+        type: 'doughnut',
+        data: {
+            labels: propLabels.length ? propLabels : ['Aucun bien'],
+            datasets: [{
+                data:            propData.length ? propData : [1],
+                backgroundColor: propData.length ? propColors.slice(0, propData.length) : ['rgba(255,255,255,0.1)'],
+                borderWidth: 0, hoverOffset: 10,
+                borderColor: 'transparent'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            cutout: '68%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { usePointStyle: true, padding: 18, color: textColor, font: { size: 12 } }
+                },
+                tooltip: {
+                    backgroundColor: tooltipBg,
+                    titleColor: tooltipText, bodyColor: tooltipText,
+                    borderColor: gridColor, borderWidth: 1,
+                    padding: 10, cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => ' ' + ctx.label + ' : ' + ctx.parsed + ' vue(s)'
+                    }
+                }
+            }
+        }
+    });
+
+    // Ré-initialiser les graphiques si le thème change
+    document.getElementById('theme-toggle')?.addEventListener('click', () => {
+        setTimeout(() => location.reload(), 350);
+    });
+});
+</script>
+
+<style>
+.stats-wrap { max-width: 1200px; margin: 0 auto; }
+
+/* Select période */
+.stats-select {
+    background: var(--c-surface); border: 1px solid var(--c-border);
+    color: var(--c-text); border-radius: 10px; padding: 9px 16px;
+    font-size: 13px; font-weight: 600; cursor: pointer; outline: none;
+    transition: border-color .2s;
+}
+.stats-select:focus { border-color: var(--c-primary); }
+.stats-select option { background: var(--c-surface); color: var(--c-text); }
+
+/* KPI */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+
+.kpi-card {
+    background: var(--c-surface); border: 1px solid var(--c-border);
+    border-radius: 18px; padding: 24px; display: flex; align-items: center; gap: 20px;
+    transition: transform .25s, border-color .25s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.kpi-card:hover { transform: translateY(-3px); border-color: var(--c-primary); }
+
+.kpi-icon {
+    width: 58px; height: 58px; border-radius: 16px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+}
+.kpi-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--c-text-muted); margin-bottom: 4px;
+}
+.kpi-value {
+    font-size: 2rem; font-weight: 800; color: var(--c-text);
+    line-height: 1.1; margin-bottom: 6px;
+}
+.kpi-sub { font-size: 12px; color: var(--c-text-muted); font-weight: 600; }
+.kpi-sub-good { color: #00e676 !important; }
+
+/* Charts */
+.charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
+.chart-large { grid-column: span 1; }
+
+.chart-card {
+    background: var(--c-surface); border: 1px solid var(--c-border);
+    border-radius: 18px; padding: 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.chart-head {
+    font-size: 14px; font-weight: 700; color: var(--c-text);
+    margin-bottom: 20px; display: flex; align-items: center;
+}
+.chart-body { position: relative; }
+
+/* Tableau */
+.stats-table { width: 100%; border-collapse: collapse; }
+.stats-table th {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--c-text-muted);
+    padding: 10px 14px; border-bottom: 1px solid var(--c-border);
+    white-space: nowrap;
+}
+.stats-table td {
+    padding: 12px 14px; border-bottom: 1px solid var(--c-border);
+    font-size: 13px; color: var(--c-text-muted);
+}
+.stats-table tr:last-child td { border-bottom: none; }
+.stats-table tbody tr:hover td { background: rgba(255,255,255,0.03); }
+
+.stat-badge {
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 50px;
+}
+.stat-active    { background: rgba(0,230,118,0.12); color: #00e676; }
+.stat-pending   { background: rgba(255,193,7,0.12);  color: #ffc107; }
+.stat-suspended { background: rgba(255,75,92,0.12);  color: #ff4b5c; }
+.stat-draft     { background: rgba(148,163,184,0.1); color: #94a3b8; }
+
+/* Light mode */
+[data-theme="light"] .kpi-card    { background: #fff; border-color: #e2e8f0; box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
+[data-theme="light"] .chart-card  { background: #fff; border-color: #e2e8f0; box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
+[data-theme="light"] .stats-select { background: #fff; border-color: #e2e8f0; }
+[data-theme="light"] .stats-table tbody tr:hover td { background: #f8fafc; }
+[data-theme="light"] .stat-active    { background: rgba(22,163,74,0.08); color: #16a34a; }
+[data-theme="light"] .stat-pending   { background: rgba(202,138,4,0.1);  color: #92400e; }
+[data-theme="light"] .stat-suspended { background: rgba(220,38,38,0.08); color: #dc2626; }
+
+@media (max-width: 768px) {
+    .charts-grid { grid-template-columns: 1fr; }
+    .kpi-value { font-size: 1.6rem; }
+}
+</style>
+
+{% endblock %}

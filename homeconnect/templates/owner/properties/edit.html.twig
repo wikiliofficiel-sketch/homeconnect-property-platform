@@ -1,0 +1,235 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Modifier Bien - Espace Propriétaire{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('app_owner_properties') }}">Mes biens</a></li>
+    <li class="breadcrumb-item active">Modifier le bien</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-0">Modifier votre bien</h1>
+            <p class="text-muted small">ID du bien: #{{ property.id }}</p>
+        </div>
+        <div class="badge rounded-pill px-3 py-2 {{ property.statut == 'active' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning' }}">
+            Statut: {{ property.statut|capitalize }}
+        </div>
+    </div>
+
+    <form method="POST" id="form_edit_property" class="row g-4">
+        <!-- Colonne Gauche: Formulaire -->
+        <div class="col-lg-8">
+            <div class="card card-premium p-4 mb-4">
+                <h5 class="fw-bold mb-4 border-bottom pb-2">Informations Générales</h5>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Titre de l'annonce *</label>
+                    <input type="text" name="title" class="form-control rounded-3" value="{{ property.title }}" required>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small">Type de bien *</label>
+                        <select name="propertyType" class="form-select rounded-3" required>
+                            <option value="appartement" {{ property.type == 'appartement' ? 'selected' : '' }}>Appartement</option>
+                            <option value="maison" {{ property.type == 'maison' ? 'selected' : '' }}>Maison / Villa</option>
+                            <option value="studio" {{ property.type == 'studio' ? 'selected' : '' }}>Studio</option>
+                            <option value="chambre" {{ property.type == 'chambre' ? 'selected' : '' }}>Chambre</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small">Surface (m²) *</label>
+                        <input type="number" name="surface" class="form-control rounded-3" value="{{ property.surface }}" required step="0.1">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Description *</label>
+                    <textarea name="description" class="form-control rounded-3" rows="5" required>{{ property.description }}</textarea>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small">Adresse *</label>
+                        <input type="text" name="address" class="form-control rounded-3" value="{{ property.address }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small">Ville *</label>
+                        <input type="text" name="city" class="form-control rounded-3" value="{{ property.city }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small">Code Postal</label>
+                        <input type="text" name="zipCode" class="form-control rounded-3" value="{{ property.zipCode }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-premium p-4">
+                <h5 class="fw-bold mb-4 border-bottom pb-2">Tarification & Détails</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small">Loyer mensuel (FCFA) *</label>
+                        <div class="input-group">
+                            <input type="number" name="pricePerMonth" class="form-control rounded-start-3" value="{{ property.pricePerMonth }}" required>
+                            <span class="input-group-text bg-light">FCFA</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small">Caution (Dépôt de garantie)</label>
+                        <div class="input-group">
+                            <input type="number" name="deposit" class="form-control rounded-start-3" value="{{ property.deposit }}">
+                            <span class="input-group-text bg-light">FCFA</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold small">Pièces *</label>
+                        <input type="number" name="rooms" class="form-control rounded-3" value="{{ property.rooms }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold small">Chambres *</label>
+                        <input type="number" name="bedrooms" class="form-control rounded-3" value="{{ property.bedrooms }}" required>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end gap-3">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="furnished" value="1" {{ property.furnished ? 'checked' : '' }}>
+                            <label class="form-check-label small">Meublé</label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="hasParking" value="1" {{ property.hasParking ? 'checked' : '' }}>
+                            <label class="form-check-label small">Parking</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne Droite: Photos & Actions -->
+        <div class="col-lg-4">
+            <div class="card card-premium p-4 mb-4">
+                <h5 class="fw-bold mb-4 border-bottom pb-2">Gestion des Photos</h5>
+                <p class="text-muted small mb-3">Modifiez les photos de votre bien. (Max 5Mo au total)</p>
+                
+                <div class="upload-zone rounded-4 p-4 text-center border-dashed mb-3" id="photoDropZone">
+                    <input type="file" id="main_photos" accept="image/*" multiple style="display:none;">
+                    <div id="uploadPlaceholder" class="cursor-pointer">
+                        <i class="fa-solid fa-cloud-arrow-up fs-2 text-primary mb-2"></i>
+                        <div class="fw-bold small">Cliquez pour ajouter</div>
+                    </div>
+                    <div class="upload-preview-grid mt-3" id="previewContainer" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                        <!-- JS injected previews -->
+                    </div>
+                </div>
+                <input type="hidden" id="photos_base64" name="photos_base64">
+                <div id="photoErrorMsg" class="text-danger small mt-2" style="display:none;">⚠️ Minimum 3 photos recommandées.</div>
+            </div>
+
+            <div class="card card-premium p-4">
+                <h5 class="fw-bold mb-4 border-bottom pb-2">Actions</h5>
+                <button type="submit" class="btn btn-primary w-100 rounded-pill mb-2 py-2 fw-bold">
+                    <i class="fa-solid fa-save me-2"></i> Enregistrer les modifications
+                </button>
+                <a href="{{ path('app_owner_properties') }}" class="btn btn-outline-secondary w-100 rounded-pill py-2 small">
+                    Annuler
+                </a>
+                
+                <hr class="my-4">
+                
+                <button type="button" class="btn btn-outline-danger w-100 rounded-pill py-2 small" onclick="confirmDelete({{ property.id }})">
+                    <i class="fa-solid fa-trash-can me-2"></i> Supprimer ce bien
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Modal Suppression -->
+<form id="deleteForm" method="POST" action="{{ path('app_owner_property_delete', {id: property.id}) }}" style="display:none;">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ property.id) }}">
+</form>
+
+<style>
+.border-dashed { border: 2px dashed var(--c-border); transition: all 0.2s; }
+.border-dashed:hover { border-color: var(--owner-primary); background: rgba(108, 92, 231, 0.05); }
+.upload-preview-grid div { aspect-ratio: 1; border-radius: 8px; overflow: hidden; position: relative; }
+.upload-preview-grid img { width: 100%; height: 100%; object-fit: cover; }
+.btn-remove-micro { position: absolute; top: 2px; right: 2px; background: rgba(220, 53, 69, 0.9); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 8px; display: flex; align-items: center; justify-content: center; }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const dropZone = document.getElementById('photoDropZone');
+    const fileInput = document.getElementById('main_photos');
+    const placeholder = document.getElementById('uploadPlaceholder');
+    const previewContainer = document.getElementById('previewContainer');
+    const hiddenBase64Input = document.getElementById('photos_base64');
+    
+    // Initialisation avec les images existantes
+    let uploadedPhotos = {{ property.images|json_encode()|raw }};
+    if (!Array.isArray(uploadedPhotos)) uploadedPhotos = [];
+
+    function renderPreviews() {
+        previewContainer.innerHTML = '';
+        uploadedPhotos.forEach((base64, index) => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <img src="${base64}">
+                <button type="button" class="btn-remove-micro" onclick="removePhoto(${index})">✕</button>
+            `;
+            previewContainer.appendChild(div);
+        });
+        updateHiddenInput();
+    }
+
+    window.removePhoto = function(index) {
+        uploadedPhotos.splice(index, 1);
+        renderPreviews();
+    }
+
+    function updateHiddenInput() {
+        hiddenBase64Input.value = JSON.stringify(uploadedPhotos);
+    }
+
+    placeholder.addEventListener('click', () => fileInput.click());
+    
+    fileInput.addEventListener('change', function() {
+        Array.from(this.files).forEach(file => {
+            if(!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = () => {
+                uploadedPhotos.push(reader.result);
+                renderPreviews();
+            }
+        });
+    });
+
+    renderPreviews();
+
+    // Form Submission
+    const form = document.getElementById('form_edit_property');
+    form.addEventListener('submit', function(e) {
+        if (form.dataset.submitting) return;
+        e.preventDefault();
+        
+        const btn = form.querySelector('button[type="submit"]');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Enregistrement...';
+        btn.disabled = true;
+        form.dataset.submitting = "true";
+        
+        setTimeout(() => form.submit(), 500);
+    });
+
+    window.confirmDelete = function(id) {
+        if (confirm('Êtes-vous sûr de vouloir supprimer définitivement ce bien ? Cette action est irréversible.')) {
+            document.getElementById('deleteForm').submit();
+        }
+    }
+});
+</script>
+{% endblock %}

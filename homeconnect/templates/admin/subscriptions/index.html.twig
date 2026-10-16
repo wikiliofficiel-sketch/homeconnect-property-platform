@@ -1,0 +1,263 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Abonnements{% endblock %}
+
+{% block admin_body %}
+
+{# ── En-tête ──────────────────────────────────────────────────── #}
+<div class="d-flex justify-content-between align-items-start mb-5 flex-wrap gap-3">
+    <div>
+        <h1 style="font-family:var(--f-serif); font-size:2rem; color:var(--c-text); margin:0 0 4px;">
+            <i class="fa-solid fa-crown me-2" style="color:var(--c-primary);"></i>Abonnements
+        </h1>
+        <p style="color:var(--c-text-muted); font-size:14px; margin:0;">{{ stats.total }} propriétaire(s) enregistré(s)</p>
+    </div>
+</div>
+
+{# ── KPIs ──────────────────────────────────────────────────────── #}
+<div class="sub-kpi-grid mb-5">
+    <div class="sub-kpi-card">
+        <div class="sub-kpi-icon" style="background:rgba(107,114,128,0.15); color:#94a3b8;">
+            <i class="fa-solid fa-user"></i>
+        </div>
+        <div>
+            <div class="sub-kpi-val">{{ stats.total_free }}</div>
+            <div class="sub-kpi-label">Plan Gratuit</div>
+        </div>
+    </div>
+    <div class="sub-kpi-card">
+        <div class="sub-kpi-icon" style="background:rgba(59,130,246,0.15); color:#3B82F6;">
+            <i class="fa-solid fa-star"></i>
+        </div>
+        <div>
+            <div class="sub-kpi-val" style="color:#3B82F6;">{{ stats.total_starter }}</div>
+            <div class="sub-kpi-label">Plan Starter</div>
+        </div>
+    </div>
+    <div class="sub-kpi-card">
+        <div class="sub-kpi-icon" style="background:rgba(139,92,246,0.15); color:#8B5CF6;">
+            <i class="fa-solid fa-crown"></i>
+        </div>
+        <div>
+            <div class="sub-kpi-val" style="color:#8B5CF6;">{{ stats.total_pro }}</div>
+            <div class="sub-kpi-label">Plan Pro</div>
+        </div>
+    </div>
+    <div class="sub-kpi-card">
+        <div class="sub-kpi-icon" style="background:rgba(255,75,92,0.15); color:#ff4b5c;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div>
+            <div class="sub-kpi-val" style="color:#ff4b5c;">{{ stats.expiring_soon }}</div>
+            <div class="sub-kpi-label">Expirent bientôt</div>
+        </div>
+    </div>
+</div>
+
+{# ── Filtres ───────────────────────────────────────────────────── #}
+<div class="sub-filters mb-4">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+        <a href="{{ path('admin_subscriptions_index') }}"
+           class="sub-filter-chip {{ plan == '' ? 'sub-filter-active' : '' }}">
+            Tous
+        </a>
+        <a href="{{ path('admin_subscriptions_index', {plan: 'free'}) }}"
+           class="sub-filter-chip {{ plan == 'free' ? 'sub-filter-active' : '' }}">
+            <i class="fa-solid fa-user me-1"></i>Gratuit
+        </a>
+        <a href="{{ path('admin_subscriptions_index', {plan: 'starter'}) }}"
+           class="sub-filter-chip {{ plan == 'starter' ? 'sub-filter-active' : '' }}" style="{{ plan == 'starter' ? '--chip-color:#3B82F6' : '' }}">
+            <i class="fa-solid fa-star me-1"></i>Starter
+        </a>
+        <a href="{{ path('admin_subscriptions_index', {plan: 'pro'}) }}"
+           class="sub-filter-chip {{ plan == 'pro' ? 'sub-filter-active' : '' }}" style="{{ plan == 'pro' ? '--chip-color:#8B5CF6' : '' }}">
+            <i class="fa-solid fa-crown me-1"></i>Pro
+        </a>
+        <div class="ms-auto sub-search-wrap">
+            <i class="fa-solid fa-magnifying-glass" style="color:var(--c-text-muted); font-size:13px;"></i>
+            <input type="text" id="searchSub" class="sub-search-input" placeholder="Rechercher un propriétaire…">
+        </div>
+    </div>
+</div>
+
+{# ── Tableau ───────────────────────────────────────────────────── #}
+<div class="sub-table-wrap">
+    {% if subscriptions|length == 0 %}
+    <div style="text-align:center; padding:3rem; color:var(--c-text-muted);">
+        <i class="fa-solid fa-crown" style="font-size:2.5rem; opacity:.2; display:block; margin-bottom:12px;"></i>
+        <p style="margin:0; font-size:14px;">Aucun abonnement trouvé pour ce filtre.</p>
+    </div>
+    {% else %}
+    <table class="sub-table">
+        <thead>
+            <tr>
+                <th>Propriétaire</th>
+                <th>Plan</th>
+                <th>Statut</th>
+                <th>Début</th>
+                <th>Expiration</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="subsTableBody">
+        {% for sub in subscriptions %}
+            {% set now = 'now'|date('U') %}
+            {% set expTs = sub.dateExpiration ? sub.dateExpiration.timestamp : null %}
+            {% set daysLeft = expTs ? ((expTs - now) / 86400)|round(0) : null %}
+            <tr class="sub-row">
+                <td class="owner-cell">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="sub-avatar">{{ sub.proprietaire.fullName|first|upper }}</div>
+                        <div>
+                            <a href="{{ path('admin_users_show', {id: sub.proprietaire.id}) }}"
+                               style="color:var(--c-text); font-weight:600; text-decoration:none; font-size:14px;">
+                                {{ sub.proprietaire.fullName }}
+                            </a>
+                            <div style="font-size:12px; color:var(--c-text-muted);">{{ sub.proprietaire.email }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    {% if sub.plan == 'pro' %}
+                        <span class="sub-plan-badge" style="background:rgba(139,92,246,0.15); color:#8B5CF6; border-color:rgba(139,92,246,0.3);">
+                            <i class="fa-solid fa-crown me-1"></i>Pro
+                        </span>
+                    {% elseif sub.plan == 'starter' %}
+                        <span class="sub-plan-badge" style="background:rgba(59,130,246,0.15); color:#3B82F6; border-color:rgba(59,130,246,0.3);">
+                            <i class="fa-solid fa-star me-1"></i>Starter
+                        </span>
+                    {% else %}
+                        <span class="sub-plan-badge" style="background:rgba(148,163,184,0.1); color:#94a3b8; border-color:rgba(148,163,184,0.2);">
+                            <i class="fa-solid fa-user me-1"></i>Gratuit
+                        </span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if sub.statut == 'active' %}
+                        <span class="sub-status-badge sub-status-active">
+                            <i class="fa-solid fa-circle" style="font-size:7px;"></i> Actif
+                        </span>
+                    {% elseif sub.statut == 'expired' %}
+                        <span class="sub-status-badge sub-status-expired">
+                            <i class="fa-solid fa-circle" style="font-size:7px;"></i> Expiré
+                        </span>
+                    {% else %}
+                        <span class="sub-status-badge sub-status-cancelled">
+                            <i class="fa-solid fa-circle" style="font-size:7px;"></i> {{ sub.statut }}
+                        </span>
+                    {% endif %}
+                </td>
+                <td style="color:var(--c-text-muted); font-size:13px;">
+                    {{ sub.dateDebut ? sub.dateDebut|date('d/m/Y') : '—' }}
+                </td>
+                <td>
+                    {% if expTs %}
+                        <div style="font-size:13px; color:var(--c-text); font-weight:600;">
+                            {{ sub.dateExpiration|date('d/m/Y') }}
+                        </div>
+                        {% if daysLeft is not null %}
+                            <div style="font-size:11px; color:{{ daysLeft < 7 ? '#ff4b5c' : (daysLeft < 30 ? '#ffc107' : '#00e676') }};">
+                                {% if daysLeft > 0 %}{{ daysLeft }} j restants{% else %}Expiré{% endif %}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <span style="color:var(--c-text-muted); font-size:13px;">Sans limite</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <a href="{{ path('admin_subscriptions_show', {id: sub.id}) }}"
+                           class="sub-action-btn sub-action-view" title="Voir">
+                            <i class="fa-solid fa-eye"></i>
+                        </a>
+                        {% if sub.plan != 'pro' %}
+                        <form method="POST" action="{{ path('admin_subscriptions_upgrade', {id: sub.id}) }}" style="display:inline;">
+                            <button type="submit" class="sub-action-btn sub-action-upgrade" title="Passer en Pro"
+                                    onclick="return confirm('Passer cet abonnement en Pro ?')">
+                                <i class="fa-solid fa-arrow-up"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                        {% if sub.dateExpiration %}
+                        <form method="POST" action="{{ path('admin_subscriptions_renew', {id: sub.id}) }}" style="display:inline;">
+                            <input type="hidden" name="mois" value="1">
+                            <button type="submit" class="sub-action-btn sub-action-renew" title="+1 mois">
+                                <i class="fa-solid fa-calendar-plus"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<style>
+.sub-kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
+.sub-kpi-card {
+    background:var(--c-surface); border:1px solid var(--c-border);
+    border-radius:16px; padding:20px; display:flex; align-items:center; gap:16px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.08); transition:transform .2s;
+}
+.sub-kpi-card:hover { transform:translateY(-2px); }
+.sub-kpi-icon { width:50px; height:50px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+.sub-kpi-val { font-size:1.8rem; font-weight:800; color:var(--c-text); line-height:1.1; }
+.sub-kpi-label { font-size:12px; color:var(--c-text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-top:2px; }
+
+.sub-filters { }
+.sub-filter-chip {
+    display:inline-flex; align-items:center;
+    background:rgba(255,255,255,0.05); border:1px solid var(--c-border);
+    color:var(--c-text-muted); border-radius:50px; padding:7px 16px;
+    font-size:13px; font-weight:600; text-decoration:none; transition:all .2s;
+}
+.sub-filter-chip:hover { color:var(--c-text); border-color:var(--c-primary); }
+.sub-filter-active { background:rgba(255,140,0,0.12); border-color:var(--c-primary); color:var(--c-primary); }
+
+.sub-search-wrap {
+    display:flex; align-items:center; gap:8px;
+    background:var(--c-surface); border:1px solid var(--c-border);
+    border-radius:50px; padding:8px 16px; min-width:260px;
+}
+.sub-search-input { background:transparent; border:none; outline:none; color:var(--c-text); font-size:13px; width:100%; font-family:inherit; }
+.sub-search-input::placeholder { color:var(--c-text-muted); }
+
+.sub-table-wrap { background:var(--c-surface); border:1px solid var(--c-border); border-radius:18px; overflow:hidden; }
+.sub-table { width:100%; border-collapse:collapse; }
+.sub-table thead tr { border-bottom:1px solid var(--c-border); }
+.sub-table th { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--c-text-muted); padding:14px 18px; white-space:nowrap; }
+.sub-table td { padding:14px 18px; border-bottom:1px solid var(--c-border); vertical-align:middle; }
+.sub-table .sub-row:last-child td { border-bottom:none; }
+.sub-table .sub-row:hover td { background:rgba(255,255,255,0.02); }
+
+.sub-avatar { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,var(--c-primary),#764ba2); color:#fff; font-weight:700; font-size:1rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+.sub-plan-badge { font-size:12px; font-weight:700; padding:4px 12px; border-radius:50px; border:1px solid; display:inline-flex; align-items:center; }
+.sub-status-badge { font-size:11px; font-weight:700; padding:4px 10px; border-radius:50px; display:inline-flex; align-items:center; gap:5px; }
+.sub-status-active    { background:rgba(0,230,118,0.12); color:#00e676; }
+.sub-status-expired   { background:rgba(255,75,92,0.12);  color:#ff4b5c; }
+.sub-status-cancelled { background:rgba(148,163,184,0.1); color:#94a3b8; }
+
+.sub-action-btn { width:34px; height:34px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; cursor:pointer; border:none; transition:all .2s; text-decoration:none; }
+.sub-action-view   { background:rgba(0,210,255,0.12); color:#00D2FF; }
+.sub-action-view:hover { background:rgba(0,210,255,0.25); color:#00D2FF; }
+.sub-action-upgrade { background:rgba(139,92,246,0.12); color:#8B5CF6; }
+.sub-action-upgrade:hover { background:rgba(139,92,246,0.25); }
+.sub-action-renew  { background:rgba(0,230,118,0.12); color:#00e676; }
+.sub-action-renew:hover { background:rgba(0,230,118,0.25); }
+</style>
+
+<script>
+document.getElementById('searchSub')?.addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.sub-row').forEach(row => {
+        const owner = row.querySelector('.owner-cell')?.textContent.toLowerCase() || '';
+        row.style.display = owner.includes(q) ? '' : 'none';
+    });
+});
+</script>
+
+{% endblock %}

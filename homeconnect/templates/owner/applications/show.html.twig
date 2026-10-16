@@ -1,0 +1,379 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Détails Candidature - Espace Propriétaire{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('app_owner_applications') }}" style="color: var(--c-text-muted); text-decoration:none;">Candidatures</a></li>
+    <li class="breadcrumb-item active" style="color: var(--c-text);">Détails</li>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <a href="{{ path('app_owner_applications')|default('#') }}" class="back-link"><i class="fa-solid fa-arrow-left"></i> Retour aux candidatures</a>
+
+    <div class="detail-card">
+        <div class="detail-header">
+            <div>
+                <h1 style="color: #2c3e50; font-family: var(--f-serif);">Candidature pour {{ application.property.title }}</h1>
+                <p class="text-muted mt-2 mb-0"><i class="fa-solid fa-hashtag"></i> Dossier REF-{{ application.id }}</p>
+            </div>
+            {% if application.statut|lower == 'pending' %}
+                <span class="badge bg-warning text-dark fs-6"><i class="fa-solid fa-hourglass-half"></i> En attente</span>
+            {% elseif application.statut|lower == 'accepted' %}
+                <span class="badge bg-success fs-6"><i class="fa-solid fa-check"></i> Acceptée</span>
+            {% elseif application.statut|lower == 'refused' %}
+                <span class="badge bg-danger fs-6"><i class="fa-solid fa-xmark"></i> Refusée</span>
+            {% else %}
+                <span class="badge bg-secondary fs-6">{{ application.statut|upper }}</span>
+            {% endif %}
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Locataire Info -->
+                <section class="detail-section">
+                    <h2><i class="fa-solid fa-user"></i> Informations du locataire</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Nom complet</label>
+                            <p>{{ application.locataire.prenom }} {{ application.locataire.nom }}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Email</label>
+                            <p>{{ application.locataire.email }}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Téléphone</label>
+                            <p>{{ application.locataire.telephone ?? 'Non renseigné' }}</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <div class="col-md-6">
+                <!-- Bien Info -->
+                <section class="detail-section">
+                    <h2><i class="fa-solid fa-house"></i> Bien loué</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Adresse</label>
+                            <p>{{ application.property.address }}, {{ application.property.city }}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Loyer mensuel</label>
+                            <p class="text-primary fw-bold">{{ application.property.pricePerMonth|number_format(0, ',', ' ') }} FCFA</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Caractéristiques</label>
+                            <p>{{ application.property.surface }} m² • {{ application.property.bedrooms }} ch.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Section NOUVELLE : Contrats et État des lieux (Seulement si Accepté) -->
+        {% if application.statut|lower == 'accepted' %}
+            <section class="detail-section bg-light p-4 rounded mt-4 border border-primary">
+                <h2 class="text-primary"><i class="fa-solid fa-file-signature"></i> Gestion du Bail & État des lieux</h2>
+                <p class="text-muted">La candidature étant acceptée, vous pouvez maintenant générer le contrat et réaliser l'état des lieux.</p>
+                
+                <div class="d-flex gap-3 mb-4">
+                    {% set rental = application.property.rentals|filter(r => r.locataire.id == application.locataire.id)|first %}
+                    {% if rental %}
+                        <a href="{{ path('app_owner_contract_generate', {id: rental.id}) }}" class="btn btn-primary" target="_blank">
+                            <i class="fa-solid fa-file-pdf"></i> Télécharger le Contrat de Bail Officiel (PDF)
+                        </a>
+                    {% endif %}
+                    <button class="btn btn-outline-primary" onclick="toggleEtatLieux()"><i class="fa-solid fa-clipboard-check"></i> Réaliser l'État des Lieux</button>
+                </div>
+
+                <!-- Formulaire État des lieux (Caché par défaut) -->
+                <div id="etatLieuxForm" class="bg-white p-4 rounded shadow-sm" style="display: none;">
+                    <h4><i class="fa-solid fa-camera"></i> Nouvel État des Lieux</h4>
+                    
+                    <form id="form_edl" onsubmit="saveEtatLieux(event)">
+                        <div id="piecesContainer">
+                            <!-- Pièce 1 -->
+                            <div class="piece-row border p-3 rounded mb-3 position-relative">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4">
+                                        <label class="fw-bold">Pièce</label>
+                                        <input type="text" class="form-control" value="Salon" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="fw-bold">Évaluation (État)</label>
+                                        <select class="form-select" required>
+                                            <option value="5">Excellent (Neuf)</option>
+                                            <option value="4">Très bon</option>
+                                            <option value="3" selected>Bon état (Usure normale)</option>
+                                            <option value="2">Médiocre (À réparer)</option>
+                                            <option value="1">Mauvais (Dégradé)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="fw-bold">Preuve (Photo)</label>
+                                        <input type="file" class="form-control" accept="image/*" onchange="previewEDLPhoto(this)">
+                                        <input type="hidden" class="base64-input">
+                                    </div>
+                                </div>
+                                <div class="edl-preview-container mt-2" style="display:none;">
+                                    <img src="" style="height: 60px; border-radius: 4px; border: 1px solid #ddd;">
+                                </div>
+                            </div>
+                            
+                            <!-- Pièce 2 -->
+                            <div class="piece-row border p-3 rounded mb-3 position-relative">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4">
+                                        <label class="fw-bold">Pièce</label>
+                                        <input type="text" class="form-control" value="Chambre Principale" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="fw-bold">Évaluation (État)</label>
+                                        <select class="form-select" required>
+                                            <option value="5">Excellent (Neuf)</option>
+                                            <option value="4">Très bon</option>
+                                            <option value="3" selected>Bon état (Usure normale)</option>
+                                            <option value="2">Médiocre (À réparer)</option>
+                                            <option value="1">Mauvais (Dégradé)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="fw-bold">Preuve (Photo)</label>
+                                        <input type="file" class="form-control" accept="image/*" onchange="previewEDLPhoto(this)">
+                                        <input type="hidden" class="base64-input">
+                                    </div>
+                                </div>
+                                <div class="edl-preview-container mt-2" style="display:none;">
+                                    <img src="" style="height: 60px; border-radius: 4px; border: 1px solid #ddd;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPieceRow()"><i class="fa-solid fa-plus"></i> Ajouter une pièce</button>
+                            <button type="submit" class="btn btn-success"><i class="fa-solid fa-floppy-disk"></i> Enregistrer l'État des Lieux</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+{% endif %}
+
+        <!-- Section KYC du locataire -->
+        <section class="detail-section mt-5 pt-4 border-top">
+            <h2 class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-primary"></i> 
+                Vérification d'identité (KYC)
+                {% if application.locataire.isVerified %}
+                    <span class="badge bg-success rounded-pill px-2 py-1 small ms-auto" style="font-size: 0.7rem;">
+                        <i class="fa-solid fa-circle-check"></i> Profil Vérifié
+                    </span>
+                {% else %}
+                    <span class="badge bg-warning text-dark rounded-pill px-2 py-1 small ms-auto" style="font-size: 0.7rem;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> En attente de vérification
+                    </span>
+                {% endif %}
+            </h2>
+            <p class="text-muted small">Consultez les pièces justificatives fournies par le candidat pour valider son dossier.</p>
+
+            <div class="row g-4 mt-2">
+                {% set docs = application.locataire.kycDocuments|default('[]')|json_decode %}
+                {% if docs and docs|length > 0 %}
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-4 border">
+                            <label class="fw-bold mb-2 small text-uppercase text-muted">Pièce d'identité (Recto)</label>
+                            {% set idUrl = docs[0] %}
+                            <div class="bg-dark rounded-3 overflow-hidden d-flex align-items-center justify-content-center" style="height: 250px;">
+                                {% if idUrl starts with 'http' or idUrl starts with 'data:image' %}
+                                    <img src="{{ idUrl }}" class="w-100 h-100 object-fit-contain" alt="Recto">
+                                {% elseif idUrl starts with '/data/' %}
+                                    <div class="text-white-50 text-center p-3">
+                                        <i class="fa-solid fa-mobile-screen fs-1 opacity-25"></i>
+                                        <div class="mt-2 small">En attente de synchro mobile</div>
+                                    </div>
+                                {% else %}
+                                    <img src="{{ asset('uploads/kyc/' ~ idUrl) }}" class="w-100 h-100 object-fit-contain" alt="Recto">
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% if docs|length > 1 %}
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-4 border">
+                            <label class="fw-bold mb-2 small text-uppercase text-muted">Selfie de vérification</label>
+                            {% set selfieUrl = docs[1] %}
+                            <div class="bg-dark rounded-3 overflow-hidden d-flex align-items-center justify-content-center" style="height: 250px;">
+                                {% if selfieUrl starts with 'http' or selfieUrl starts with 'data:image' %}
+                                    <img src="{{ selfieUrl }}" class="w-100 h-100 object-fit-contain" alt="Selfie">
+                                {% elseif selfieUrl starts with '/data/' %}
+                                    <div class="text-white-50 text-center p-3">
+                                        <i class="fa-solid fa-user-check fs-1 opacity-25"></i>
+                                        <div class="mt-2 small">En attente de synchro mobile</div>
+                                    </div>
+                                {% else %}
+                                    <img src="{{ asset('uploads/kyc/' ~ selfieUrl) }}" class="w-100 h-100 object-fit-contain" alt="Selfie">
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="col-12 text-center py-5 bg-light rounded-4 border">
+                        <i class="fa-solid fa-file-circle-xmark fs-1 text-muted opacity-25 mb-2"></i>
+                        <p class="text-muted mb-0">Aucun document KYC fourni par ce candidat.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+
+        <!-- Actions (Si En attente) -->
+        {% if application.statut|lower == 'pending' %}
+            <section class="detail-section mt-4">
+                <h2><i class="fa-solid fa-bolt"></i> Actions requises</h2>
+                <div class="action-buttons mt-3 d-flex gap-3">
+                    <form action="{{ path('app_owner_application_accept', {id: application.id}) }}" method="POST" class="flex-fill" onsubmit="return confirm('Confirmer l\'acceptation ?')">
+                        <button type="submit" class="btn btn-success w-100 p-3 fw-bold fs-5 shadow-sm"><i class="fa-solid fa-check-circle"></i> Accepter la candidature</button>
+                    </form>
+                    <form action="{{ path('app_owner_application_refuse', {id: application.id}) }}" method="POST" class="flex-fill" onsubmit="return confirm('Confirmer le refus ?')">
+                        <button type="submit" class="btn btn-outline-danger w-100 p-3 fw-bold fs-5 shadow-sm"><i class="fa-solid fa-xmark-circle"></i> Refuser</button>
+                    </form>
+                </div>
+            </section>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// --- LOGIQUE ÉTAT DES LIEUX ---
+function toggleEtatLieux() {
+    const form = document.getElementById('etatLieuxForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function previewEDLPhoto(inputElement) {
+    const file = inputElement.files[0];
+    if(!file) return;
+
+    const row = inputElement.closest('.piece-row');
+    const previewContainer = row.querySelector('.edl-preview-container');
+    const imgElement = previewContainer.querySelector('img');
+    const hiddenInput = row.querySelector('.base64-input');
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = function() {
+        imgElement.src = reader.result;
+        previewContainer.style.display = 'block';
+        hiddenInput.value = reader.result; // Stockage base64
+    }
+}
+
+function addPieceRow() {
+    const container = document.getElementById('piecesContainer');
+    const newRow = document.createElement('div');
+    newRow.className = "piece-row border p-3 rounded mb-3 position-relative";
+    newRow.innerHTML = `
+        <button type="button" class="btn btn-sm btn-danger position-absolute" style="top: 5px; right: 5px; padding: 2px 8px; font-size: 10px;" onclick="this.closest('.piece-row').remove()"><i class="fa-solid fa-trash"></i></button>
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <label class="fw-bold">Pièce</label>
+                <input type="text" class="form-control" placeholder="Nouvelle pièce" required>
+            </div>
+            <div class="col-md-4">
+                <label class="fw-bold">Évaluation</label>
+                <select class="form-select" required>
+                    <option value="5">Excellent (Neuf)</option>
+                    <option value="4">Très bon</option>
+                    <option value="3" selected>Bon état</option>
+                    <option value="2">Médiocre</option>
+                    <option value="1">Mauvais</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="fw-bold">Preuve (Photo)</label>
+                <input type="file" class="form-control" accept="image/*" onchange="previewEDLPhoto(this)">
+                <input type="hidden" class="base64-input">
+            </div>
+        </div>
+        <div class="edl-preview-container mt-2" style="display:none;">
+            <img src="" style="height: 60px; border-radius: 4px; border: 1px solid #ddd;">
+        </div>
+    `;
+    container.appendChild(newRow);
+}
+
+function saveEtatLieux(event) {
+    event.preventDefault();
+    // Simulation d'enregistrement
+    const btn = event.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sauvegarde...';
+    btn.disabled = true;
+
+    setTimeout(() => {
+        alert("L'état des lieux a été enregistré avec succès et rattaché au dossier ! Les photos ont été stockées.");
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        toggleEtatLieux();
+    }, 1200);
+}
+
+// --- LOGIQUE ACCEPT/REFUSE SIMULÉE ---
+function acceptApplication() {
+    if(confirm("Confirmer l'acceptation de cette candidature ?")) {
+        alert("Candidature Acceptée ! Le statut du dossier est mis à jour.");
+        // Recharger ou rediriger vers un backend réel
+        // location.reload();
+    }
+}
+
+function refuseApplication() {
+    if(confirm("Êtes-vous sûr de vouloir refuser cette candidature ?")) {
+        prompt("Veuillez indiquer un motif de refus (Optionnel):");
+        alert("Candidature Refusée. Le locataire sera notifié.");
+    }
+}
+</script>
+
+<style>
+.back-link {
+    display: inline-block;
+    color: #667eea;
+    text-decoration: none;
+    margin-bottom: 20px;
+    font-size: 15px;
+    font-weight: 600;
+}
+.back-link:hover { text-decoration: underline; color: #5a67d8; }
+
+.detail-container { max-width: 1000px; margin: 0 auto; }
+.detail-card { background: white; border-radius: 12px; padding: 35px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); }
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f1f3f5;
+}
+
+.detail-section { margin-bottom: 30px; }
+.detail-section h2 { font-size: 18px; color: #2c3e50; font-weight: 700; margin-bottom: 15px; }
+
+.info-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+.info-item { background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea; }
+.info-item label { display: block; font-size: 12px; font-weight: 700; color: #6c757d; text-transform: uppercase; margin-bottom: 5px; }
+.info-item p { margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500; }
+
+.btn { border-radius: 8px; transition: transform 0.2s; }
+.btn:hover { transform: translateY(-2px); }
+
+@media (max-width: 768px) {
+    .detail-header { flex-direction: column; gap: 10px; }
+    .action-buttons { flex-direction: column; }
+}
+</style>
+{% endblock %}

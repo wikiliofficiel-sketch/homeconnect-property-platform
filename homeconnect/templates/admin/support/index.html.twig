@@ -1,0 +1,95 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Tickets de Support{% endblock %}
+
+{% block admin_body %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <h1 class="fw-bold mb-1" style="color: var(--c-text); font-family: var(--f-serif);">
+            <i class="fa-solid fa-headset text-primary me-2"></i> Tickets de Support
+        </h1>
+        <div class="text-muted small">Demandes des locataires et propriétaires</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">{{ stats.ouvert }} ouvert(s)</span>
+        <span class="badge bg-primary rounded-pill px-3 py-2">{{ stats.en_cours }} en cours</span>
+        <span class="badge bg-secondary rounded-pill px-3 py-2">{{ stats.ferme }} fermé(s)</span>
+    </div>
+</div>
+
+{# Flash messages #}
+{% for type, messages in app.flashes %}
+    {% for msg in messages %}
+        <div class="alert alert-{{ type == 'success' ? 'success' : (type == 'danger' ? 'danger' : 'warning') }} alert-dismissible fade show rounded-3 mb-3">
+            {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endfor %}
+
+{# Filtres #}
+<div class="mb-4 d-flex gap-2 flex-wrap">
+    <a href="{{ path('admin_support_index') }}" class="btn btn-sm {{ status == '' ? 'btn-primary' : 'btn-outline-secondary' }} rounded-pill">Tous</a>
+    <a href="{{ path('admin_support_index', {status: 'ouvert'}) }}" class="btn btn-sm {{ status == 'ouvert' ? 'btn-warning' : 'btn-outline-secondary' }} rounded-pill">Ouverts</a>
+    <a href="{{ path('admin_support_index', {status: 'en_cours'}) }}" class="btn btn-sm {{ status == 'en_cours' ? 'btn-primary' : 'btn-outline-secondary' }} rounded-pill">En cours</a>
+    <a href="{{ path('admin_support_index', {status: 'ferme'}) }}" class="btn btn-sm {{ status == 'ferme' ? 'btn-secondary' : 'btn-outline-secondary' }} rounded-pill">Fermés</a>
+</div>
+
+<div class="card border-0" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+    <div class="card-body p-0">
+        {% if tickets|length == 0 %}
+            <div class="text-center py-5 text-muted">
+                <i class="fa-solid fa-inbox fs-1 opacity-25 mb-3"></i>
+                <p>Aucun ticket{{ status ? ' avec ce statut' : '' }}.</p>
+            </div>
+        {% else %}
+        <div class="table-responsive">
+            <table class="table mb-0" style="color: var(--c-text);">
+                <thead style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <tr class="text-muted small text-uppercase">
+                        <th class="px-4 py-3">#</th>
+                        <th class="py-3">Utilisateur</th>
+                        <th class="py-3">Sujet</th>
+                        <th class="py-3">Type</th>
+                        <th class="py-3">Statut</th>
+                        <th class="py-3">Date</th>
+                        <th class="py-3"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for ticket in tickets %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td class="px-4 py-3 text-muted small">{{ ticket.id }}</td>
+                    <td class="py-3">
+                        <div class="fw-bold small" style="color: var(--c-text);">{{ ticket.user.fullName }}</div>
+                        <div class="text-muted" style="font-size: 11px;">{{ ticket.user.email }}</div>
+                    </td>
+                    <td class="py-3">
+                        <span style="color: var(--c-text);">{{ ticket.subject }}</span>
+                    </td>
+                    <td class="py-3">
+                        <span class="badge bg-secondary rounded-pill">{{ ticket.type }}</span>
+                    </td>
+                    <td class="py-3">
+                        {% if ticket.status == 'ouvert' %}
+                            <span class="badge bg-warning text-dark rounded-pill">Ouvert</span>
+                        {% elseif ticket.status == 'en_cours' %}
+                            <span class="badge bg-primary rounded-pill">En cours</span>
+                        {% else %}
+                            <span class="badge bg-secondary rounded-pill">Fermé</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3 text-muted small">{{ ticket.createdAt|date('d/m/Y H:i') }}</td>
+                    <td class="py-3">
+                        <a href="{{ path('admin_support_show', {id: ticket.id}) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            Voir
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

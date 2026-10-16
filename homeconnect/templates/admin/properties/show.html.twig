@@ -1,0 +1,227 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Détail bien - {{ property.title }}{% endblock %}
+
+{% block admin_body %}
+<div class="property-detail">
+    <div class="property-header">
+        <div class="property-meta">
+            <h2>{{ property.title }}</h2>
+            <p>📍 {{ property.address }}, {{ property.zipCode }} {{ property.city }}</p>
+            <p>Par: <a href="{{ path('admin_users_show', {'id': property.proprietaire.id}) }}">{{ property.proprietaire.fullName }}</a></p>
+        </div>
+        <div class="property-status">
+            <span class="badge badge-{{ property.statut == 'active' ? 'success' : (property.statut == 'suspended' ? 'danger' : 'warning') }}">
+                {{ property.statut|upper }}
+            </span>
+        </div>
+    </div>
+
+    <div class="property-sections">
+        {% if property.images and property.images|length > 0 %}
+        <div class="section">
+            <h3>📸 Photos du bien</h3>
+            <div class="d-flex gap-3 overflow-auto pb-2">
+                {% for image in property.images %}
+                    {% if image starts with 'http' or image starts with 'data:' or image starts with '/' %}
+                        <img src="{{ image }}" class="rounded shadow-sm" style="height:150px; width:200px; object-fit:cover; cursor:pointer;" alt="Photo du bien" onclick="this.requestFullscreen ? this.requestFullscreen() : window.open(this.src)">
+                    {% else %}
+                        <img src="{{ asset('uploads/properties/' ~ image) }}" class="rounded shadow-sm" style="height:150px; width:200px; object-fit:cover; cursor:pointer;" alt="Photo du bien" onclick="this.requestFullscreen ? this.requestFullscreen() : window.open(this.src)">
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="section">
+            <h3>📋 Détails</h3>
+            <div class="details-grid">
+                <div><strong>Surface:</strong> {{ property.surface }} m²</div>
+                <div><strong>Chambres:</strong> {{ property.bedrooms }}</div>
+                <div><strong>Prix/mois:</strong> {{ property.pricePerMonth|number_format(0, ',', ' ') }} FCFA</div>
+                <div><strong>Créé:</strong> {{ property.createdAt|date('d/m/Y H:i') }}</div>
+                {% if property.updatedAt %}
+                <div><strong>Modifié:</strong> {{ property.updatedAt|date('d/m/Y H:i') }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📝 Description</h3>
+            <p>{{ property.description }}</p>
+        </div>
+
+        <div class="section">
+            <h3>🚩 Signalements</h3>
+            {% if reports is defined and reports|length > 0 %}
+                <p><strong>{{ reports|length }} signalements</strong></p>
+                <ul class="reports-list">
+                {% for report in reports %}
+                    <li>
+                        <span class="badge badge-{{ report.priorite == 'critical' ? 'danger' : (report.priorite == 'high' ? 'warning' : 'info') }}">
+                            {{ report.priorite }}
+                        </span>
+                        {{ report.motif }}
+                        <a href="#">Voir</a>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>Aucun signalement rattaché à ce bien.</p>
+            {% endif %}
+        </div>
+
+        <div class="section actions">
+            <h3>⚙️ Actions</h3>
+            {% if property.statut == 'pending' %}
+                <form method="post" action="{{ path('admin_properties_approve', {'id': property.id}) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-success">✅ Approuver</button>
+                </form>
+            {% endif %}
+
+            {% if property.statut != 'suspended' %}
+                <button onclick="document.getElementById('suspendForm').style.display='block'" class="btn btn-warning">⚠️ Suspendre</button>
+            {% endif %}
+
+            <form method="post" action="{{ path('admin_properties_delete', {'id': property.id}) }}" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr?')">
+                <button type="submit" class="btn btn-danger">🗑️ Supprimer</button>
+            </form>
+        </div>
+
+        <div id="suspendForm" style="display:none; margin-top: 15px; padding: 15px; background-color: #feebc8; border-radius: 6px; border-left: 4px solid #ed8936;">
+            <form method="post" action="{{ path('admin_properties_suspend', {'id': property.id}) }}">
+                <label>Motif de suspension:</label>
+                <textarea name="motif" required></textarea>
+                <button type="submit" class="btn btn-warning">Confirmer suspension</button>
+                <button type="button" onclick="document.getElementById('suspendForm').style.display='none'" class="btn btn-outline">Annuler</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.property-detail {
+    max-width: 900px;
+}
+
+.property-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.property-meta h2 {
+    margin: 0 0 10px 0;
+    font-size: 2em;
+}
+
+.property-meta p {
+    margin: 5px 0;
+}
+
+.property-meta a {
+    color: white;
+    text-decoration: underline;
+}
+
+.property-status {
+    text-align: right;
+}
+
+.property-sections {
+    display: grid;
+    gap: 20px;
+}
+
+.section {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.section h3 {
+    margin: 0 0 15px 0;
+}
+
+.details-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.details-grid div {
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.reports-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.reports-list li {
+    padding: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.reports-list a {
+    margin-left: auto;
+    color: #4299e1;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+}
+
+.badge-success { background-color: #c6f6d5; color: #22543d; }
+.badge-warning { background-color: #feebc8; color: #7c2d12; }
+.badge-danger { background-color: #fed7d7; color: #742a2a; }
+.badge-info { background-color: #bee3f8; color: #2c5282; }
+
+.actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.actions form {
+    display: inline;
+}
+
+.btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-success { background-color: #48bb78; color: white; }
+.btn-warning { background-color: #ed8936; color: white; }
+.btn-danger { background-color: #f56565; color: white; }
+.btn-outline { background-color: white; color: #2d3748; border: 1px solid #cbd5e0; }
+
+textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    margin: 10px 0;
+    font-family: inherit;
+}
+</style>
+{% endblock %}

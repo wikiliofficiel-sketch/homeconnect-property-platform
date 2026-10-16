@@ -1,0 +1,514 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}{{ property.title }} - Mon bien{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('app_owner_properties') }}" style="color: var(--c-text-muted); text-decoration:none;">Mes biens</a></li>
+    <li class="breadcrumb-item active" style="color: var(--c-text);">{{ property.title|slice(0,30) }}{% if property.title|length > 30 %}…{% endif %}</li>
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+/* ── Galerie ─────────────────────────────────────────────────────── */
+.gallery-main { height: 420px; border-radius: 16px; overflow: hidden; position: relative; cursor: pointer; }
+.gallery-main img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+.gallery-main:hover img { transform: scale(1.02); }
+.gallery-thumb { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+.gallery-thumb img { height: 90px; width: 100%; object-fit: cover; border-radius: 10px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s, transform 0.2s; border: 2px solid transparent; }
+.gallery-thumb img:hover, .gallery-thumb img.active { opacity: 1; border-color: var(--c-primary); transform: scale(1.03); }
+.gallery-count { position: absolute; bottom: 14px; right: 14px; background: rgba(0,0,0,0.65); color: #fff; font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: 50px; }
+
+/* ── Sections ────────────────────────────────────────────────────── */
+.pd-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.25rem; }
+.pd-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+.pd-stat { text-align: center; padding: 1rem; border-radius: 12px; background: rgba(255,140,0,0.07); border: 1px solid rgba(255,140,0,0.15); }
+.pd-stat .val { font-size: 2rem; font-weight: 800; color: var(--c-primary); line-height: 1; }
+.pd-stat .lbl { font-size: 11px; color: var(--c-text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ── Info grid ───────────────────────────────────────────────────── */
+.info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.info-item { background: rgba(255,255,255,0.03); border: 1px solid var(--c-border); border-radius: 10px; padding: 12px 14px; }
+.info-item .i-label { font-size: 11px; color: var(--c-text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+.info-item .i-val { font-size: 15px; font-weight: 600; color: var(--c-text); }
+
+/* ── Chips ───────────────────────────────────────────────────────── */
+.eq-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 50px; background: rgba(255,140,0,0.1); border: 1px solid rgba(255,140,0,0.25); color: var(--c-primary); font-size: 12px; font-weight: 500; }
+.rule-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 50px; background: rgba(0,184,148,0.1); border: 1px solid rgba(0,184,148,0.25); color: #00b894; font-size: 12px; font-weight: 500; }
+
+/* ── Statut badges ───────────────────────────────────────────────── */
+.st-active   { background: rgba(0,230,118,0.15); color: #00e676; border: 1px solid rgba(0,230,118,0.3); }
+.st-pending  { background: rgba(255,193,7,0.15);  color: #ffc107; border: 1px solid rgba(255,193,7,0.3); }
+.st-suspended{ background: rgba(255,75,92,0.15);  color: #ff4b5c; border: 1px solid rgba(255,75,92,0.3); }
+.stat-badge  { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 50px; font-size: 13px; font-weight: 600; }
+
+/* ── Candidatures ────────────────────────────────────────────────── */
+.app-row { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--c-border); margin-bottom: 8px; transition: background 0.2s; }
+.app-row:hover { background: rgba(255,255,255,0.06); }
+.app-avatar { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,140,0,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--c-primary); font-weight: 700; }
+
+/* ── Boutons actions ─────────────────────────────────────────────── */
+.btn-owner-primary { background: linear-gradient(135deg, #FF8C00, #e67e00); color: #fff; border: none; border-radius: 50px; padding: 10px 22px; font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+.btn-owner-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(255,140,0,0.4); color: #fff; }
+.btn-owner-ghost { background: rgba(255,255,255,0.06); color: var(--c-text-muted); border: 1px solid var(--c-border); border-radius: 50px; padding: 10px 22px; font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+.btn-owner-ghost:hover { background: rgba(255,255,255,0.1); color: var(--c-text); }
+.btn-owner-danger { background: rgba(255,75,92,0.1); color: #ff4b5c; border: 1px solid rgba(255,75,92,0.3); border-radius: 50px; padding: 10px 22px; font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+.btn-owner-danger:hover { background: rgba(255,75,92,0.2); }
+.btn-owner-warn { background: rgba(255,193,7,0.1); color: #ffc107; border: 1px solid rgba(255,193,7,0.3); border-radius: 50px; padding: 10px 22px; font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+.btn-owner-warn:hover { background: rgba(255,193,7,0.2); }
+.btn-owner-success { background: rgba(0,230,118,0.1); color: #00e676; border: 1px solid rgba(0,230,118,0.3); border-radius: 50px; padding: 10px 22px; font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+.btn-owner-success:hover { background: rgba(0,230,118,0.2); }
+
+/* Lightbox */
+.lightbox { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.9); z-index: 9999; align-items: center; justify-content: center; }
+.lightbox.open { display: flex; }
+.lightbox img { max-width: 90vw; max-height: 85vh; object-fit: contain; border-radius: 12px; }
+.lightbox-close { position:absolute; top:20px; right:24px; font-size:2rem; color:#fff; cursor:pointer; }
+.lightbox-nav { position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.15); border:none; color:#fff; width:48px; height:48px; border-radius:50%; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.lightbox-nav.prev { left:20px; }
+.lightbox-nav.next { right:20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px;">
+
+    {# ── HEADER : Titre + actions ────────────────────────────────── #}
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+                <span class="stat-badge {{ property.statut == 'active' ? 'st-active' : (property.statut == 'pending' ? 'st-pending' : 'st-suspended') }}">
+                    <i class="fa-solid fa-circle" style="font-size:8px;"></i>
+                    {{ property.statut == 'active' ? 'Actif' : (property.statut == 'pending' ? 'En attente' : (property.statut == 'suspended' ? 'Suspendu' : property.statut|capitalize)) }}
+                </span>
+                {% if property.type %}
+                <span style="font-size:12px; color: var(--c-text-muted); background: rgba(255,255,255,0.06); padding: 4px 12px; border-radius: 50px;">
+                    {{ property.type|capitalize }}
+                </span>
+                {% endif %}
+            </div>
+            <h1 style="font-family: var(--f-serif); font-size: 2rem; color: var(--c-text); margin:0;">{{ property.title }}</h1>
+            <p style="color: var(--c-text-muted); margin-top: 6px;">
+                <i class="fa-solid fa-location-dot me-1" style="color: var(--c-primary);"></i>
+                {{ property.address }}{% if property.city %}, {{ property.city }}{% endif %}
+            </p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ path('app_owner_property_edit', {id: property.id}) }}" class="btn-owner-ghost">
+                <i class="fa-solid fa-pen-to-square"></i> Modifier
+            </a>
+            {% if property.statut == 'active' %}
+            <form method="POST" action="{{ path('app_owner_property_suspend', {id: property.id}) }}" style="display:inline;">
+                <button type="submit" class="btn-owner-warn" onclick="return confirm('Suspendre cette annonce ?')">
+                    <i class="fa-solid fa-pause"></i> Suspendre
+                </button>
+            </form>
+            {% elseif property.statut == 'suspended' %}
+            <form method="POST" action="{{ path('app_owner_property_reactivate', {id: property.id}) }}" style="display:inline;">
+                <button type="submit" class="btn-owner-success">
+                    <i class="fa-solid fa-play"></i> Réactiver
+                </button>
+            </form>
+            {% endif %}
+            <button class="btn-owner-danger" onclick="confirmDelete({{ property.id }}, '{{ property.title|escape('js') }}')">
+                <i class="fa-solid fa-trash-can"></i> Supprimer
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {# ══════════ COLONNE PRINCIPALE ══════════ #}
+        <div class="col-lg-8">
+
+            {# ── GALERIE PHOTOS ─────────────────────────────────── #}
+            {% if property.images and property.images|length > 0 %}
+            <div class="pd-card p-0 overflow-hidden mb-4">
+                <div class="gallery-main" onclick="openLightbox(0)">
+                    {% set img0 = property.images[0] %}
+                    <img id="mainPhoto" src="{{ img0 starts with 'http' or img0 starts with 'data:' ? img0 : asset('uploads/properties/' ~ img0) }}" alt="{{ property.title }}">
+                    <div class="gallery-count"><i class="fa-solid fa-camera me-1"></i>{{ property.images|length }} photos</div>
+                </div>
+                {% if property.images|length > 1 %}
+                <div class="gallery-thumb p-3">
+                    {% for i, img in property.images %}
+                    {% if i < 8 %}
+                    <img src="{{ img starts with 'http' or img starts with 'data:' ? img : asset('uploads/properties/' ~ img) }}"
+                         onclick="setMainPhoto(this, '{{ img starts with 'http' or img starts with 'data:' ? img : asset('uploads/properties/' ~ img) }}', {{ i }})"
+                         class="{{ i == 0 ? 'active' : '' }}"
+                         alt="Photo {{ i+1 }}">
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="pd-card d-flex align-items-center justify-content-center mb-4" style="height:300px;">
+                <div class="text-center" style="color: var(--c-text-muted);">
+                    <i class="fa-solid fa-images fs-1 mb-3 d-block opacity-25"></i>
+                    <p class="mb-0">Aucune photo</p>
+                    <a href="{{ path('app_owner_property_edit', {id: property.id}) }}" class="btn-owner-primary mt-3 d-inline-flex" style="font-size:13px;">
+                        <i class="fa-solid fa-plus"></i> Ajouter des photos
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            {# ── VIDÉO ─────────────────────────────────────────── #}
+            {% if property.videoUrl %}
+            <div class="pd-card mb-4">
+                <div class="pd-section-title"><i class="fa-solid fa-video"></i> Vidéo de présentation</div>
+                {% set videoId = '' %}
+                {% if 'youtube.com/watch?v=' in property.videoUrl %}
+                    {% set videoId = property.videoUrl|split('v=')[1]|split('&')[0] %}
+                {% elseif 'youtu.be/' in property.videoUrl %}
+                    {% set videoId = property.videoUrl|split('youtu.be/')[1]|split('?')[0] %}
+                {% endif %}
+                {% if videoId %}
+                <div style="position:relative; padding-bottom:56.25%; height:0; border-radius:12px; overflow:hidden;">
+                    <iframe src="https://www.youtube.com/embed/{{ videoId }}" frameborder="0" allowfullscreen
+                        style="position:absolute; top:0; left:0; width:100%; height:100%;"></iframe>
+                </div>
+                {% else %}
+                <a href="{{ property.videoUrl }}" target="_blank" class="btn-owner-primary" style="font-size:13px;">
+                    <i class="fa-solid fa-play"></i> Voir la vidéo
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {# ── DESCRIPTION ──────────────────────────────────── #}
+            <div class="pd-card mb-4">
+                <div class="pd-section-title"><i class="fa-solid fa-align-left"></i> Description</div>
+                <p style="color: var(--c-text); line-height: 1.8; white-space: pre-line;">{{ property.description }}</p>
+            </div>
+
+            {# ── CARACTÉRISTIQUES ─────────────────────────────── #}
+            <div class="pd-card mb-4">
+                <div class="pd-section-title"><i class="fa-solid fa-ruler-combined"></i> Caractéristiques</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="i-label">Surface</div>
+                        <div class="i-val">{{ property.surface }} m²</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="i-label">Pièces</div>
+                        <div class="i-val">{{ property.rooms }}</div>
+                    </div>
+                    {% if property.bedrooms %}
+                    <div class="info-item">
+                        <div class="i-label">Chambres</div>
+                        <div class="i-val">{{ property.bedrooms }}</div>
+                    </div>
+                    {% endif %}
+                    {% if property.nbSalons %}
+                    <div class="info-item">
+                        <div class="i-label">Salons</div>
+                        <div class="i-val">{{ property.nbSalons }}</div>
+                    </div>
+                    {% endif %}
+                    {% if property.nbSallesDeBain %}
+                    <div class="info-item">
+                        <div class="i-label">Salles de bain</div>
+                        <div class="i-val">{{ property.nbSallesDeBain }}</div>
+                    </div>
+                    {% endif %}
+                    {% if property.nbToilettes %}
+                    <div class="info-item">
+                        <div class="i-label">WC</div>
+                        <div class="i-val">{{ property.nbToilettes }}</div>
+                    </div>
+                    {% endif %}
+                    {% if property.etage is not null %}
+                    <div class="info-item">
+                        <div class="i-label">Étage</div>
+                        <div class="i-val">{{ property.etage == 0 ? 'RDC' : property.etage }}</div>
+                    </div>
+                    {% endif %}
+                    {% if property.typeCuisine %}
+                    <div class="info-item">
+                        <div class="i-label">Cuisine</div>
+                        <div class="i-val">{{ property.typeCuisine }}</div>
+                    </div>
+                    {% endif %}
+                    {% if property.disponibilite %}
+                    <div class="info-item">
+                        <div class="i-label">Disponible dès</div>
+                        <div class="i-val">{{ property.disponibilite }}</div>
+                    </div>
+                    {% endif %}
+                    {% if property.dureeMinLocation %}
+                    <div class="info-item">
+                        <div class="i-label">Durée min.</div>
+                        <div class="i-val">{{ property.dureeMinLocation }} mois</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# ── ÉQUIPEMENTS ──────────────────────────────────── #}
+            {% if property.equipements and property.equipements|length > 0 %}
+            <div class="pd-card mb-4">
+                <div class="pd-section-title"><i class="fa-solid fa-plug"></i> Équipements</div>
+                <div class="d-flex flex-wrap gap-2">
+                    {% set equipIcons = {
+                        'wifi': 'fa-wifi', 'climatisation': 'fa-snowflake', 'ventilateur': 'fa-fan',
+                        'chauffage': 'fa-fire', 'eau_courante': 'fa-droplet', 'groupe_electrogene': 'fa-bolt',
+                        'panneaux_solaires': 'fa-solar-panel', 'gardiennage': 'fa-user-shield',
+                        'interphone': 'fa-phone', 'alarme': 'fa-bell', 'piscine': 'fa-water-ladder',
+                        'salle_sport': 'fa-dumbbell', 'buanderie': 'fa-shirt', 'meuble': 'fa-couch'
+                    } %}
+                    {% for eq in property.equipements %}
+                    <span class="eq-chip">
+                        <i class="fa-solid {{ equipIcons[eq] ?? 'fa-check' }}"></i>
+                        {{ eq|replace({'_': ' '})|capitalize }}
+                    </span>
+                    {% endfor %}
+                    {% if property.hasParking %}<span class="eq-chip"><i class="fa-solid fa-square-parking"></i> Parking</span>{% endif %}
+                    {% if property.hasJardin %}<span class="eq-chip"><i class="fa-solid fa-tree"></i> Jardin</span>{% endif %}
+                    {% if property.hasBalcon %}<span class="eq-chip"><i class="fa-solid fa-door-open"></i> Balcon</span>{% endif %}
+                    {% if property.hasAscenseur %}<span class="eq-chip"><i class="fa-solid fa-elevator"></i> Ascenseur</span>{% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# ── RÈGLES ───────────────────────────────────────── #}
+            {% if property.animauxAcceptes or property.fumeursAcceptes %}
+            <div class="pd-card mb-4">
+                <div class="pd-section-title"><i class="fa-solid fa-shield-halved"></i> Règles</div>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if property.animauxAcceptes %}<span class="rule-chip"><i class="fa-solid fa-dog"></i> Animaux acceptés</span>{% endif %}
+                    {% if property.fumeursAcceptes %}<span class="rule-chip"><i class="fa-solid fa-smoking"></i> Fumeurs acceptés</span>{% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# ── CANDIDATURES ─────────────────────────────────── #}
+            <div class="pd-card">
+                <div class="pd-section-title d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-folder-open"></i> Candidatures reçues</span>
+                    <span class="badge rounded-pill" style="background: rgba(255,140,0,0.2); color: var(--c-primary);">{{ applications|length }}</span>
+                </div>
+
+                {% if applications|length == 0 %}
+                <div class="text-center py-4" style="color: var(--c-text-muted);">
+                    <i class="fa-solid fa-inbox fs-2 mb-2 d-block opacity-25"></i>
+                    <p class="mb-0 small">Aucune candidature pour ce bien pour l'instant.</p>
+                </div>
+                {% else %}
+                {% for app in applications %}
+                <div class="app-row">
+                    <div class="app-avatar">{{ app.locataire.prenom|slice(0,1)|upper }}</div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold small" style="color: var(--c-text);">{{ app.locataire.fullName }}</div>
+                        <div style="font-size:12px; color: var(--c-text-muted);">
+                            {{ app.createdAt|date('d/m/Y') }}
+                            {% if app.message %} · "{{ app.message|slice(0,40) }}{% if app.message|length > 40 %}…{% endif %}"{% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="stat-badge" style="font-size:11px; {{ app.statut == 'accepted' ? 'background: rgba(0,230,118,0.1); color:#00e676;' : (app.statut == 'pending' ? 'background: rgba(255,193,7,0.1); color:#ffc107;' : 'background: rgba(255,75,92,0.1); color:#ff4b5c;') }}">
+                            {{ app.statut == 'pending' ? 'En attente' : (app.statut == 'accepted' ? 'Acceptée' : 'Refusée') }}
+                        </span>
+                    </div>
+                    <a href="{{ path('app_owner_application_show', {id: app.id}) }}" class="btn-owner-ghost" style="padding: 6px 14px; font-size: 12px;">
+                        Voir
+                    </a>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+
+        </div>
+
+        {# ══════════ COLONNE LATÉRALE ══════════ #}
+        <div class="col-lg-4">
+
+            {# ── PRIX ─────────────────────────────────────────── #}
+            <div class="pd-card mb-4">
+                <div class="pd-section-title"><i class="fa-solid fa-coins"></i> Prix</div>
+                {% if property.statutAnnonce != 'À vendre' %}
+                <div class="mb-3">
+                    <div style="font-size: 2.2rem; font-weight: 800; color: var(--c-primary); line-height: 1;">
+                        {{ property.pricePerMonth|number_format(0, ',', ' ') }}
+                        <span style="font-size: 1rem; color: var(--c-text-muted); font-weight: 500;">FCFA/mois</span>
+                    </div>
+                </div>
+                {% endif %}
+                {% if property.prixVente and property.statutAnnonce != 'À louer' %}
+                <div class="mb-3">
+                    <div style="font-size: 1.6rem; font-weight: 700; color: #00d2ff;">
+                        {{ property.prixVente|number_format(0, ',', ' ') }}
+                        <span style="font-size: 0.9rem; color: var(--c-text-muted); font-weight: 500;">FCFA (vente)</span>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="d-flex flex-column gap-1" style="font-size: 13px; color: var(--c-text-muted);">
+                    {% if property.deposit %}<div><i class="fa-solid fa-lock me-2" style="color:var(--c-primary);"></i>Caution : {{ property.deposit|number_format(0, ',', ' ') }} FCFA</div>{% endif %}
+                    {% if property.fraisAgence %}<div><i class="fa-solid fa-handshake me-2" style="color:var(--c-primary);"></i>Agence : {{ property.fraisAgence|number_format(0, ',', ' ') }} FCFA</div>{% endif %}
+                    {% if property.chargesComprises %}<div><i class="fa-solid fa-circle-check me-2 text-success"></i>Charges comprises</div>{% endif %}
+                </div>
+            </div>
+
+            {# ── STATISTIQUES ─────────────────────────────────── #}
+            <div class="pd-card mb-4">
+                <div class="pd-section-title"><i class="fa-solid fa-chart-bar"></i> Performances</div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="pd-stat">
+                            <div class="val">{{ stats.views }}</div>
+                            <div class="lbl">Vues</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="pd-stat">
+                            <div class="val">{{ stats.applications }}</div>
+                            <div class="lbl">Candidatures</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="pd-stat">
+                            <div class="val">{{ stats.pending }}</div>
+                            <div class="lbl">En attente</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="pd-stat">
+                            <div class="val">{{ stats.accepted }}</div>
+                            <div class="lbl">Acceptées</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# ── INFOS PUBLICATION ────────────────────────────── #}
+            <div class="pd-card mb-4">
+                <div class="pd-section-title"><i class="fa-solid fa-circle-info"></i> Publication</div>
+                <div class="d-flex flex-column gap-2" style="font-size: 13px;">
+                    <div class="d-flex justify-content-between">
+                        <span style="color: var(--c-text-muted);">Créé le</span>
+                        <span style="color: var(--c-text);">{{ property.createdAt|date('d/m/Y') }}</span>
+                    </div>
+                    {% if property.updatedAt %}
+                    <div class="d-flex justify-content-between">
+                        <span style="color: var(--c-text-muted);">Modifié le</span>
+                        <span style="color: var(--c-text);">{{ property.updatedAt|date('d/m/Y') }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-between">
+                        <span style="color: var(--c-text-muted);">Statut annonce</span>
+                        <span style="color: var(--c-text);">{{ property.statutAnnonce ?? 'À louer' }}</span>
+                    </div>
+                    {% if property.preavis %}
+                    <div class="d-flex justify-content-between">
+                        <span style="color: var(--c-text-muted);">Préavis</span>
+                        <span style="color: var(--c-text);">{{ property.preavis }} mois</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# ── ACTIONS ──────────────────────────────────────── #}
+            <div class="pd-card">
+                <div class="pd-section-title"><i class="fa-solid fa-sliders"></i> Actions rapides</div>
+                <div class="d-flex flex-column gap-2">
+                    <a href="{{ path('app_owner_property_edit', {id: property.id}) }}" class="btn-owner-primary" style="justify-content: center;">
+                        <i class="fa-solid fa-pen-to-square"></i> Modifier l'annonce
+                    </a>
+                    <a href="{{ path('app_owner_applications') }}" class="btn-owner-ghost" style="justify-content: center;">
+                        <i class="fa-solid fa-folder-open"></i> Toutes mes candidatures
+                    </a>
+                    {% if property.statut == 'active' %}
+                    <form method="POST" action="{{ path('app_owner_property_suspend', {id: property.id}) }}">
+                        <button type="submit" class="btn-owner-warn w-100" style="justify-content:center;" onclick="return confirm('Suspendre ?')">
+                            <i class="fa-solid fa-pause"></i> Suspendre l'annonce
+                        </button>
+                    </form>
+                    {% elseif property.statut == 'suspended' %}
+                    <form method="POST" action="{{ path('app_owner_property_reactivate', {id: property.id}) }}">
+                        <button type="submit" class="btn-owner-success w-100" style="justify-content:center;">
+                            <i class="fa-solid fa-play"></i> Réactiver l'annonce
+                        </button>
+                    </form>
+                    {% endif %}
+                    <button class="btn-owner-danger" style="justify-content:center;" onclick="confirmDelete({{ property.id }}, '{{ property.title|escape('js') }}')">
+                        <i class="fa-solid fa-trash-can"></i> Supprimer définitivement
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{# Formulaire suppression caché #}
+<form id="deleteForm" method="POST" style="display:none;"></form>
+
+{# ── LIGHTBOX ───────────────────────────────────────────────────── #}
+<div class="lightbox" id="lightbox" onclick="closeLightboxOutside(event)">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <button class="lightbox-nav prev" onclick="lightboxNav(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+    <img id="lightboxImg" src="" alt="Photo">
+    <button class="lightbox-nav next" onclick="lightboxNav(1)"><i class="fa-solid fa-chevron-right"></i></button>
+</div>
+
+<script>
+const photos = {{ property.images|json_encode|raw }};
+let currentPhoto = 0;
+
+function setMainPhoto(el, src, idx) {
+    document.getElementById('mainPhoto').src = src;
+    document.querySelectorAll('.gallery-thumb img').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    currentPhoto = idx;
+}
+
+function openLightbox(idx) {
+    currentPhoto = idx;
+    const src = photos[idx];
+    document.getElementById('lightboxImg').src = src.startsWith('http') || src.startsWith('data:') ? src : '/uploads/properties/' + src;
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function closeLightboxOutside(e) { if (e.target === document.getElementById('lightbox')) closeLightbox(); }
+
+function lightboxNav(dir) {
+    currentPhoto = (currentPhoto + dir + photos.length) % photos.length;
+    openLightbox(currentPhoto);
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') lightboxNav(-1);
+    if (e.key === 'ArrowRight') lightboxNav(1);
+});
+
+function confirmDelete(id, title) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Supprimer ce bien ?',
+            html: `"<strong>${title}</strong>"<br><br>Cette action est <strong>irréversible</strong>.`,
+            icon: 'warning', showCancelButton: true,
+            confirmButtonColor: '#ff4b5c', cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Oui, supprimer', cancelButtonText: 'Annuler',
+            background: 'var(--c-surface)', color: 'var(--c-text)'
+        }).then(r => {
+            if (r.isConfirmed) {
+                const f = document.getElementById('deleteForm');
+                f.action = `/proprietary/properties/${id}/delete`;
+                f.submit();
+            }
+        });
+    } else if (confirm('Supprimer "' + title + '" ? Irréversible.')) {
+        const f = document.getElementById('deleteForm');
+        f.action = `/proprietary/properties/${id}/delete`;
+        f.submit();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,177 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Aide & Support - HomeConnect{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active" style="color: var(--c-text);">Aide</li>
+{% endblock %}
+
+{% block content %}
+
+{% for label, msgs in app.flashes %}
+    {% for msg in msgs %}
+    <div class="alert alert-{{ label == 'success' ? 'success' : 'danger' }} alert-dismissible fade show rounded-3 mb-4">
+        <i class="fa-solid fa-{{ label == 'success' ? 'circle-check' : 'circle-exclamation' }} me-2"></i>{{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+{% endfor %}
+
+<div class="sup-wrap">
+    <div class="sup-header mb-5">
+        <div class="sup-hero-icon"><i class="fa-solid fa-headset"></i></div>
+        <div>
+            <h1 class="sup-title">Centre d'aide Propriétaire</h1>
+            <p class="sup-sub">Besoin d'assistance ? Notre équipe HomeConnect vous répond sous 2h ouvrées.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="sup-card">
+                <div class="sup-card-title"><i class="fa-solid fa-paper-plane"></i> Envoyer une demande</div>
+                <form method="POST" action="{{ path('app_owner_support') }}" onsubmit="handleSubmit(event)">
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="sup-label">Nom complet</label>
+                            <input type="text" class="sup-input" value="{{ app.user.fullName }}" readonly style="opacity:.6;">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="sup-label">Sujet *</label>
+                            <input type="text" name="subject" class="sup-input" required placeholder="ex: Problème de publication">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="sup-label">Type de demande</label>
+                        <select name="type" class="sup-input">
+                            <option value="publication">Problème de publication</option>
+                            <option value="candidature">Question sur les candidatures</option>
+                            <option value="abonnement">Abonnement / Paiement</option>
+                            <option value="kyc">Certification KYC</option>
+                            <option value="technique">Bug technique</option>
+                            <option value="general">Autre</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="sup-label">Votre message *</label>
+                        <textarea name="message" class="sup-input sup-textarea" rows="6" required
+                                  placeholder="Décrivez votre situation…"></textarea>
+                    </div>
+                    <button type="submit" class="sup-btn-primary w-100" id="submitBtn">
+                        <i class="fa-solid fa-paper-plane me-2"></i> Envoyer la demande
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-5 d-flex flex-column gap-4">
+            <div class="sup-card sup-card-accent">
+                <div class="sup-card-title" style="color:rgba(255,255,255,0.7);">
+                    <i class="fa-solid fa-clock"></i> Horaires d'ouverture
+                </div>
+                <div class="sup-schedule">
+                    <div class="sup-sched-row"><span>Lundi — Vendredi</span><strong>08:00 – 18:00</strong></div>
+                    <div class="sup-sched-row"><span>Samedi</span><strong>09:00 – 13:00</strong></div>
+                    <div class="sup-sched-row">
+                        <span>Dimanche</span>
+                        <span class="sup-badge-urgent">Urgences uniquement</span>
+                    </div>
+                </div>
+                <div class="sup-sla mt-3"><i class="fa-solid fa-bolt me-1"></i> Réponse garantie : <strong>2h</strong></div>
+            </div>
+
+            <div class="sup-card">
+                <div class="sup-card-title"><i class="fa-solid fa-satellite-dish"></i> Autres canaux</div>
+                <a href="tel:+22921000000" class="sup-channel">
+                    <div class="sup-ch-icon" style="background:rgba(99,102,241,0.15);color:#818cf8;"><i class="fa-solid fa-phone"></i></div>
+                    <div><div class="sup-ch-label">Téléphone</div><div class="sup-ch-val">+229 21 00 00 00</div></div>
+                    <i class="fa-solid fa-chevron-right ms-auto dash-text-muted" style="font-size:12px;"></i>
+                </a>
+                <a href="mailto:support@homeconnect.bj" class="sup-channel">
+                    <div class="sup-ch-icon" style="background:rgba(255,140,0,0.15);color:var(--c-primary);"><i class="fa-solid fa-envelope"></i></div>
+                    <div><div class="sup-ch-label">Email</div><div class="sup-ch-val">support@homeconnect.bj</div></div>
+                    <i class="fa-solid fa-chevron-right ms-auto dash-text-muted" style="font-size:12px;"></i>
+                </a>
+                <a href="{{ path('app_owner_messages') }}" class="sup-channel">
+                    <div class="sup-ch-icon" style="background:rgba(0,210,255,0.15);color:#00D2FF;"><i class="fa-solid fa-comments"></i></div>
+                    <div><div class="sup-ch-label">Messagerie interne</div><div class="sup-ch-val">Chat avec l'administration</div></div>
+                    <i class="fa-solid fa-chevron-right ms-auto dash-text-muted" style="font-size:12px;"></i>
+                </a>
+            </div>
+
+            <div class="sup-card">
+                <div class="sup-card-title"><i class="fa-solid fa-circle-question"></i> FAQ rapide</div>
+                <div class="sup-faq">
+                    <details class="sup-faq-item">
+                        <summary>Comment publier un bien ?</summary>
+                        <p>Rendez-vous dans "Mes Biens" et cliquez sur "Ajouter un bien". Remplissez le formulaire et soumettez. Votre bien sera validé par l'admin sous 24h.</p>
+                    </details>
+                    <details class="sup-faq-item">
+                        <summary>Pourquoi mon bien est "en attente" ?</summary>
+                        <p>Tout bien soumis doit être validé par notre équipe avant d'être visible. Ce processus prend généralement 24 à 48h ouvrées.</p>
+                    </details>
+                    <details class="sup-faq-item">
+                        <summary>Comment accepter une candidature ?</summary>
+                        <p>Dans l'onglet "Candidatures", cliquez sur la candidature et utilisez le bouton "Accepter". Le locataire sera notifié automatiquement.</p>
+                    </details>
+                    <details class="sup-faq-item">
+                        <summary>Comment upgrader mon abonnement ?</summary>
+                        <p>Dans l'onglet "Abonnement", cliquez sur "Passer en Premium+" et suivez les étapes de paiement via FedaPay.</p>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.sup-wrap { max-width:1080px; margin:0 auto; }
+.sup-header { display:flex; align-items:center; gap:20px; }
+.sup-hero-icon { width:64px; height:64px; border-radius:18px; flex-shrink:0; background:linear-gradient(135deg,var(--c-primary),#FF4B5C); display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:#fff; box-shadow:0 8px 24px rgba(255,140,0,0.3); }
+.sup-title { font-size:1.75rem; font-weight:800; color:var(--c-text); margin:0 0 4px; }
+.sup-sub { color:var(--c-text-muted); font-size:14px; margin:0; }
+.sup-card { background:var(--c-surface); border:1px solid var(--c-border); border-radius:20px; padding:1.75rem; }
+.sup-card-accent { background:linear-gradient(135deg,#1a1a3e,#0d2137); border-color:rgba(99,102,241,0.3); }
+.sup-card-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--c-primary); margin-bottom:1.2rem; display:flex; align-items:center; gap:8px; }
+.sup-label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--c-text-muted); margin-bottom:7px; }
+.sup-input { width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--c-border); border-radius:12px; color:var(--c-text)!important; padding:11px 15px; font-size:14px; font-family:inherit; outline:none; transition:border-color .2s; appearance:none; }
+.sup-input:focus { border-color:var(--c-primary); box-shadow:0 0 0 3px rgba(255,140,0,0.12); }
+.sup-input::placeholder { color:rgba(255,255,255,0.25)!important; opacity:1!important; }
+.sup-input option { background:var(--c-surface); color:var(--c-text); }
+.sup-textarea { resize:vertical; min-height:130px; line-height:1.6; }
+.sup-btn-primary { background:linear-gradient(135deg,var(--c-primary),#e67e00); color:#fff; border:none; border-radius:50px; padding:14px 28px; font-size:15px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 16px rgba(255,140,0,0.35); transition:all .2s; }
+.sup-btn-primary:hover { transform:translateY(-2px); }
+.sup-btn-primary:disabled { opacity:.65; cursor:not-allowed; transform:none; }
+.sup-schedule { display:flex; flex-direction:column; gap:10px; }
+.sup-sched-row { display:flex; justify-content:space-between; align-items:center; font-size:14px; color:rgba(255,255,255,0.75); padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.07); }
+.sup-sched-row:last-child { border-bottom:none; }
+.sup-sched-row strong { color:#fff; }
+.sup-badge-urgent { background:rgba(255,75,92,0.2); color:#ff8a94; font-size:11px; font-weight:700; padding:3px 10px; border-radius:50px; }
+.sup-sla { font-size:13px; color:rgba(255,255,255,0.5); }
+.sup-sla strong { color:#25D366; }
+.sup-channel { display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid var(--c-border); text-decoration:none; transition:opacity .15s; }
+.sup-channel:last-child { border-bottom:none; }
+.sup-channel:hover { opacity:.75; }
+.sup-ch-icon { width:44px; height:44px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:1.1rem; }
+.sup-ch-label { font-size:11px; color:var(--c-text-muted); margin-bottom:2px; }
+.sup-ch-val { font-size:14px; font-weight:600; color:var(--c-text); }
+.sup-faq { display:flex; flex-direction:column; gap:2px; }
+.sup-faq-item { border-bottom:1px solid var(--c-border); padding:4px 0; }
+.sup-faq-item:last-child { border-bottom:none; }
+.sup-faq-item summary { font-size:13px; font-weight:600; color:var(--c-text); cursor:pointer; padding:10px 0; list-style:none; display:flex; justify-content:space-between; user-select:none; }
+.sup-faq-item summary::after { content:'+'; font-size:16px; color:var(--c-primary); }
+.sup-faq-item[open] summary::after { content:'−'; }
+.sup-faq-item p { font-size:13px; color:var(--c-text-muted); padding:0 0 10px; margin:0; line-height:1.6; }
+[data-theme="light"] .sup-input { background:#fff!important; color:#1e293b!important; border-color:rgba(0,0,0,0.15)!important; }
+[data-theme="light"] .sup-input::placeholder { color:#94a3b8!important; }
+[data-theme="light"] .sup-card { background:#fff; }
+</style>
+
+<script>
+function handleSubmit(e) {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Envoi en cours…';
+}
+</script>
+{% endblock %}

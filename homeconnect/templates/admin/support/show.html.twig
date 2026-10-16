@@ -1,0 +1,140 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Ticket #{{ ticket.id }}{% endblock %}
+
+{% block admin_body %}
+<div class="mb-4">
+    <a href="{{ path('admin_support_index') }}" class="text-decoration-none small fw-bold" style="color: var(--c-text-muted);">
+        <i class="fa-solid fa-arrow-left me-1"></i> Retour aux tickets
+    </a>
+</div>
+
+{% for type, messages in app.flashes %}
+    {% for msg in messages %}
+        <div class="alert alert-{{ type == 'success' ? 'success' : (type == 'danger' ? 'danger' : 'warning') }} alert-dismissible fade show rounded-3 mb-3">
+            {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endfor %}
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+    <div>
+        <h1 class="fw-bold mb-1" style="color: var(--c-text); font-family: var(--f-serif);">
+            Ticket #{{ ticket.id }} — {{ ticket.subject }}
+        </h1>
+        <div class="text-muted small">Reçu le {{ ticket.createdAt|date('d/m/Y à H:i') }}</div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        {% if ticket.status == 'ouvert' %}
+            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Ouvert</span>
+            <form method="POST" action="{{ path('admin_support_in_progress', {id: ticket.id}) }}">
+                <button class="btn btn-sm btn-outline-primary rounded-pill">
+                    <i class="fa-solid fa-spinner me-1"></i> Marquer En cours
+                </button>
+            </form>
+        {% elseif ticket.status == 'en_cours' %}
+            <span class="badge bg-primary rounded-pill px-3 py-2">En cours</span>
+        {% else %}
+            <span class="badge bg-secondary rounded-pill px-3 py-2">Fermé</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+
+        {# Message du locataire #}
+        <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+            <div class="card-header border-0 pb-0 pt-4 px-4" style="background: transparent;">
+                <h5 class="fw-bold mb-0" style="color: var(--c-text);">
+                    <i class="fa-solid fa-comment-dots text-primary me-2"></i> Message de {{ ticket.user.fullName }}
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-2">
+                    <span class="badge bg-secondary rounded-pill me-2">{{ ticket.type }}</span>
+                </div>
+                <p style="color: var(--c-text); line-height: 1.7;">{{ ticket.message|nl2br }}</p>
+            </div>
+        </div>
+
+        {# Réponse admin existante ou formulaire #}
+        {% if ticket.adminResponse %}
+        <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(99,102,241,0.3) !important;">
+            <div class="card-header border-0 pb-0 pt-4 px-4" style="background: transparent;">
+                <h5 class="fw-bold mb-0 text-primary">
+                    <i class="fa-solid fa-reply me-2"></i> Réponse de l'administration
+                    <span class="text-muted fw-normal small ms-2">({{ ticket.respondedAt|date('d/m/Y H:i') }})</span>
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <p style="color: var(--c-text); line-height: 1.7;">{{ ticket.adminResponse|nl2br }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if ticket.status != 'ferme' %}
+        <div class="card border-0" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+            <div class="card-header border-0 pb-0 pt-4 px-4" style="background: transparent;">
+                <h5 class="fw-bold mb-0" style="color: var(--c-text);">
+                    <i class="fa-solid fa-pen-to-square text-primary me-2"></i>
+                    {{ ticket.adminResponse ? 'Modifier la réponse' : 'Répondre et fermer' }}
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ path('admin_support_respond', {id: ticket.id}) }}">
+                    <div class="mb-3">
+                        <style>.support-textarea{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:rgba(255,255,255,0.9)!important;padding:14px 16px;font-size:14px;line-height:1.6;resize:vertical;min-height:120px;font-family:inherit;outline:none;transition:border-color .2s;}.support-textarea::placeholder{color:rgba(255,255,255,0.35)!important;opacity:1!important;}.support-textarea:focus{border-color:var(--c-primary);}</style>
+                        <textarea name="response" rows="5" required class="support-textarea"
+                                  placeholder="Rédigez votre réponse pour l'utilisateur…">{{ ticket.adminResponse }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-pill fw-bold px-4">
+                        <i class="fa-solid fa-paper-plane me-2"></i> Envoyer la réponse &amp; Fermer le ticket
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3" style="color: var(--c-text);">Informations</h6>
+                <div class="d-flex flex-column gap-2 small">
+                    <div>
+                        <span class="text-muted">Utilisateur :</span>
+                        <a href="{{ path('admin_users_show', {id: ticket.user.id}) }}" class="fw-bold ms-1" style="color: var(--c-text);">
+                            {{ ticket.user.fullName }}
+                        </a>
+                    </div>
+                    <div>
+                        <span class="text-muted">Email :</span>
+                        <span class="ms-1" style="color: var(--c-text);">{{ ticket.user.email }}</span>
+                    </div>
+                    <div>
+                        <span class="text-muted">Rôle :</span>
+                        <span class="ms-1 badge bg-secondary rounded-pill">
+                            {% if 'ROLE_PROPRIETAIRE' in ticket.user.roles %}Propriétaire
+                            {% elseif 'ROLE_LOCATAIRE' in ticket.user.roles %}Locataire
+                            {% else %}Utilisateur{% endif %}
+                        </span>
+                    </div>
+                    <hr style="border-color: rgba(255,255,255,0.1);">
+                    <div>
+                        <span class="text-muted">Ticket ouvert le :</span>
+                        <span class="ms-1" style="color: var(--c-text);">{{ ticket.createdAt|date('d/m/Y') }}</span>
+                    </div>
+                    {% if ticket.respondedAt %}
+                    <div>
+                        <span class="text-muted">Répondu le :</span>
+                        <span class="ms-1" style="color: var(--c-text);">{{ ticket.respondedAt|date('d/m/Y') }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

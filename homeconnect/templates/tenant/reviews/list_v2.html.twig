@@ -1,0 +1,150 @@
+{% extends 'tenant/base.html.twig' %}
+
+{% block tenant_content %}
+<div class="reviews-container">
+    <div class="page-header mb-5">
+        <h1 class="display-6 fw-bold" style="color: #2c3e50; font-family: var(--f-serif);"><i class="fa-solid fa-star-half-stroke text-warning"></i> Évaluations & Avis <span class="badge bg-info" style="font-size: 0.8rem;">V2.1</span></h1>
+        <p class="text-muted mb-0">Consultez votre réputation et laissez des avis sur vos bailleurs.</p>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Résumé des Notes -->
+        <div class="col-lg-5">
+            <div class="rating-card bg-white p-4 rounded-5 shadow-sm border h-100 text-center">
+                <h4 class="fw-bold mb-4">Note Globale</h4>
+                <div class="display-1 fw-bold text-primary mb-0">{{ averageRating|default(0) }}</div>
+                <div class="text-warning fs-4 mb-2">
+                    {% if averageRating > 0 %}
+                        {% for i in 1..5 %}
+                            <i class="fa-{{ averageRating >= i ? 'solid' : (averageRating >= i - 0.5 ? 'solid fa-star-half-stroke' : 'regular') }} fa-star"></i>
+                        {% endfor %}
+                    {% else %}
+                        {% for i in 1..5 %}<i class="fa-regular fa-star"></i>{% endfor %}
+                    {% endif %}
+                </div>
+                <p class="text-muted small">Basé sur {{ totalReviews|default(0) }} avis reçus</p>
+                
+                <!-- Histogramme -->
+                <div class="histogram mt-4">
+                    {% for i in 5..1 %}
+                        {% set count = starStats[i]|default(0) %}
+                        {% set percent = totalReviews > 0 ? (count / totalReviews * 100) : 0 %}
+                        <div class="d-flex align-items-center mb-2 gap-2">
+                            <span class="small fw-bold text-muted" style="min-width: 15px;">{{ i }}</span>
+                            <i class="fa-solid fa-star text-warning small"></i>
+                            <div class="progress flex-grow-1 rounded-pill" style="height: 8px; background: #f1f3f5;">
+                                <div class="progress-bar bg-primary rounded-pill" style="width: {{ percent }}%"></div>
+                            </div>
+                            <span class="small text-muted" style="min-width: 25px;">{{ count }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire de Nouvel Avis -->
+        <div class="col-lg-7">
+            <div class="rating-card bg-white p-4 rounded-5 shadow-sm border h-100">
+                <h4 class="fw-bold mb-3">Laisser un avis</h4>
+                <p class="text-muted small mb-4">Partagez votre expérience avec votre dernier bailleur.</p>
+                
+                <form id="reviewForm" action="{{ path('app_tenant_review_create') }}" method="POST">
+                    <div class="mb-4 text-center">
+                        <label class="d-block small fw-bold text-muted text-uppercase mb-2">Votre note</label>
+                        <div class="star-rating fs-2 d-flex justify-content-center gap-2">
+                            <i class="fa-regular fa-star text-warning star-icon" style="cursor:pointer" onclick="setRating(1)"></i>
+                            <i class="fa-regular fa-star text-warning star-icon" style="cursor:pointer" onclick="setRating(2)"></i>
+                            <i class="fa-regular fa-star text-warning star-icon" style="cursor:pointer" onclick="setRating(3)"></i>
+                            <i class="fa-regular fa-star text-warning star-icon" style="cursor:pointer" onclick="setRating(4)"></i>
+                            <i class="fa-regular fa-star text-warning star-icon" style="cursor:pointer" onclick="setRating(5)"></i>
+                        </div>
+                        <input type="hidden" name="rating" id="ratingInput" value="0">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Bailleur concerné</label>
+                        <select class="form-select rounded-pill border-light bg-light py-2 px-3" name="rentalId" required>
+                            <option value="">Sélectionnez une location terminée</option>
+                            {% for rental in rentals %}
+                                <option value="{{ rental.id }}">{{ rental.property.proprietaire.fullName }} ({{ rental.property.title }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Votre commentaire</label>
+                        <textarea class="form-control rounded-4 p-3 border-light bg-light" name="comment" rows="3" placeholder="Comment s'est passée votre location ?" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-3 shadow-sm">
+                        <i class="fa-solid fa-paper-plane me-2"></i> Publier mon avis
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des avis reçus -->
+    <div class="reviews-section">
+        <h4 class="fw-bold mb-4">Avis Récents</h4>
+        
+        {% for review in reviews %}
+            <div class="review-item-modern bg-white p-4 rounded-5 shadow-sm border mb-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle me-3 border border-2 border-primary-subtle d-flex align-items-center justify-content-center bg-light" style="width: 50px; height: 50px;">
+                            <i class="fa-solid fa-user text-primary"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">{{ review.author.fullName }} <span class="badge bg-light text-muted fw-normal ms-2" style="font-size: 0.6rem;">{{ review.type|capitalize }}</span></h5>
+                            <div class="text-warning small mt-1">
+                                {% for i in 1..5 %}
+                                    <i class="fa-{{ review.rating >= i ? 'solid' : 'regular' }} fa-star"></i>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <span class="text-muted small">Le {{ review.createdAt|date('d F Y') }}</span>
+                </div>
+                <p class="text-dark-subtle italic mb-0 ps-5" style="border-left: 3px solid #eee;">
+                    "{{ review.comment }}"
+                </p>
+            </div>
+        {% else %}
+            <div class="empty-reviews text-center py-5 bg-white rounded-5 border border-dashed shadow-sm">
+                <i class="fa-solid fa-comments-slash text-muted opacity-25 mb-3" style="font-size: 4rem;"></i>
+                <h3 class="fw-bold">Aucun avis pour le moment</h3>
+                <p class="text-muted">Une fois votre première location terminée, vos bailleurs pourront laisser un avis ici.</p>
+            </div>
+        {% endfor %}
+
+    </div>
+</div>
+
+<script>
+function setRating(val) {
+    document.getElementById('ratingInput').value = val;
+    const stars = document.querySelectorAll('.star-rating i');
+    stars.forEach((star, index) => {
+        if (index < val) {
+            star.classList.replace('fa-regular', 'fa-solid');
+        } else {
+            star.classList.replace('fa-solid', 'fa-regular');
+        }
+    });
+}
+</script>
+
+<style>
+.rating-card { transition: transform 0.3s; }
+.review-item-modern { transition: all 0.3s; }
+.review-item-modern:hover { transform: translateX(10px); border-color: #686de0 !important; }
+
+.star-rating i:hover { transform: scale(1.2); color: #f1c40f !important; }
+
+.empty-reviews { border: 2px dashed #dee2e6 !important; }
+
+.pagination .page-link { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #686de0; font-weight: bold; }
+.pagination .page-item.active .page-link { background: #686de0 !important; color: white; }
+</style>
+{% endblock %}

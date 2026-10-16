@@ -1,0 +1,90 @@
+<footer>
+    <div class="footer-grid">
+        <div class="footer-brand">
+            <a href="{{ path('app_home') }}" class="logo" style="text-decoration:none;">
+                <div class="logo-icon"><i class="fa-solid fa-house-chimney"></i></div>
+                <span class="logo-name">Home<span>Connect</span></span>
+            </a>
+            <p>La plateforme immobilière locative de référence au Bénin. Sécurisée, vérifiée et adaptée au contexte local.</p>
+            <div class="footer-socials">
+                <a href="#" class="social-btn" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="#" class="social-btn" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#" class="social-btn" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+                <a href="#" class="social-btn" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+            </div>
+        </div>
+
+        <div>
+            <div class="footer-col-title">Plateforme</div>
+            <ul class="footer-links">
+                <li><a href="{{ path('app_home') }}"><i class="fa-solid fa-chevron-right fa-xs"></i>Toutes les annonces</a></li>
+                <li><a href="{{ path('app_home') }}"><i class="fa-solid fa-chevron-right fa-xs"></i>Carte interactive</a></li>
+                <li><a href="{{ path('app_how_it_works') }}"><i class="fa-solid fa-chevron-right fa-xs"></i>Comment ça marche</a></li>
+                <li><a href="{{ path('app_pricing') }}"><i class="fa-solid fa-chevron-right fa-xs"></i>Tarifs & abonnements</a></li>
+            </ul>
+        </div>
+
+        <div>
+            <div class="footer-col-title">{{ 'public.footer.col_actors'|trans }}</div>
+            <ul class="footer-links">
+                <li><a href="{{ path('app_home') }}"><i class="fa-solid fa-chevron-right fa-xs"></i>{{ 'public.footer.link_owners'|trans }}</a></li>
+                <li><a href="{{ path('app_home') }}"><i class="fa-solid fa-chevron-right fa-xs"></i>{{ 'public.footer.link_tenants'|trans }}</a></li>
+                <li><a href="{{ path('app_home') }}"><i class="fa-solid fa-chevron-right fa-xs"></i>{{ 'public.footer.link_partners'|trans }}</a></li>
+                <li><a href="{{ path('app_register') }}"><i class="fa-solid fa-chevron-right fa-xs"></i>{{ 'public.nav.register'|trans }}</a></li>
+            </ul>
+        </div>
+
+        <div>
+            <div class="footer-col-title">{{ 'public.footer.col_info'|trans }}</div>
+            <ul class="footer-links">
+                <li><a href="{{ path('app_home') }}"><i class="fa-solid fa-chevron-right fa-xs"></i>{{ 'public.footer.link_about'|trans }}</a></li>
+                <li><a href="{{ path('app_home') }}"><i class="fa-solid fa-chevron-right fa-xs"></i>{{ 'public.footer.link_faq'|trans }}</a></li>
+                <li><a href="{{ path('app_contact') }}"><i class="fa-solid fa-chevron-right fa-xs"></i>{{ 'public.footer.link_contact'|trans }}</a></li>
+                <li><a href="{{ path('app_home') }}"><i class="fa-solid fa-chevron-right fa-xs"></i>{{ 'public.footer.legal'|trans }}</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <span>&copy; {{ "now"|date("Y") }} HomeConnect Bénin — {{ 'public.footer.rights'|trans }}</span>
+        <div class="footer-bottom-links">
+            <a href="{{ path('app_home') }}">{{ 'public.footer.privacy'|trans }}</a>
+            <a href="{{ path('app_home') }}">{{ 'public.footer.cgu'|trans }}</a>
+            <a href="{{ path('app_home') }}">{{ 'public.footer.legal'|trans }}</a>
+        </div>
+    </div>
+</footer>
+
+<style>
+    /* ══════════════════════════════
+       FOOTER (SYNC)
+    ══════════════════════════════ */
+    footer { background: #0D0D1A; color: rgba(255,255,255,0.7); padding: 5rem 5% 2.5rem; border-top: 1px solid rgba(255,255,255,0.05); }
+    .footer-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 3rem; margin-bottom: 4rem; }
+    .footer-brand .logo-name { color: #fff; }
+    .footer-brand p { margin-top: 1rem; font-size: 0.87rem; line-height: 1.7; color: rgba(255,255,255,0.5); max-width: 280px; }
+    .footer-socials { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+    .social-btn {
+        width: 36px; height: 36px; border-radius: 9px;
+        background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+        display: flex; align-items: center; justify-content: center;
+        color: rgba(255,255,255,0.5); font-size: 0.85rem;
+        text-decoration: none; transition: background 0.25s, color 0.25s;
+    }
+    .social-btn:hover { background: var(--wine); color: #fff; border-color: var(--wine); }
+    .footer-col-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #fff; margin-bottom: 1.4rem; }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; padding: 0; }
+    .footer-links a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.87rem; transition: color 0.25s; display: flex; align-items: center; gap: 0.4rem; }
+    .footer-links a:hover { color: var(--wine-light); }
+    .footer-bottom { border-top: 1px solid rgba(255,255,255,0.07); padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; font-size: 0.8rem; color: rgba(255,255,255,0.35); }
+    .footer-bottom a { color: rgba(255,255,255,0.35); text-decoration: none; transition: color 0.25s; }
+    .footer-bottom a:hover { color: var(--wine-light); }
+    .footer-bottom-links { display: flex; gap: 1.5rem; }
+
+    @media (max-width: 1024px) {
+        .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+        .footer-grid { grid-template-columns: 1fr; }
+    }
+</style>

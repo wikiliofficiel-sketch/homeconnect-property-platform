@@ -1,0 +1,247 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Validation KYC{% endblock %}
+
+{% block admin_body %}
+<div class="kyc-admin-container">
+    <div class="row g-4">
+
+        {# ── Liste : en attente ─────────────────────────────────────── #}
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="background: var(--c-surface); border: 1px solid var(--c-border) !important;">
+                <div class="card-header p-3 border-bottom border-white-10" style="background: rgba(255,255,255,0.02);">
+                    <h6 class="fw-bold mb-0 text-white">
+                        <i class="fa-solid fa-clock text-warning me-2"></i>
+                        En attente ({{ pendingUsers|length }})
+                    </h6>
+                </div>
+                <div class="list-group list-group-flush overflow-auto custom-scrollbar" style="max-height: 380px; background: transparent;">
+                    {% for u in pendingUsers %}
+                        <a href="?user_id={{ u.id }}" class="list-group-item list-group-item-action p-3 d-flex align-items-center gap-3 {{ app.request.query.get('user_id') == u.id ? 'active' : '' }} border-0 border-bottom border-white-10" style="background: transparent; color: var(--c-body);">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center bg-warning text-dark fw-bold" style="width:38px;height:38px;min-width:38px;font-size:.8rem;">
+                                {{ u.prenom|first|upper }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold small {{ app.request.query.get('user_id') == u.id ? 'text-warning' : 'text-white' }}">{{ u.prenom }} {{ u.nom }}</div>
+                                <div class="text-white-50" style="font-size:0.7rem;">
+                                    Soumis le {{ u.kycSubmittedAt ? u.kycSubmittedAt|date('d/m/Y') : 'N/A' }}
+                                </div>
+                            </div>
+                            <span class="badge bg-warning-subtle text-warning rounded-pill" style="font-size:0.65rem;">Attente</span>
+                        </a>
+                    {% else %}
+                        <p class="p-4 text-center text-white-50 small">Aucune demande en attente.</p>
+                    {% endfor %}
+                </div>
+
+                {# ── Déjà traités ─────────────────────────────────────── #}
+                <div class="card-header p-3 border-top border-bottom border-white-10" style="background: rgba(255,255,255,0.02);">
+                    <h6 class="fw-bold mb-0 text-white-50" style="font-size:.8rem;">
+                        <i class="fa-solid fa-check-double me-1"></i> Traités ({{ processedUsers|length }})
+                    </h6>
+                </div>
+                <div class="list-group list-group-flush overflow-auto custom-scrollbar" style="max-height: 220px; background: transparent;">
+                    {% for u in processedUsers %}
+                        <a href="?user_id={{ u.id }}" class="list-group-item list-group-item-action p-2 d-flex align-items-center gap-2 border-0 border-bottom border-white-10" style="background:transparent;color:var(--c-body);">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center {{ u.kycStatus == 'approved' ? 'bg-success' : 'bg-danger' }} text-white fw-bold" style="width:30px;height:30px;min-width:30px;font-size:.7rem;">
+                                {{ u.prenom|first|upper }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="small text-white">{{ u.prenom }} {{ u.nom }}</div>
+                            </div>
+                            <span class="badge {{ u.kycStatus == 'approved' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }} rounded-pill" style="font-size:.6rem;">
+                                {{ u.kycStatus == 'approved' ? 'Certifié' : 'Rejeté' }}
+                            </span>
+                        </a>
+                    {% else %}
+                        <p class="p-3 text-center text-white-50 small">Aucun dossier traité.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {# ── Détail du dossier sélectionné ──────────────────────────── #}
+        <div class="col-lg-8">
+            {% set selectedUserId = app.request.query.get('user_id') %}
+            {% set selectedUser = null %}
+            {% for u in pendingUsers %}
+                {% if u.id == selectedUserId %}{% set selectedUser = u %}{% endif %}
+            {% endfor %}
+            {% if selectedUser is null %}
+                {% for u in processedUsers %}
+                    {% if u.id == selectedUserId %}{% set selectedUser = u %}{% endif %}
+                {% endfor %}
+            {% endif %}
+
+            {% if selectedUser %}
+                <div class="card border-0 shadow-sm rounded-4 p-4" style="background: var(--c-surface); border: 1px solid var(--c-border) !important;">
+
+                    {# En-tête propriétaire #}
+                    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle border border-3 border-warning-subtle d-flex align-items-center justify-content-center bg-warning text-dark fw-bold shadow-sm" style="width:60px;height:60px;font-size:1.4rem;">
+                                {{ selectedUser.prenom|first|upper }}
+                            </div>
+                            <div>
+                                <h4 class="fw-bold mb-0 text-white">{{ selectedUser.prenom }} {{ selectedUser.nom }}</h4>
+                                <p class="text-white-50 small mb-0">{{ selectedUser.email }} • Inscrit le {{ selectedUser.createdAt|date('d/m/Y') }}</p>
+                                <p class="small mb-0">
+                                    {% if selectedUser.kycStatus == 'approved' %}
+                                        <span class="badge bg-success rounded-pill">Certifié <i class="fa-solid fa-shield-check ms-1"></i></span>
+                                    {% elseif selectedUser.kycStatus == 'rejected' %}
+                                        <span class="badge bg-danger rounded-pill">Rejeté</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark rounded-pill">En attente</span>
+                                    {% endif %}
+                                    {% if selectedUser.kycSubmittedAt %}
+                                        <span class="text-white-50 ms-2 small">Soumis {{ selectedUser.kycSubmittedAt|date('d/m/Y H:i') }}</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        {# Boutons d'action #}
+                        {% if selectedUser.kycStatus != 'approved' %}
+                        <div class="d-flex gap-2 flex-wrap">
+                            <form action="{{ path('admin_kyc_reject', {id: selectedUser.id}) }}" method="POST" id="rejectForm">
+                                <input type="hidden" name="reason" id="rejectReason">
+                                <button type="button" class="btn btn-outline-danger rounded-pill fw-bold px-4" onclick="promptReject()">
+                                    <i class="fa-solid fa-times me-1"></i> Rejeter
+                                </button>
+                            </form>
+                            <form action="{{ path('admin_kyc_approve', {id: selectedUser.id}) }}" method="POST">
+                                <button type="submit" class="btn btn-success rounded-pill fw-bold px-4 shadow">
+                                    <i class="fa-solid fa-shield-check me-1"></i> Certifier
+                                </button>
+                            </form>
+                        </div>
+                        {% else %}
+                            <span class="badge bg-success fs-6 rounded-pill px-4 py-2">
+                                <i class="fa-solid fa-shield-check me-1"></i> Compte certifié
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    {# Motif de rejet si applicable #}
+                    {% if selectedUser.kycStatus == 'rejected' and selectedUser.kycRejectionReason %}
+                        <div class="alert alert-danger d-flex gap-2 mb-4 rounded-3 p-3">
+                            <i class="fa-solid fa-triangle-exclamation mt-1"></i>
+                            <div><strong>Motif du rejet :</strong> {{ selectedUser.kycRejectionReason }}</div>
+                        </div>
+                    {% endif %}
+
+                    {# ── Documents obligatoires ────────────────────────── #}
+                    <h6 class="fw-bold text-white-50 text-uppercase small mb-3 mt-2">Documents obligatoires</h6>
+                    <div class="row g-3 mb-4">
+
+                        {# Pièce d'identité #}
+                        <div class="col-md-4">
+                            {% set docLabel = selectedUser.kycIdentiteType == 'cni' ? 'CNI' : (selectedUser.kycIdentiteType == 'passeport' ? 'Passeport' : 'Pièce d\'identité') %}
+                            {{ _self.docCard('Pièce d\'identité', docLabel, selectedUser.kycIdentiteUrl, 'fa-id-card', '#f59e0b') }}
+                        </div>
+
+                        {# Justificatif domicile #}
+                        <div class="col-md-4">
+                            {% set domLabel = selectedUser.kycDomicileType ? selectedUser.kycDomicileType|replace({'_': ' '})|capitalize : 'Justificatif domicile' %}
+                            {{ _self.docCard('Justificatif domicile', domLabel, selectedUser.kycDomicileUrl, 'fa-house', '#60a5fa') }}
+                        </div>
+
+                        {# Justificatif propriété #}
+                        <div class="col-md-4">
+                            {% set propLabel = selectedUser.kycProprieteType ? selectedUser.kycProprieteType|replace({'_': ' '})|capitalize : 'Justificatif propriété' %}
+                            {{ _self.docCard('Titre de propriété', propLabel, selectedUser.kycProprieteUrl, 'fa-gavel', '#a78bfa') }}
+                        </div>
+                    </div>
+
+                    {# ── Documents optionnels ──────────────────────────── #}
+                    {% if selectedUser.kycRibUrl or selectedUser.kycAssuranceUrl or selectedUser.kycCasParticulier %}
+                    <h6 class="fw-bold text-white-50 text-uppercase small mb-3">Documents complémentaires</h6>
+                    <div class="row g-3 mb-4">
+                        {% if selectedUser.kycRibUrl %}
+                        <div class="col-md-4">
+                            {{ _self.docCard('RIB', 'Relevé bancaire', selectedUser.kycRibUrl, 'fa-building-columns', '#34d399') }}
+                        </div>
+                        {% endif %}
+                        {% if selectedUser.kycAssuranceUrl %}
+                        <div class="col-md-4">
+                            {{ _self.docCard('Assurance PNO', 'Attestation PNO', selectedUser.kycAssuranceUrl, 'fa-shield-halved', '#fb923c') }}
+                        </div>
+                        {% endif %}
+                        {% if selectedUser.kycCasParticulier %}
+                        <div class="col-md-4">
+                            {% set casLabel = selectedUser.kycCasParticulier == 'sci' ? 'Statuts SCI' : 'Règlement copropriété' %}
+                            {{ _self.docCard('Cas particulier (' ~ selectedUser.kycCasParticulier|upper ~ ')', casLabel, selectedUser.kycCasParticulierUrl, 'fa-building-user', '#e879f9') }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                </div>
+            {% else %}
+                <div class="h-100 d-flex align-items-center justify-content-center text-center p-5 rounded-4 border border-white-10" style="background: var(--c-surface); min-height:400px;">
+                    <div>
+                        <i class="fa-solid fa-user-shield text-white-50 display-1 opacity-25 mb-4"></i>
+                        <h4 class="text-white-50">Sélectionnez un propriétaire pour examiner son dossier KYC</h4>
+                        <p class="text-white-25 small">Cliquez sur un nom dans la liste de gauche.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# ── Macro d'affichage d'un document ────────────────────────────────── #}
+{% macro docCard(title, subtitle, fileUrl, icon, color) %}
+<div class="rounded-4 p-3 border border-white-10 h-100" style="background:rgba(255,255,255,0.03);">
+    <div class="d-flex align-items-center gap-2 mb-2">
+        <i class="fa-solid {{ icon }}" style="color:{{ color }};font-size:1.1rem;"></i>
+        <div>
+            <div class="small fw-bold text-white">{{ title }}</div>
+            <div class="text-white-50" style="font-size:.7rem;">{{ subtitle }}</div>
+        </div>
+    </div>
+    {% if fileUrl %}
+        {% if fileUrl ends with '.pdf' %}
+            <a href="{{ asset(fileUrl) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill w-100 mt-1">
+                <i class="fa-solid fa-file-pdf me-1"></i> Voir PDF
+            </a>
+        {% elseif fileUrl starts with 'data:image' or fileUrl starts with 'http' %}
+            <a href="{{ fileUrl }}" target="_blank">
+                <img src="{{ fileUrl }}" class="w-100 rounded-3 mt-1" style="max-height:120px;object-fit:cover;" alt="{{ title }}">
+            </a>
+        {% else %}
+            <a href="{{ asset(fileUrl) }}" target="_blank">
+                <img src="{{ asset(fileUrl) }}" class="w-100 rounded-3 mt-1" style="max-height:120px;object-fit:cover;" alt="{{ title }}">
+            </a>
+        {% endif %}
+        <a href="{{ fileUrl starts with 'http' or fileUrl starts with 'data:' ? fileUrl : asset(fileUrl) }}" target="_blank"
+           class="btn btn-sm btn-outline-light rounded-pill w-100 mt-2" style="font-size:.7rem;">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Ouvrir en plein écran
+        </a>
+    {% else %}
+        <div class="d-flex flex-column align-items-center justify-content-center rounded-3 mt-1" style="height:80px;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,.1);">
+            <i class="fa-solid fa-image text-white-25 fs-4 opacity-25"></i>
+            <span class="text-white-50 mt-1" style="font-size:.7rem;">Non fourni</span>
+        </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+<script>
+function promptReject() {
+    const reason = prompt('Motif du rejet (obligatoire) :');
+    if (reason && reason.trim()) {
+        document.getElementById('rejectReason').value = reason.trim();
+        document.getElementById('rejectForm').submit();
+    }
+}
+</script>
+
+<style>
+.bg-warning-subtle { background: rgba(245,158,11,.1); }
+.bg-success-subtle { background: rgba(34,197,94,.1); }
+.bg-danger-subtle  { background: rgba(239,68,68,.1); }
+.text-white-25     { color: rgba(255,255,255,.25); }
+.border-white-10   { border-color: rgba(255,255,255,.1) !important; }
+</style>
+{% endblock %}

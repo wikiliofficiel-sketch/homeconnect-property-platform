@@ -1,0 +1,183 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Journaux d'activité{% endblock %}
+
+{% block admin_body %}
+
+{# ── En-tête ──────────────────────────────────────────────────── #}
+<div class="d-flex justify-content-between align-items-start mb-5 flex-wrap gap-3">
+    <div>
+        <h1 style="font-family:var(--f-serif); font-size:2rem; color:var(--c-text); margin:0 0 4px;">
+            <i class="fa-solid fa-clock-rotate-left me-2" style="color:var(--c-primary);"></i>Journaux d'activité
+        </h1>
+        <p style="color:var(--c-text-muted); font-size:14px; margin:0;">
+            Traçabilité complète des actions de modération — {{ logs|length }} entrée(s)
+        </p>
+    </div>
+    <button onclick="exportLogsCSV()" class="log-export-btn">
+        <i class="fa-solid fa-file-csv me-2"></i>Exporter CSV
+    </button>
+</div>
+
+{# ── Filtres ───────────────────────────────────────────────────── #}
+<form method="GET" action="{{ path('admin_logs_index') }}" class="log-filter-bar mb-4">
+    <div class="log-filter-group">
+        <label class="log-filter-label">Type d'action</label>
+        <select name="action" class="log-filter-input" onchange="this.form.submit()">
+            <option value="">Toutes</option>
+            {% for act in actions %}
+            <option value="{{ act }}" {{ filter.action == act ? 'selected' : '' }}>
+                {{ act|replace({'_': ' '})|capitalize }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="log-filter-group">
+        <label class="log-filter-label">Du</label>
+        <input type="date" name="date_from" value="{{ filter.dateFrom }}" class="log-filter-input" onchange="this.form.submit()">
+    </div>
+    <div class="log-filter-group">
+        <label class="log-filter-label">Au</label>
+        <input type="date" name="date_to" value="{{ filter.dateTo }}" class="log-filter-input" onchange="this.form.submit()">
+    </div>
+    <div class="log-filter-group" style="flex:1;">
+        <label class="log-filter-label">Recherche</label>
+        <div style="position:relative;">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--c-text-muted); font-size:12px;"></i>
+            <input type="text" id="searchLog" class="log-filter-input" style="padding-left:32px;" placeholder="Mot-clé dans les détails…">
+        </div>
+    </div>
+    {% if filter.action or filter.dateFrom or filter.dateTo %}
+    <a href="{{ path('admin_logs_index') }}" class="log-reset-btn">
+        <i class="fa-solid fa-xmark me-1"></i>Réinitialiser
+    </a>
+    {% endif %}
+</form>
+
+{# ── Tableau ───────────────────────────────────────────────────── #}
+<div class="log-table-wrap">
+    {% if logs|length == 0 %}
+    <div style="text-align:center; padding:3rem 2rem; color:var(--c-text-muted);">
+        <i class="fa-solid fa-clock-rotate-left" style="font-size:3rem; opacity:.2; display:block; margin-bottom:12px;"></i>
+        <p style="margin:0; font-size:14px;">Aucun journal pour les filtres sélectionnés.<br>Les journaux se remplissent automatiquement à chaque action admin.</p>
+    </div>
+    {% else %}
+    <table class="log-table" id="logTable">
+        <thead>
+            <tr>
+                <th style="width:140px;">Date / Heure</th>
+                <th style="width:160px;">Administrateur</th>
+                <th style="width:180px;">Action</th>
+                <th>Détails</th>
+            </tr>
+        </thead>
+        <tbody id="logTableBody">
+        {% for log in logs %}
+        <tr class="log-row" data-details="{{ log.details|lower }}">
+            <td>
+                <div style="font-size:13px; font-weight:600; color:var(--c-text);">{{ log.createdAt|date('d/m/Y') }}</div>
+                <div style="font-size:11px; color:var(--c-text-muted);">{{ log.createdAt|date('H:i:s') }}</div>
+            </td>
+            <td>
+                {% if log.user %}
+                <div style="font-size:13px; color:var(--c-text); font-weight:600;">{{ log.user.fullName }}</div>
+                <div style="font-size:11px; color:var(--c-text-muted);">{{ log.user.email }}</div>
+                {% else %}
+                <span style="font-size:12px; color:var(--c-text-muted); font-style:italic;">Système</span>
+                {% endif %}
+            </td>
+            <td>
+                {% set actionColors = {
+                    'property_approved':    ['#00e676', 'rgba(0,230,118,0.12)',    'fa-check-circle'],
+                    'property_suspended':   ['#ffc107', 'rgba(255,193,7,0.12)',    'fa-pause-circle'],
+                    'property_deleted':     ['#ff4b5c', 'rgba(255,75,92,0.12)',    'fa-trash-circle'],
+                    'kyc_approved':         ['#00D2FF', 'rgba(0,210,255,0.12)',    'fa-id-card'],
+                    'kyc_rejected':         ['#e74c3c', 'rgba(231,76,60,0.12)',    'fa-id-card-clip'],
+                    'user_deleted':         ['#ff4b5c', 'rgba(255,75,92,0.12)',    'fa-user-minus'],
+                    'user_role_changed':    ['#8B5CF6', 'rgba(139,92,246,0.12)',   'fa-user-tag'],
+                    'subscription_upgraded':['#8B5CF6', 'rgba(139,92,246,0.12)',   'fa-crown'],
+                    'subscription_renewed': ['#3B82F6', 'rgba(59,130,246,0.12)',   'fa-rotate'],
+                    'report_handled':       ['#f59e0b', 'rgba(245,158,11,0.12)',   'fa-flag'],
+                    'commission_generated': ['#FFD700', 'rgba(255,215,0,0.12)',    'fa-coins'],
+                } %}
+                {% set col = actionColors[log.action] ?? ['#94a3b8', 'rgba(148,163,184,0.1)', 'fa-circle-dot'] %}
+                <span class="log-action-badge" style="background:{{ col[1] }}; color:{{ col[0] }};">
+                    <i class="fa-solid {{ col[2] }} me-1"></i>
+                    {{ log.action|replace({'_': ' '})|capitalize }}
+                </span>
+            </td>
+            <td style="font-size:13px; color:var(--c-text-muted); max-width:400px;">
+                {{ log.details }}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<style>
+/* Filtres */
+.log-filter-bar { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; background:var(--c-surface); border:1px solid var(--c-border); border-radius:14px; padding:16px 20px; }
+.log-filter-group { display:flex; flex-direction:column; gap:5px; min-width:140px; }
+.log-filter-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--c-text-muted); }
+.log-filter-input { background:rgba(255,255,255,0.05); border:1px solid var(--c-border); border-radius:8px; color:var(--c-text); padding:8px 12px; font-size:13px; font-family:inherit; outline:none; transition:border-color .2s; width:100%; }
+.log-filter-input:focus { border-color:var(--c-primary); }
+.log-filter-input option { background:var(--c-surface); color:var(--c-text); }
+.log-reset-btn { display:inline-flex; align-items:center; background:rgba(255,75,92,0.1); color:#ff4b5c; border:1px solid rgba(255,75,92,0.25); border-radius:8px; padding:8px 14px; font-size:13px; font-weight:600; text-decoration:none; align-self:flex-end; transition:all .2s; white-space:nowrap; }
+.log-reset-btn:hover { background:rgba(255,75,92,0.2); color:#ff4b5c; }
+
+/* Export */
+.log-export-btn { background:linear-gradient(135deg,#16a34a,#15803d); color:#fff; border:none; border-radius:50px; padding:10px 20px; font-size:13px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; box-shadow:0 4px 14px rgba(22,163,74,0.3); transition:all .2s; }
+.log-export-btn:hover { transform:translateY(-2px); filter:brightness(1.1); }
+
+/* Table */
+.log-table-wrap { background:var(--c-surface); border:1px solid var(--c-border); border-radius:18px; overflow:hidden; }
+.log-table { width:100%; border-collapse:collapse; }
+.log-table thead tr { border-bottom:1px solid var(--c-border); }
+.log-table th { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--c-text-muted); padding:14px 18px; }
+.log-table td { padding:13px 18px; border-bottom:1px solid var(--c-border); vertical-align:middle; }
+.log-row:last-child td { border-bottom:none; }
+.log-row:hover td { background:rgba(255,255,255,0.02); }
+
+.log-action-badge { display:inline-flex; align-items:center; font-size:11px; font-weight:700; padding:4px 10px; border-radius:50px; white-space:nowrap; }
+
+/* Light mode */
+[data-theme="light"] .log-filter-input { background:#f8fafc; color:#1e293b; border-color:#e2e8f0; }
+[data-theme="light"] .log-filter-input option { background:#fff; color:#1e293b; }
+[data-theme="light"] .log-table-wrap { background:#fff; border-color:#e2e8f0; }
+[data-theme="light"] .log-filter-bar { background:#fff; border-color:#e2e8f0; }
+</style>
+
+<script>
+// Recherche JS côté client
+document.getElementById('searchLog')?.addEventListener('input', function() {
+    const q = this.value.toLowerCase().trim();
+    document.querySelectorAll('.log-row').forEach(row => {
+        const details = row.dataset.details || '';
+        const text    = row.innerText.toLowerCase();
+        row.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+});
+
+function exportLogsCSV() {
+    let csv = 'Date;Heure;Administrateur;Action;Détails\n';
+    document.querySelectorAll('.log-row').forEach(row => {
+        if (row.style.display === 'none') return;
+        const cells = row.querySelectorAll('td');
+        const date  = cells[0].querySelector('div')?.innerText.trim() || '';
+        const heure = cells[0].querySelectorAll('div')[1]?.innerText.trim() || '';
+        const admin = cells[1].querySelector('div')?.innerText.trim() || 'Système';
+        const action = cells[2].querySelector('span')?.innerText.trim() || '';
+        const details = cells[3]?.innerText.trim().replace(/;/g, ',') || '';
+        csv += `"${date}";"${heure}";"${admin}";"${action}";"${details}"\n`;
+    });
+
+    const link = document.createElement('a');
+    link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    link.download = 'homeconnect_journaux_{{ 'now'|date('Y-m-d') }}.csv';
+    link.click();
+}
+</script>
+
+{% endblock %}

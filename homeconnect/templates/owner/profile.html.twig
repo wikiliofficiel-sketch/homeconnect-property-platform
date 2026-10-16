@@ -1,0 +1,325 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Mon Profil - HomeConnect{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active" style="color: var(--c-text);">Mon Profil</li>
+{% endblock %}
+
+{% block content %}
+
+{# ── Flash messages ─────────────────────────────────────────────── #}
+{% for label, msgs in app.flashes %}
+    {% for msg in msgs %}
+    <div class="alert alert-{{ label == 'success' ? 'success' : 'danger' }} alert-dismissible fade show rounded-3 mb-4">
+        <i class="fa-solid fa-{{ label == 'success' ? 'circle-check' : 'circle-exclamation' }} me-2"></i>{{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+{% endfor %}
+
+<div class="row g-4">
+
+    {# ── Colonne gauche : Avatar + statut ─────────────────────── #}
+    <div class="col-lg-4">
+        <div class="prof-card text-center mb-4">
+            <div class="prof-avatar mx-auto mb-3">{{ user.prenom|slice(0,1)|upper }}</div>
+            <h4 class="fw-bold dash-text mb-1">{{ user.fullName }}</h4>
+            <p class="dash-text-muted small mb-3">Propriétaire depuis {{ user.createdAt|date('M Y') }}</p>
+
+            {% set kycSt = user.verificationStatus %}
+            {% if kycSt == 'certifie' %}
+                <span class="badge bg-success rounded-pill px-3 py-2 mb-3">
+                    <i class="fa-solid fa-shield-check me-1"></i> Certifié KYC
+                </span>
+            {% elseif kycSt == 'en_attente' %}
+                <span class="badge bg-warning text-dark rounded-pill px-3 py-2 mb-3">
+                    <i class="fa-solid fa-clock me-1"></i> KYC En attente
+                </span>
+            {% else %}
+                <a href="{{ path('app_owner_kyc') }}" class="badge bg-danger rounded-pill px-3 py-2 mb-3 text-decoration-none">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i> KYC requis
+                </a>
+            {% endif %}
+
+            {% if averageRating > 0 %}
+            <div class="mb-3" style="font-size:13px;">
+                {% for i in 1..5 %}
+                <i class="fa-{{ i <= averageRating|round ? 'solid' : 'regular' }} fa-star" style="color:#f39c12;"></i>
+                {% endfor %}
+                <span class="dash-text-muted ms-1">{{ averageRating|number_format(1) }} ({{ totalReviews }} avis)</span>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Statut du compte #}
+        <div class="prof-card mb-4">
+            <div class="prof-card-title"><i class="fa-solid fa-shield-halved"></i> Statut du compte</div>
+            <div class="prof-stat-row">
+                <span class="dash-text-muted">Email</span>
+                <span style="color:{% if user.isVerified %}#00e676{% else %}#ff4b5c{% endif %}; font-weight:700;">
+                    <i class="fa-solid fa-{{ user.isVerified ? 'circle-check' : 'circle-xmark' }}"></i>
+                    {{ user.isVerified ? 'Vérifié' : 'Non vérifié' }}
+                </span>
+            </div>
+            <div class="prof-stat-row">
+                <span class="dash-text-muted">Téléphone</span>
+                <span class="badge {{ user.telephone ? 'bg-success' : 'bg-warning text-dark' }} rounded-pill">
+                    {{ user.telephone ? user.telephone : 'Non renseigné' }}
+                </span>
+            </div>
+            <div class="prof-stat-row">
+                <span class="dash-text-muted">KYC</span>
+                <span style="font-size:12px; font-weight:700; padding:2px 10px; border-radius:50px;
+                    {% if kycSt == 'certifie' %}background:rgba(0,230,118,0.15);color:#00e676;
+                    {% elseif kycSt == 'en_attente' %}background:rgba(255,193,7,0.15);color:#ffc107;
+                    {% else %}background:rgba(255,75,92,0.15);color:#ff4b5c;{% endif %}">
+                    {{ kycSt == 'certifie' ? 'Approuvé' : (kycSt == 'en_attente' ? 'En attente' : 'Requis') }}
+                </span>
+            </div>
+            {% if user.isSuspended %}
+            <div class="prof-stat-row">
+                <span class="dash-text-muted">Statut</span>
+                <span style="color:#ff4b5c; font-weight:700; font-size:12px;">
+                    <i class="fa-solid fa-ban me-1"></i>Suspendu
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Zone danger #}
+        <div class="prof-card" style="border-color:rgba(255,75,92,0.2);">
+            <div class="prof-card-title" style="color:#e74c3c;"><i class="fa-solid fa-triangle-exclamation"></i> Zone danger</div>
+            <p style="color:var(--c-text-muted); font-size:13px; margin-bottom:12px;">
+                Mettre fin à la session ou supprimer définitivement votre compte.
+            </p>
+            <a href="{{ path('app_logout') }}" class="prof-btn-ghost w-100 mb-3 text-decoration-none"
+               style="display:flex; justify-content:center;" onclick="logoutConfirm(event)">
+                <i class="fa-solid fa-door-open me-2"></i> Se déconnecter
+            </a>
+            <button type="button" class="prof-btn-danger w-100" style="justify-content:center;"
+                    onclick="document.getElementById('deleteModal').classList.add('show')">
+                <i class="fa-solid fa-trash-can me-2"></i> Supprimer mon compte
+            </button>
+        </div>
+    </div>
+
+    {# ── Colonne droite : Formulaires + Évaluations ─────────────── #}
+    <div class="col-lg-8">
+
+        {# Modifier informations personnelles #}
+        <div class="prof-card mb-4">
+            <div class="prof-card-title"><i class="fa-solid fa-user-pen"></i> Informations personnelles</div>
+            <form method="POST" action="{{ path('app_owner_profile') }}">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="prof-label">Prénom *</label>
+                        <input type="text" name="prenom" value="{{ user.prenom }}" class="prof-input" required placeholder="Prénom">
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="prof-label">Nom *</label>
+                        <input type="text" name="nom" value="{{ user.nom }}" class="prof-input" required placeholder="Nom">
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="prof-label">Email</label>
+                        <input type="email" value="{{ user.email }}" class="prof-input" disabled style="opacity:.6; cursor:not-allowed;">
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="prof-label">Téléphone</label>
+                        <input type="tel" name="telephone" value="{{ user.telephone }}" class="prof-input" placeholder="+229 97 00 00 00">
+                    </div>
+                    <div class="col-12">
+                        <label class="prof-label">Ville</label>
+                        <select name="ville" class="prof-input">
+                            <option value="">Sélectionner…</option>
+                            {% for v in ['Cotonou','Porto-Novo','Parakou','Abomey-Calavi','Ouidah','Bohicon','Natitingou','Lokossa','Kandi','Autre'] %}
+                            <option value="{{ v }}" {{ user.ville == v ? 'selected' : '' }}>{{ v }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="d-flex gap-3 mt-4">
+                    <button type="submit" class="prof-btn-primary">
+                        <i class="fa-solid fa-check me-2"></i> Enregistrer
+                    </button>
+                    <button type="reset" class="prof-btn-ghost">
+                        <i class="fa-solid fa-xmark me-2"></i> Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {# Changer le mot de passe #}
+        <div class="prof-card mb-4">
+            <div class="prof-card-title"><i class="fa-solid fa-lock"></i> Changer le mot de passe</div>
+            <form method="POST" action="{{ path('app_owner_change_password') }}" onsubmit="return validatePwd()">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="prof-label">Mot de passe actuel *</label>
+                        <div class="prof-input-eye">
+                            <input type="password" name="current_password" id="curPwd" class="prof-input" required placeholder="Mot de passe actuel">
+                            <button type="button" class="eye-btn" onclick="togglePwd('curPwd',this)"><i class="fa-regular fa-eye"></i></button>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="prof-label">Nouveau mot de passe *</label>
+                        <div class="prof-input-eye">
+                            <input type="password" name="new_password" id="newPwd" class="prof-input" required minlength="8" placeholder="Min. 8 caractères" oninput="checkPwdStrength(this)">
+                            <button type="button" class="eye-btn" onclick="togglePwd('newPwd',this)"><i class="fa-regular fa-eye"></i></button>
+                        </div>
+                        <div class="pwd-strength-bar mt-1"><div id="pwdFill"></div></div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="prof-label">Confirmer *</label>
+                        <div class="prof-input-eye">
+                            <input type="password" name="confirm_password" id="confPwd" class="prof-input" required placeholder="Répéter le mot de passe">
+                            <button type="button" class="eye-btn" onclick="togglePwd('confPwd',this)"><i class="fa-regular fa-eye"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="prof-btn-primary mt-4">
+                    <i class="fa-solid fa-shield-halved me-2"></i> Modifier le mot de passe
+                </button>
+            </form>
+        </div>
+
+        {# Évaluations reçues #}
+        {% if reviews|length > 0 %}
+        <div class="prof-card">
+            <div class="prof-card-title">
+                <i class="fa-solid fa-star"></i> Évaluations reçues
+                <span class="ms-2" style="background:var(--c-primary);color:#fff;font-size:10px;padding:2px 8px;border-radius:50px;">{{ totalReviews }}</span>
+            </div>
+            {% for review in reviews %}
+            <div class="prof-review">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="prof-review-av">{{ review.author.prenom|slice(0,1)|upper }}</div>
+                    <div>
+                        <strong class="dash-text" style="font-size:14px;">{{ review.author.fullName }}</strong>
+                        <div>
+                            {% for i in 1..5 %}
+                            <i class="fa-{{ i <= review.rating ? 'solid' : 'regular' }} fa-star" style="color:#f39c12; font-size:12px;"></i>
+                            {% endfor %}
+                            <span class="dash-text-muted" style="font-size:12px; margin-left:4px;">{{ review.rating }}/5</span>
+                        </div>
+                    </div>
+                    <span style="margin-left:auto; font-size:11px;" class="dash-text-muted">{{ review.createdAt|date('d/m/Y') }}</span>
+                </div>
+                <p class="dash-text-muted" style="font-size:13px; font-style:italic; margin:0;">"{{ review.comment }}"</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# ── Modal suppression compte ─────────────────────────────────────── #}
+<div id="deleteModal" class="prof-modal-overlay" onclick="if(event.target===this)this.classList.remove('show')">
+    <div class="prof-modal">
+        <div class="prof-modal-header">
+            <i class="fa-solid fa-skull-crossbones" style="color:#ff4b5c; font-size:1.4rem;"></i>
+            <h5 style="margin:0; color:var(--c-text);">Supprimer mon compte</h5>
+            <button type="button" onclick="document.getElementById('deleteModal').classList.remove('show')"
+                    style="background:none;border:none;color:var(--c-text-muted);cursor:pointer;font-size:1.2rem;margin-left:auto;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div style="padding:0 1.5rem 1.5rem;">
+            <div class="prof-delete-warning">
+                <i class="fa-solid fa-circle-exclamation me-2"></i>
+                Action <strong>irréversible</strong>. Tous vos biens, candidatures, contrats et données seront supprimés définitivement.
+            </div>
+            <form method="POST" action="{{ path('app_owner_delete_account') }}" onsubmit="return confirmDelete()">
+                <div class="mb-3">
+                    <label class="prof-label">Confirmez avec votre mot de passe *</label>
+                    <input type="password" name="delete_password" id="delPwd" class="prof-input" required placeholder="Votre mot de passe">
+                </div>
+                <div class="d-flex gap-3 justify-content-end mt-4">
+                    <button type="button" class="prof-btn-ghost" onclick="document.getElementById('deleteModal').classList.remove('show')">Annuler</button>
+                    <button type="submit" class="prof-btn-danger" style="background:rgba(255,75,92,0.85);color:#fff;">
+                        <i class="fa-solid fa-trash-can me-2"></i> Confirmer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.prof-avatar {
+    width:80px; height:80px; border-radius:50%;
+    background:linear-gradient(135deg,var(--c-primary),#FF4B5C);
+    display:flex; align-items:center; justify-content:center;
+    font-size:2rem; font-weight:800; color:#fff;
+    box-shadow:0 4px 16px rgba(255,140,0,0.4);
+}
+.prof-card { background:var(--c-surface); border:1px solid var(--c-border); border-radius:16px; padding:1.5rem; }
+.prof-card-title { font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--c-primary); margin-bottom:1.2rem; display:flex; align-items:center; gap:8px; }
+.prof-label { display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--c-text-muted); margin-bottom:6px; }
+.prof-input { width:100%; background:rgba(255,255,255,0.06); border:1px solid var(--c-border); border-radius:10px; color:var(--c-text)!important; padding:10px 14px; font-size:14px; font-family:inherit; transition:border-color .2s; outline:none; appearance:none; }
+.prof-input:focus { border-color:var(--c-primary); box-shadow:0 0 0 3px rgba(255,140,0,0.12); }
+.prof-input::placeholder { color:rgba(255,255,255,0.25)!important; opacity:1!important; }
+.prof-input option { background:var(--c-surface); color:var(--c-text); }
+.prof-input-eye { position:relative; }
+.prof-input-eye .prof-input { padding-right:42px; }
+.eye-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--c-text-muted); cursor:pointer; }
+.prof-btn-primary { background:linear-gradient(135deg,var(--c-primary),#e67e00); color:#fff; border:none; border-radius:50px; padding:11px 24px; font-size:14px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; box-shadow:0 4px 14px rgba(255,140,0,0.35); transition:all .2s; text-decoration:none; }
+.prof-btn-primary:hover { transform:translateY(-2px); color:#fff; }
+.prof-btn-ghost { background:rgba(255,255,255,0.06); color:var(--c-text-muted); border:1px solid var(--c-border); border-radius:50px; padding:11px 24px; font-size:14px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; transition:all .2s; text-decoration:none; }
+.prof-btn-ghost:hover { background:rgba(255,255,255,0.1); color:var(--c-text); }
+.prof-btn-danger { background:rgba(255,75,92,0.1); color:#ff4b5c; border:1px solid rgba(255,75,92,0.3); border-radius:50px; padding:11px 24px; font-size:14px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; transition:all .2s; }
+.prof-stat-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--c-border); font-size:13px; }
+.prof-stat-row:last-child { border-bottom:none; }
+.prof-review { background:rgba(255,255,255,0.03); border:1px solid var(--c-border); border-radius:12px; padding:1rem; margin-bottom:10px; }
+.prof-review:last-child { margin-bottom:0; }
+.prof-review-av { width:38px; height:38px; border-radius:50%; background:var(--c-primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; }
+.pwd-strength-bar { height:4px; background:rgba(255,255,255,0.1); border-radius:4px; }
+#pwdFill { height:100%; border-radius:4px; width:0; transition:width .3s,background .3s; }
+.prof-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:1060; padding:1rem; }
+.prof-modal-overlay.show { display:flex; }
+.prof-modal { background:var(--c-surface); border:1px solid rgba(255,75,92,0.3); border-radius:20px; width:100%; max-width:480px; animation:modalIn .25s ease; }
+@keyframes modalIn { from{transform:scale(.9);opacity:0} to{transform:scale(1);opacity:1} }
+.prof-modal-header { display:flex; align-items:center; gap:12px; padding:1.2rem 1.5rem; border-bottom:1px solid var(--c-border); }
+.prof-delete-warning { background:rgba(255,75,92,0.08); border:1px solid rgba(255,75,92,0.25); color:#ff8a94; border-radius:10px; padding:.9rem 1rem; font-size:13px; margin-bottom:1.2rem; line-height:1.6; margin-top:1rem; }
+
+[data-theme="light"] .prof-input { background:#fff!important; color:#1e293b!important; border-color:rgba(0,0,0,0.15)!important; }
+[data-theme="light"] .prof-input::placeholder { color:#94a3b8!important; }
+[data-theme="light"] .prof-card { background:#fff; }
+</style>
+
+<script>
+function togglePwd(id, btn) {
+    const inp = document.getElementById(id);
+    const icon = btn.querySelector('i');
+    if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fa-regular fa-eye-slash'; }
+    else { inp.type = 'password'; icon.className = 'fa-regular fa-eye'; }
+}
+function checkPwdStrength(el) {
+    const v = el.value;
+    const fill = document.getElementById('pwdFill');
+    if (!v) { fill.style.width = '0'; return; }
+    let score = 0;
+    if (v.length >= 8)  score++;
+    if (v.length >= 12) score++;
+    if (/[A-Z]/.test(v)) score++;
+    if (/[0-9]/.test(v)) score++;
+    if (/[^A-Za-z0-9]/.test(v)) score++;
+    const colors = ['#e74c3c','#e67e22','#f39c12','#2ecc71','#00e676'];
+    fill.style.width = (score * 20) + '%';
+    fill.style.background = colors[score - 1] || colors[0];
+}
+function validatePwd() {
+    const n = document.getElementById('newPwd').value;
+    const c = document.getElementById('confPwd').value;
+    if (n.length < 8) { alert('Le mot de passe doit faire au moins 8 caractères.'); return false; }
+    if (n !== c) { alert('Les mots de passe ne correspondent pas.'); return false; }
+    return true;
+}
+function confirmDelete() {
+    return confirm('⚠️ Dernière confirmation : votre compte et toutes vos données seront définitivement supprimés.');
+}
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.getElementById('deleteModal')?.classList.remove('show');
+});
+</script>
+{% endblock %}

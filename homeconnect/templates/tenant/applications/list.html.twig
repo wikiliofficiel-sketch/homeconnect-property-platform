@@ -1,0 +1,205 @@
+{% extends 'tenant/base.html.twig' %}
+
+{% block tenant_content %}
+<div style="max-width: 900px; margin: 0 auto;">
+
+    {# ── Header ─────────────────────────────────────────────────── #}
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h1 style="font-size:1.8rem; font-weight:800; color:#1a1a2e; margin:0 0 4px;">
+                <i class="fa-solid fa-folder-open me-2" style="color:#667eea;"></i>Mes Candidatures
+            </h1>
+            <p style="color:#888; font-size:14px; margin:0;">
+                {{ applications|length }} candidature{% if applications|length > 1 %}s{% endif %} au total
+            </p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            {# Compteurs #}
+            <span class="applist-counter pending">
+                <i class="fa-solid fa-clock"></i>
+                {{ applications|filter(a => a.statut == 'pending')|length }} en attente
+            </span>
+            <span class="applist-counter accepted">
+                <i class="fa-solid fa-check"></i>
+                {{ applications|filter(a => a.statut == 'accepted')|length }} acceptée{% if applications|filter(a => a.statut == 'accepted')|length > 1 %}s{% endif %}
+            </span>
+        </div>
+    </div>
+
+    {# ── Filtres ─────────────────────────────────────────────────── #}
+    <div class="d-flex gap-2 mb-4 flex-wrap">
+        <button class="applist-filter active" data-filter="all">Toutes</button>
+        <button class="applist-filter" data-filter="pending">En attente</button>
+        <button class="applist-filter" data-filter="accepted">Acceptées</button>
+        <button class="applist-filter" data-filter="refused">Refusées</button>
+    </div>
+
+    {# ── Liste ───────────────────────────────────────────────────── #}
+    {% if applications|length == 0 %}
+    <div style="text-align:center; padding:4rem 2rem; background:#fff; border-radius:20px; border:1px solid #eee; box-shadow:0 2px 12px rgba(0,0,0,0.04);">
+        <i class="fa-solid fa-paper-plane" style="font-size:4rem; color:#dee2e6; display:block; margin-bottom:1rem;"></i>
+        <h3 style="color:#1a1a2e; font-weight:700; margin-bottom:8px;">Aucune candidature envoyée</h3>
+        <p style="color:#888; font-size:14px; margin-bottom:1.5rem;">Parcourez le catalogue et postulez aux biens qui vous intéressent.</p>
+        <a href="{{ path('app_tenant_search') }}" style="display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; padding:12px 28px; border-radius:50px; font-weight:700; text-decoration:none; box-shadow:0 4px 14px rgba(102,126,234,.4);">
+            <i class="fa-solid fa-magnifying-glass"></i> Explorer les biens
+        </a>
+    </div>
+    {% else %}
+    <div id="appList">
+    {% for app in applications %}
+    <div class="applist-card" data-status="{{ app.statut }}">
+        {# Photo du bien #}
+        <div class="applist-img">
+            {% if app.property.images and app.property.images|length > 0 %}
+                {% set img = app.property.images[0] %}
+                <img src="{{ img starts with 'http' or img starts with 'data:' ? img : asset('uploads/properties/' ~ img) }}" alt="">
+            {% else %}
+                <div style="width:100%; height:100%; background:#f0f0f0; display:flex; align-items:center; justify-content:center;">
+                    <i class="fa-solid fa-house" style="color:#ccc; font-size:2rem;"></i>
+                </div>
+            {% endif %}
+            {# Badge statut sur l'image #}
+            <div class="applist-img-badge">
+                {% if app.statut == 'pending' %}
+                <span class="aib-pending"><i class="fa-solid fa-clock"></i> En attente</span>
+                {% elseif app.statut == 'accepted' %}
+                <span class="aib-accepted"><i class="fa-solid fa-check"></i> Acceptée</span>
+                {% elseif app.statut == 'refused' %}
+                <span class="aib-refused"><i class="fa-solid fa-xmark"></i> Refusée</span>
+                {% else %}
+                <span class="aib-cancelled"><i class="fa-solid fa-ban"></i> Annulée</span>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Infos #}
+        <div class="applist-body">
+            <div class="d-flex justify-content-between align-items-start mb-1 flex-wrap gap-2">
+                <div>
+                    <h5 style="font-weight:700; color:#1a1a2e; margin:0 0 4px; font-size:16px;">{{ app.property.title }}</h5>
+                    <div style="color:#888; font-size:13px;">
+                        <i class="fa-solid fa-location-dot me-1" style="color:#667eea;"></i>
+                        {{ app.property.city }}{% if app.property.address %}, {{ app.property.address|slice(0,30) }}{% endif %}
+                    </div>
+                </div>
+                <div style="color:#667eea; font-weight:800; font-size:15px; white-space:nowrap;">
+                    {{ app.property.pricePerMonth|number_format(0, ',', ' ') }} <small style="font-size:11px; font-weight:500; color:#aaa;">FCFA/mois</small>
+                </div>
+            </div>
+
+            {# Timeline étapes #}
+            <div class="applist-mini-timeline">
+                <div class="amt-step {{ app.statut in ['pending','accepted','refused'] ? 'done' : '' }}">
+                    <div class="amt-dot"></div><span>Envoyée</span>
+                </div>
+                <div class="amt-line {{ app.statut in ['accepted','refused'] ? 'done' : '' }}"></div>
+                <div class="amt-step {{ app.statut in ['accepted','refused'] ? 'done' : '' }} {{ app.statut == 'pending' ? 'active' : '' }}">
+                    <div class="amt-dot"></div><span>Examen</span>
+                </div>
+                <div class="amt-line {{ app.statut in ['accepted','refused'] ? 'done' : '' }}"></div>
+                <div class="amt-step {{ app.statut in ['accepted','refused'] ? 'done' : '' }}">
+                    <div class="amt-dot"></div><span>Décision</span>
+                </div>
+                {% if app.statut == 'accepted' %}
+                <div class="amt-line {{ app.visites|length > 0 ? 'done' : '' }}"></div>
+                <div class="amt-step {{ app.visites|length > 0 ? 'done' : '' }}">
+                    <div class="amt-dot"></div><span>Visite</span>
+                </div>
+                {% endif %}
+            </div>
+
+            {# Visite info si planifiée #}
+            {% if app.visites|length > 0 %}
+            {% set visite = app.visites|first %}
+            <div style="background:#f0f4ff; border:1px solid #d0d9ff; border-radius:10px; padding:8px 14px; font-size:13px; color:#667eea; font-weight:600; display:inline-flex; align-items:center; gap:8px; margin-bottom:10px;">
+                <i class="fa-solid fa-calendar-check"></i>
+                Visite le {{ visite.dateHeureDebut|date('d/m/Y à H:i') }}
+            </div>
+            {% endif %}
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div style="font-size:12px; color:#aaa;">
+                    <i class="fa-regular fa-calendar me-1"></i>Envoyée le {{ app.createdAt|date('d/m/Y') }}
+                    {% if app.message %} · <i class="fa-solid fa-comment-dots me-1"></i>Message joint{% endif %}
+                </div>
+                <div class="d-flex gap-2">
+                    {% if app.statut == 'pending' %}
+                    <form method="POST" action="{{ path('app_tenant_application_cancel', {id: app.id}) }}"
+                          onsubmit="return confirm('Annuler cette candidature ?')">
+                        <button type="submit" class="applist-btn-cancel">Annuler</button>
+                    </form>
+                    {% endif %}
+                    <a href="{{ path('app_tenant_application_show', {id: app.id}) }}" class="applist-btn-view">
+                        <i class="fa-solid fa-eye me-1"></i> Voir le détail
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+
+<style>
+/* Compteurs */
+.applist-counter { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:50px; font-size:13px; font-weight:600; }
+.applist-counter.pending  { background:#fff9e6; color:#856404; border:1px solid #f6c84a; }
+.applist-counter.accepted { background:#e8f8f0; color:#155724; border:1px solid #b2dfdb; }
+
+/* Filtres */
+.applist-filter { padding:7px 18px; border-radius:50px; border:1.5px solid #e5e5e5; background:#fff; color:#888; font-size:13px; font-weight:600; cursor:pointer; transition:all .2s; }
+.applist-filter:hover { border-color:#667eea; color:#667eea; background:#eef2ff; }
+.applist-filter.active { background:linear-gradient(135deg,#667eea,#764ba2); border-color:#667eea; color:#fff; }
+
+/* Cards */
+.applist-card { display:flex; background:#fff; border:1px solid #eee; border-radius:20px; overflow:hidden; margin-bottom:16px; box-shadow:0 2px 12px rgba(0,0,0,0.04); transition:transform .25s, box-shadow .25s; }
+.applist-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.08); }
+
+.applist-img { width:160px; flex-shrink:0; position:relative; overflow:hidden; }
+.applist-img img { width:100%; height:100%; object-fit:cover; }
+.applist-img-badge { position:absolute; top:10px; left:10px; }
+.aib-pending  { background:rgba(246,200,74,.9); color:#856404; font-size:11px; font-weight:700; padding:3px 10px; border-radius:50px; display:inline-flex; align-items:center; gap:4px; }
+.aib-accepted { background:rgba(39,174,96,.9); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:50px; display:inline-flex; align-items:center; gap:4px; }
+.aib-refused  { background:rgba(231,76,60,.9); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:50px; display:inline-flex; align-items:center; gap:4px; }
+.aib-cancelled{ background:rgba(108,117,125,.9); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:50px; display:inline-flex; align-items:center; gap:4px; }
+
+.applist-body { flex:1; padding:1.2rem; min-width:0; }
+
+/* Mini timeline */
+.applist-mini-timeline { display:flex; align-items:center; margin:12px 0; }
+.amt-step { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.amt-dot { width:18px; height:18px; border-radius:50%; background:#e5e5e5; border:2px solid #e5e5e5; transition:all .3s; }
+.amt-step.done .amt-dot { background:#667eea; border-color:#667eea; }
+.amt-step.active .amt-dot { background:#f6c84a; border-color:#f6c84a; box-shadow:0 0 0 3px rgba(246,200,74,.3); }
+.amt-step span { font-size:10px; color:#aaa; white-space:nowrap; font-weight:600; }
+.amt-step.done span, .amt-step.active span { color:#1a1a2e; }
+.amt-line { flex:1; height:2px; background:#e5e5e5; margin:0 6px 12px; }
+.amt-line.done { background:linear-gradient(to right,#667eea,#764ba2); }
+
+/* Boutons */
+.applist-btn-view { display:inline-flex; align-items:center; padding:7px 16px; border-radius:50px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; font-size:13px; font-weight:600; text-decoration:none; box-shadow:0 3px 10px rgba(102,126,234,.35); transition:all .2s; }
+.applist-btn-view:hover { transform:translateY(-1px); box-shadow:0 5px 14px rgba(102,126,234,.45); color:#fff; }
+.applist-btn-cancel { padding:7px 14px; border-radius:50px; border:1.5px solid #f5c6cb; background:transparent; color:#e74c3c; font-size:13px; font-weight:600; cursor:pointer; transition:all .2s; }
+.applist-btn-cancel:hover { background:#fdecea; }
+
+@media(max-width:600px) {
+    .applist-card { flex-direction:column; }
+    .applist-img { width:100%; height:160px; }
+}
+</style>
+
+<script>
+document.querySelectorAll('.applist-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.applist-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const f = btn.dataset.filter;
+        document.querySelectorAll('.applist-card').forEach(card => {
+            card.style.display = (f === 'all' || card.dataset.status === f) ? '' : 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

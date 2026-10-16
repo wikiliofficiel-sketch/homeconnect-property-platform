@@ -1,0 +1,213 @@
+# ======================
+# HomeConnect Platform
+# Symfony 7.2 + Flutter 2.1 + FedaPay
+# ======================
+
+# --- Symfony back-end (/homeconnect/) ---
+
+# Environment & secrets
+/homeconnect/.env.local
+/homeconnect/.env.local.php
+/homeconnect/.env.*.local
+/homeconnect/config/secrets/prod/prod.decrypt.private.php
+
+# Build & cache
+/homeconnect/public/bundles/
+/homeconnect/assets/vendor/
+/homeconnect/var/
+/homeconnect/phpunit.xml
+/homeconnect/.phpunit.cache/
+/homeconnect/public/assets/
+
+# JWT keys
+/homeconnect/config/jwt/*.pem
+
+# Vendor & embedded repos (composer deps)
+/homeconnect/vendor/
+/homeconnect/homeconnect/
+/homeconnect/.phpunit.cache/
+
+# Embedded git submodules (data-fixtures, doctrine-fixtures-bundle, string-extra)
+/homeconnect/vendor/doctrine/data-fixtures/
+/homeconnect/vendor/doctrine/doctrine-fixtures-bundle/
+/homeconnect/vendor/twig/string-extra/
+
+# Test artifacts
+/homeconnect/tmp_login.json
+/homeconnect/test_data.json
+/homeconnect/data_sample.json
+
+# PDF document
+/homeconnect/DEGUENON\ Débora\ \&\ HOUESSOU\ Magnificat\ .pdf
+
+# --- Flutter apps (/homeconnect_app/ and /immobenin_app/) ---
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.thumbs
+build/
+pubspec.lock
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/pubspec.lock
+
+# Android related
+android/.gradle
+android/app/build.gradle
+android/gradle.properties
+android/gradle/wrapper/gradle-wrapper.properties
+android/local.properties
+android/.gradle/
+android/app/gradle.properties
+
+# iOS related
+**/Pods/
+**/Podfile.lock
+**/Pods/
+*.xcworkspace
+*.xcuserstate
+*.xcconfig
+*.xcodeproj
+
+# Flutter build artifacts
+*.apk
+*.ipa
+*.flutter-debug
+*.flutter-test-syntax
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Firebase config
+google-services.json
+GoogleService-Info.plist
+
+# Keystore files
+*.jks
+*.keystore
+*.p12
+
+# Log files
+*.log
+
+# --- Root level ---
+
+# Claude settings (local)
+.claude/settings.local.json
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+.lcov*
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components/
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Typescript v1 declaration files
+typings/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_*/
+.rts2_cache_*/
+.nodesktop/
+
+# Storybook snapshots
+.storybook/
+storybook-static/
+
+# Next.js
+.out/
+.cache/
+.vercel
+
+# Production environment build
+.next/
+out/
+
+# Nuxt.js
+.nuxt/
+dist/
+
+# Gatsby files
+.cache/
+public/
+
+# Jekyll
+/_site/
+.sass-cache/
+.sass-cache
+/assets/
+css/
+_css/
+_sass/
+_site/
+
+# DoNotTrack
+donottrack.*

@@ -1,0 +1,77 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Configuration Système{% endblock %}
+
+{% block admin_body %}
+<div class="row g-4">
+    <div class="col-md-8">
+        <form action="{{ path('admin_config_update') }}" method="POST" class="premium-card bg-white-5 p-5 rounded-4 border border-white-10">
+            <h2 class="h4 text-white mb-4">Paramètres de la Plateforme</h2>
+            
+            <div class="row g-3">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-white-50 small">Nom de la Plateforme</label>
+                    <input type="text" name="platform_name" class="form-control bg-white-5 border-white-10 text-white p-3" value="{{ settings['platform_name']|default('Immo Bénin') }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-white-50 small">Email du Support</label>
+                    <input type="email" name="support_email" class="form-control bg-white-5 border-white-10 text-white p-3" value="{{ settings['support_email']|default('support@homeconnect.bj') }}">
+                </div>
+                
+                <hr class="border-white-10 my-4">
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-white-50 small">Taux Commission Normal (%)</label>
+                    <input type="number" name="commission_rate" class="form-control bg-white-5 border-white-10 text-white p-3" value="{{ settings['commission_rate']|default(5) }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-white-50 small">Taux Commission Premium (%)</label>
+                    <input type="number" name="commission_rate_premium" class="form-control bg-white-5 border-white-10 text-white p-3" value="{{ settings['commission_rate_premium']|default(3) }}">
+                </div>
+                
+                <div class="col-12 mb-3">
+                    <label class="form-label text-white-50 small">Prix Abonnement Premium (FCFA)</label>
+                    <input type="number" name="premium_price" class="form-control bg-white-5 border-white-10 text-white p-3" value="{{ settings['premium_price']|default(25000) }}">
+                </div>
+
+                <hr class="border-white-10 my-4">
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-white-50 small">Max biens gratuits</label>
+                    <input type="number" name="max_free_listings" class="form-control bg-white-5 border-white-10 text-white p-3" value="{{ settings['max_free_listings']|default(5) }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-white-50 small">Seuil de Signalements</label>
+                    <input type="number" name="report_threshold" class="form-control bg-white-5 border-white-10 text-white p-3" value="{{ settings['report_threshold']|default(5) }}">
+                </div>
+            </div>
+
+            <div class="mt-5 d-flex gap-3">
+                <button type="submit" class="btn btn-primary px-5 py-3 rounded-pill fw-bold">Sauvegarder les modifications</button>
+                <button type="reset" class="btn btn-outline-light px-4 py-3 rounded-pill">Réinitialiser</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-4">
+        <div class="premium-card bg-white-5 p-4 rounded-4 border border-white-10 mb-4">
+            <h3 class="h6 text-white-50 mb-3">Statut du Système</h3>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="bg-success rounded-circle" style="width: 12px; height: 12px;"></div>
+                <span class="text-white">API Opérationnelle</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-success rounded-circle" style="width: 12px; height: 12px;"></div>
+                <span class="text-white">Base de données synchronisée</span>
+            </div>
+        </div>
+
+        <div class="premium-card bg-danger-subtle bg-opacity-10 p-4 rounded-4 border border-danger border-opacity-25">
+            <h3 class="h6 text-danger mb-3">Zone de Danger</h3>
+            <p class="small text-white-50 mb-4">Les actions ci-dessous sont irréversibles et impactent l'ensemble de la plateforme.</p>
+            <button class="btn btn-outline-danger w-100 rounded-pill mb-2">Purger le cache</button>
+            <button class="btn btn-danger w-100 rounded-pill">Réinitialiser la plateforme</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

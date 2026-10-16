@@ -1,0 +1,302 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Gestion des signalements{% endblock %}
+
+{% block admin_body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 style="color: white; font-family: var(--f-serif); margin: 0;">
+        Gestion des signalements 
+        <span class="badge bg-danger ms-2 rounded-pill" style="font-size: 0.5em; vertical-align: middle;">{{ stats.open }} ouvert(s)</span>
+    </h1>
+</div>
+
+<div class="reports-header" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+    <div class="alerts mb-4">
+        {% if stats.critical > 0 %}
+            <div class="alert alert-danger d-flex align-items-center" role="alert">
+                <i class="fa-solid fa-triangle-exclamation fs-4 me-3"></i>
+                <div><strong>{{ stats.critical }} signalement(s) critique(s)</strong> en attente d'action immédiate !</div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex gap-3">
+            <select id="statusFilter" class="form-select bg-dark text-white border-secondary w-auto">
+                <option value="">Tous statuts</option>
+                <option value="ouvert">Ouverts</option>
+                <option value="en_revision">En révision</option>
+                <option value="resolu">Résolus</option>
+                <option value="rejete">Rejetés</option>
+            </select>
+            
+            <select id="priorityFilter" class="form-select bg-dark text-white border-secondary w-auto">
+                <option value="">Toutes priorités</option>
+                <option value="critique">🔴 Critique</option>
+                <option value="elevee">🟠 Élevée</option>
+                <option value="moyenne">🟡 Moyenne</option>
+                <option value="basse">🟢 Basse</option>
+            </select>
+
+            <select id="typeFilter" class="form-select bg-dark text-white border-secondary w-auto">
+                <option value="">Tous types</option>
+                <option value="bien">🏠 Bien</option>
+                <option value="utilisateur">👤 Utilisateur</option>
+                <option value="avis">💬 Avis/Commentaire</option>
+            </select>
+        </div>
+        
+        <div class="search-box" style="width: 300px;">
+            <input type="text" id="searchReport" class="form-control bg-dark text-white border-secondary" placeholder="🔍 Rechercher (Motif, Utilisateur)...">
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive" style="min-height: 400px;">
+    <table class="table table-dark table-hover align-middle reports-table">
+        <thead>
+            <tr>
+                <th>Priorité</th>
+                <th>Type</th>
+                <th>Motif</th>
+                <th>Signalé par</th>
+                <th>Statut</th>
+                <th>Créé le</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="reportsTableBody">
+            {% for report in reports %}
+            <tr class="report-row" data-priority="{{ report.priorite }}" data-status="{{ report.statut }}" data-type="{{ report.type }}">
+                <td class="priority-cell">
+                    {% if report.priorite == constant('App\\Entity\\Report::PRIORITY_CRITICAL') %}
+                        <span class="badge bg-danger">🔴 Critique</span>
+                    {% elseif report.priorite == constant('App\\Entity\\Report::PRIORITY_HIGH') %}
+                        <span class="badge bg-warning text-dark">🟠 Élevée</span>
+                    {% elseif report.priorite == constant('App\\Entity\\Report::PRIORITY_MEDIUM') %}
+                        <span class="badge bg-info text-dark">🟡 Moyenne</span>
+                    {% else %}
+                        <span class="badge bg-success">🟢 Basse</span>
+                    {% endif %}
+                </td>
+                <td class="type-cell">
+                    {% if report.type == constant('App\\Entity\\Report::TYPE_PROPERTY') %}
+                        <i class="fa-solid fa-house text-muted"></i> Bien
+                    {% elseif report.type == constant('App\\Entity\\Report::TYPE_USER') %}
+                        <i class="fa-solid fa-user text-muted"></i> Utilisateur
+                    {% else %}
+                        <i class="fa-solid fa-comment text-muted"></i> Avis
+                    {% endif %}
+                </td>
+                <td class="motif-cell text-white">{{ report.motif|slice(0, 50) }}{{ report.motif|length > 50 ? '...' : '' }}</td>
+                <td class="user-cell">
+                    <a href="{{ path('admin_users_show', {'id': report.signataire.id}) }}" class="text-info text-decoration-none">
+                        {{ report.signataire.fullName }}
+                    </a>
+                </td>
+                <td class="status-cell">
+                    <span class="badge bg-{{ report.statut == constant('App\\Entity\\Report::STATUS_RESOLVED') ? 'success' : (report.statut == constant('App\\Entity\\Report::STATUS_DISMISSED') ? 'secondary' : 'warning text-dark') }}">
+                        {{ report.statut }}
+                    </span>
+                </td>
+                <td>{{ report.createdAt|date('d/m/Y') }}</td>
+                <td>
+                    <div class="d-flex gap-1 align-items-center">
+                        <a href="{{ path('admin_reports_show', {'id': report.id}) }}" class="btn btn-sm btn-primary" title="Détails"><i class="fa-solid fa-eye"></i></a>
+                        
+                        {% if report.statut == constant('App\\Entity\\Report::STATUS_OPEN') or report.statut == constant('App\\Entity\\Report::STATUS_IN_REVIEW') %}
+                            <!-- Approuver -->
+                            <button class="btn btn-sm btn-success action-btn" onclick="moderateReport(this, 'approve')" title="Approuver (Traité + Avertissement)"><i class="fa-solid fa-check"></i></button>
+                            
+                            <!-- Rejeter -->
+                            <button class="btn btn-sm btn-danger action-btn" onclick="moderateReport(this, 'reject')" title="Rejeter (Supprime le contenu)"><i class="fa-solid fa-trash"></i></button>
+                            
+                            <!-- Sanctionner Dropdown -->
+                            <div class="dropdown d-inline-block action-btn">
+                                <button class="btn btn-sm btn-warning dropdown-toggle text-dark" type="button" data-bs-toggle="dropdown" title="Sanctionner">
+                                    <i class="fa-solid fa-gavel"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                    <li><a class="dropdown-item" href="#" onclick="moderateReport(this, 'sanction_warn')">⚠️ Avertissement</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="moderateReport(this, 'sanction_susp_7')">⏸️ Suspension 7j</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="moderateReport(this, 'sanction_susp_30')">⏸️ Suspension 30j</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="moderateReport(this, 'sanction_ban')">🚫 Bannissement définitif</a></li>
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">Aucun signalement trouvé.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+// Fonction Debounce
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById('searchReport');
+    const statusFilter = document.getElementById('statusFilter');
+    const priorityFilter = document.getElementById('priorityFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const rows = document.querySelectorAll('.report-row');
+
+    function applyFilters() {
+        const term = searchInput.value.toLowerCase();
+        const status = statusFilter.value.toLowerCase();
+        const priority = priorityFilter.value.toLowerCase();
+        const type = typeFilter.value.toLowerCase();
+        
+        rows.forEach(row => {
+            const motif = row.querySelector('.motif-cell').textContent.toLowerCase();
+            const user = row.querySelector('.user-cell').textContent.toLowerCase();
+            const typeText = row.querySelector('.type-cell').textContent.toLowerCase();
+            
+            const rowStatus = row.getAttribute('data-status').toLowerCase();
+            const rowPriority = row.getAttribute('data-priority').toLowerCase();
+            
+            const matchSearch = motif.includes(term) || user.includes(term);
+            const matchStatus = status === "" || rowStatus.includes(status) || (status==='ouvert' && rowStatus==='open') || (status==='resolu' && rowStatus==='resolved') || (status==='rejete' && rowStatus==='dismissed');
+            const matchPriority = priority === "" || rowPriority.includes(priority) || (priority==='critique' && rowPriority==='critical') || (priority==='elevee' && rowPriority==='high') || (priority==='moyenne' && rowPriority==='medium') || (priority==='basse' && rowPriority==='low');
+            const matchType = type === "" || typeText.includes(type);
+            
+            row.style.display = (matchSearch && matchStatus && matchPriority && matchType) ? '' : 'none';
+        });
+    }
+
+    searchInput.addEventListener('input', debounce(applyFilters, 300));
+    statusFilter.addEventListener('change', applyFilters);
+    priorityFilter.addEventListener('change', applyFilters);
+    typeFilter.addEventListener('change', applyFilters);
+});
+
+// Toast Helper
+function showToast(message, type = 'success') {
+    const toastContainer = document.querySelector('.toast-container');
+    if(toastContainer) {
+        toastContainer.insertAdjacentHTML('beforeend', `
+            <div class="toast align-items-center text-bg-${type} border-0 mb-2 show" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+        setTimeout(() => {
+            const toastNode = toastContainer.lastElementChild;
+            if(toastNode) toastNode.remove();
+        }, 5000);
+    }
+}
+
+// Action Logique
+function moderateReport(btn, action) {
+    // Si btn est un élément <a> du dropdown, on doit remonter au tr
+    const row = btn.closest('.report-row');
+    if(!row) return;
+
+    let confirmMsg = "";
+    let toastMsg = "";
+    let toastType = "success";
+    let newStatusLabel = "";
+    let newStatusColor = "";
+
+    if (action === 'approve') {
+        confirmMsg = "Approuver ce signalement et envoyer un avertissement à l'auteur du contenu ?";
+        toastMsg = "Signalement traité. Avertissement envoyé.";
+        newStatusLabel = "resolved";
+        newStatusColor = "success";
+    } else if (action === 'reject') {
+        confirmMsg = "Rejeter ce signalement et supprimer définitivement le contenu signalé ?";
+        toastMsg = "Contenu supprimé et signalement clos.";
+        toastType = "danger";
+        newStatusLabel = "dismissed";
+        newStatusColor = "secondary";
+    } else if (action.startsWith('sanction_')) {
+        let sanctionType = "";
+        if(action === 'sanction_warn') sanctionType = "Avertissement envoyé";
+        if(action === 'sanction_susp_7') sanctionType = "Compte suspendu 7 jours";
+        if(action === 'sanction_susp_30') sanctionType = "Compte suspendu 30 jours";
+        if(action === 'sanction_ban') sanctionType = "Utilisateur banni définitivement";
+        
+        confirmMsg = `Confirmez-vous la sanction : ${sanctionType} ?`;
+        toastMsg = sanctionType + ". Signalement clos.";
+        toastType = "warning";
+        newStatusLabel = "resolved";
+        newStatusColor = "success";
+    }
+
+    if (!confirm(confirmMsg)) return;
+
+    // Call Backend
+    const reportId = row.getAttribute('data-id') || row.querySelector('a').href.split('/').pop();
+    let endpoint = '';
+    let formData = new FormData();
+    
+    if (action === 'reject') {
+        endpoint = `/admin/reports/${reportId}/dismiss`;
+    } else {
+        endpoint = `/admin/reports/${reportId}/resolve`;
+        if (action === 'approve') {
+            formData.append('sanction', 'warning');
+        } else if (action === 'sanction_warn') {
+            formData.append('sanction', 'warning');
+        } else if (action === 'sanction_susp_7') {
+            formData.append('sanction', 'suspension_7');
+        } else if (action === 'sanction_susp_30') {
+            formData.append('sanction', 'suspension_30');
+        } else if (action === 'sanction_ban') {
+            formData.append('sanction', 'ban');
+        }
+    }
+
+    // Desactiver bouton
+    btn.disabled = true;
+
+    fetch(endpoint, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    }).then(response => {
+        if (response.ok) {
+            // UI Updates
+            showToast(toastMsg, toastType);
+            
+            const badge = row.querySelector('.status-cell .badge');
+            badge.className = `badge bg-${newStatusColor}`;
+            badge.textContent = newStatusLabel;
+            row.setAttribute('data-status', newStatusLabel);
+            
+            // Cacher les boutons d'action
+            const actions = row.querySelectorAll('.action-btn');
+            actions.forEach(b => b.style.display = 'none');
+        } else {
+            showToast("Erreur lors de l'action", "danger");
+        }
+    }).catch(err => {
+        showToast("Erreur serveur", "danger");
+    }).finally(() => {
+        btn.disabled = false;
+    });
+}
+</script>
+{% endblock %}

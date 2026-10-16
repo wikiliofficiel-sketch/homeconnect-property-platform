@@ -1,0 +1,313 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Candidature #{{ application.id }}{% endblock %}
+
+{% block admin_body %}
+{# ── Breadcrumb ── #}
+<div class="mb-4">
+    <a href="{{ path('admin_applications_index') }}" class="text-decoration-none small fw-bold" style="color: var(--c-text-muted);">
+        <i class="fa-solid fa-arrow-left me-1"></i> Retour aux candidatures
+    </a>
+</div>
+
+{# ── Flash messages ── #}
+{% for type, messages in app.flashes %}
+    {% for msg in messages %}
+        <div class="alert alert-{{ type == 'info' ? 'info' : (type == 'success' ? 'success' : (type == 'danger' ? 'danger' : 'warning')) }} alert-dismissible fade show rounded-3 mb-3" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endfor %}
+
+{# ── Header ── #}
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+    <div>
+        <h1 class="fw-bold mb-1" style="color: var(--c-text); font-family: var(--f-serif);">
+            Candidature #{{ application.id }}
+        </h1>
+        <div class="text-muted small">Soumise le {{ application.createdAt|date('d/m/Y à H:i') }}</div>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        {% if application.statut == 'pending' %}
+            <span class="badge bg-warning text-dark rounded-pill px-4 py-2 fs-6">En attente de traitement</span>
+        {% elseif application.statut == 'accepted' %}
+            <span class="badge bg-success rounded-pill px-4 py-2 fs-6">Acceptée</span>
+        {% elseif application.statut == 'refused' %}
+            <span class="badge bg-danger rounded-pill px-4 py-2 fs-6">Refusée</span>
+        {% else %}
+            <span class="badge bg-secondary rounded-pill px-4 py-2 fs-6">{{ application.statut }}</span>
+        {% endif %}
+        {% if application.statut == 'accepted' %}
+            <a href="{{ path('admin_applications_generate_contract', {id: application.id}) }}" target="_blank" class="btn btn-outline-info rounded-pill px-3 btn-sm">
+                <i class="fa-solid fa-file-pdf me-1"></i> Générer contrat PDF
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    {# ══════════════════════ COLONNE PRINCIPALE ══════════════════════ #}
+    <div class="col-lg-8">
+
+        {# ── Infos locataire ── #}
+        <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+            <div class="card-header border-0 pb-0 pt-4 px-4" style="background: transparent;">
+                <h5 class="fw-bold mb-0" style="color: var(--c-text);">
+                    <i class="fa-solid fa-user-circle text-primary me-2"></i> Profil du locataire
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="small text-muted text-uppercase fw-bold d-block mb-1">Nom complet</label>
+                        <div class="fw-bold" style="color: var(--c-text);">{{ application.locataire.fullName }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small text-muted text-uppercase fw-bold d-block mb-1">Email</label>
+                        <div style="color: var(--c-text);">{{ application.locataire.email }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small text-muted text-uppercase fw-bold d-block mb-1">Téléphone</label>
+                        <div style="color: var(--c-text);">{{ application.locataire.phone|default('—') }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small text-muted text-uppercase fw-bold d-block mb-1">Statut KYC</label>
+                        {% set kycStatus = application.locataire.kycStatus %}
+                        {% if kycStatus == 'approved' %}
+                            <span class="badge bg-success rounded-pill px-3">Vérifié</span>
+                        {% elseif kycStatus == 'pending' %}
+                            <span class="badge bg-warning text-dark rounded-pill px-3">En cours</span>
+                        {% elseif kycStatus == 'rejected' %}
+                            <span class="badge bg-danger rounded-pill px-3">Rejeté</span>
+                        {% else %}
+                            <span class="badge bg-secondary rounded-pill px-3">Non soumis</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-12">
+                        <a href="{{ path('admin_users_show', {id: application.locataire.id}) }}" class="btn btn-sm btn-outline-light rounded-pill">
+                            <i class="fa-solid fa-external-link-alt me-1"></i> Voir profil complet
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ── Infos bien ── #}
+        <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+            <div class="card-header border-0 pb-0 pt-4 px-4" style="background: transparent;">
+                <h5 class="fw-bold mb-0" style="color: var(--c-text);">
+                    <i class="fa-solid fa-house-lock text-primary me-2"></i> Détail du bien
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="small text-muted text-uppercase fw-bold d-block mb-1">Titre</label>
+                        <div class="fw-bold" style="color: var(--c-text);">{{ application.property.title }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small text-muted text-uppercase fw-bold d-block mb-1">Adresse</label>
+                        <div style="color: var(--c-text);">{{ application.property.address }}, {{ application.property.city }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small text-muted text-uppercase fw-bold d-block mb-1">Prix / mois</label>
+                        <div class="fw-bold text-primary">{{ application.property.pricePerMonth|number_format(0, ',', ' ') }} FCFA</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small text-muted text-uppercase fw-bold d-block mb-1">Propriétaire</label>
+                        <div style="color: var(--c-text);">
+                            {{ application.property.proprietaire ? application.property.proprietaire.fullName : '—' }}
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <a href="{{ path('admin_properties_show', {id: application.property.id}) }}" class="btn btn-sm btn-outline-light rounded-pill">
+                            <i class="fa-solid fa-external-link-alt me-1"></i> Voir fiche bien
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ── Message locataire ── #}
+        <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+            <div class="card-header border-0 pb-0 pt-4 px-4" style="background: transparent;">
+                <h5 class="fw-bold mb-0" style="color: var(--c-text);">
+                    <i class="fa-solid fa-comment-dots text-primary me-2"></i> Message du locataire
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                {% if application.message %}
+                    <blockquote class="blockquote mb-0">
+                        <p class="fst-italic" style="color: var(--c-text);">"{{ application.message }}"</p>
+                    </blockquote>
+                {% else %}
+                    <p class="text-muted fst-italic mb-0">Aucun message fourni.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ── Dates souhaitées ── #}
+        <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+            <div class="card-header border-0 pb-0 pt-4 px-4" style="background: transparent;">
+                <h5 class="fw-bold mb-0" style="color: var(--c-text);">
+                    <i class="fa-solid fa-calendar-days text-primary me-2"></i> Dates souhaitées
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="small text-muted text-uppercase fw-bold d-block mb-1">Entrée souhaitée</label>
+                        <div class="fw-bold" style="color: var(--c-text);">
+                            {{ application.dateDebut ? application.dateDebut|date('d/m/Y') : '—' }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small text-muted text-uppercase fw-bold d-block mb-1">Fin souhaitée</label>
+                        <div class="fw-bold" style="color: var(--c-text);">
+                            {{ application.dateFin ? application.dateFin|date('d/m/Y') : '—' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ── Motif de refus ── #}
+        {% if application.statut == 'refused' and application.motifRefus %}
+        <div class="alert alert-danger rounded-3 mb-4">
+            <strong><i class="fa-solid fa-circle-xmark me-1"></i> Motif de refus :</strong> {{ application.motifRefus }}
+        </div>
+        {% endif %}
+
+        {# ── Visites planifiées ── #}
+        {% if application.visites|length > 0 %}
+        <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+            <div class="card-header border-0 pb-0 pt-4 px-4" style="background: transparent;">
+                <h5 class="fw-bold mb-0" style="color: var(--c-text);">
+                    <i class="fa-solid fa-calendar-check text-success me-2"></i> Visites planifiées
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                {% for visite in application.visites %}
+                <div class="d-flex justify-content-between align-items-start p-3 rounded-3 mb-2" style="background: rgba(255,255,255,0.05);">
+                    <div>
+                        <div class="fw-bold" style="color: var(--c-text);">
+                            {{ visite.dateHeureDebut|date('d/m/Y') }} — {{ visite.dateHeureDebut|date('H:i') }} à {{ visite.dateHeureFin|date('H:i') }}
+                        </div>
+                        {% if visite.notes %}
+                            <div class="small text-muted mt-1">{{ visite.notes }}</div>
+                        {% endif %}
+                    </div>
+                    <span class="badge rounded-pill
+                        {% if visite.statut == 'planifiee' %}bg-primary
+                        {% elseif visite.statut == 'completee' %}bg-success
+                        {% else %}bg-secondary{% endif %}">
+                        {{ visite.statut|capitalize }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    {# ══════════════════════ COLONNE LATÉRALE ══════════════════════ #}
+    <div class="col-lg-4">
+
+        {# ── Actions ── #}
+        {% if application.statut == 'pending' %}
+        <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+            <div class="card-header border-0 pt-4 px-4 pb-0" style="background: transparent;">
+                <h5 class="fw-bold mb-0" style="color: var(--c-text);">
+                    <i class="fa-solid fa-sliders text-primary me-2"></i> Décision
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                {# Accepter #}
+                <form method="POST" action="{{ path('admin_applications_accept', {id: application.id}) }}" class="mb-3" onsubmit="return confirm('Accepter cette candidature ?')">
+                    <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold py-2">
+                        <i class="fa-solid fa-check me-2"></i> Accepter la candidature
+                    </button>
+                </form>
+
+                {# Refuser #}
+                <button class="btn btn-danger w-100 rounded-pill fw-bold py-2" type="button" data-bs-toggle="collapse" data-bs-target="#refuseForm">
+                    <i class="fa-solid fa-xmark me-2"></i> Refuser la candidature
+                </button>
+                <div class="collapse mt-3" id="refuseForm">
+                    <form method="POST" action="{{ path('admin_applications_refuse', {id: application.id}) }}" onsubmit="return confirm('Refuser cette candidature ?')">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Motif de refus (optionnel)</label>
+                            <textarea name="motif" class="form-control bg-dark text-white border-secondary rounded-3" rows="3" placeholder="Ex : Profil ne correspond pas aux critères du bailleur…"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100 rounded-pill fw-bold">
+                            Confirmer le refus
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ── Planifier visite (si acceptée) ── #}
+        {% if application.statut == 'accepted' %}
+        <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+            <div class="card-header border-0 pt-4 px-4 pb-0" style="background: transparent;">
+                <h5 class="fw-bold mb-0" style="color: var(--c-text);">
+                    <i class="fa-solid fa-calendar-plus text-primary me-2"></i> Planifier une visite
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ path('admin_applications_schedule_visite', {id: application.id}) }}">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Début de la visite <span class="text-danger">*</span></label>
+                        <input type="datetime-local" name="dateHeureDebut" class="form-control bg-dark text-white border-secondary rounded-3" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Fin de la visite <span class="text-danger">*</span></label>
+                        <input type="datetime-local" name="dateHeureFin" class="form-control bg-dark text-white border-secondary rounded-3" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Notes (optionnel)</label>
+                        <textarea name="notes" class="form-control bg-dark text-white border-secondary rounded-3" rows="2" placeholder="Instructions d'accès, équipement à vérifier…"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold">
+                        <i class="fa-solid fa-calendar-check me-2"></i> Planifier la visite
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ── Résumé statut ── #}
+        <div class="card border-0" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3" style="color: var(--c-text);">Chronologie</h6>
+                <div class="d-flex flex-column gap-2">
+                    <div class="d-flex align-items-center gap-2 small">
+                        <i class="fa-solid fa-circle-check text-success"></i>
+                        <span style="color: var(--c-text);">Soumise le {{ application.createdAt|date('d/m/Y H:i') }}</span>
+                    </div>
+                    {% if application.respondedAt %}
+                    <div class="d-flex align-items-center gap-2 small">
+                        <i class="fa-solid fa-circle-check {{ application.statut == 'accepted' ? 'text-success' : 'text-danger' }}"></i>
+                        <span style="color: var(--c-text);">
+                            {% if application.statut == 'accepted' %}Acceptée{% else %}Refusée{% endif %}
+                            le {{ application.respondedAt|date('d/m/Y H:i') }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    {% if application.visites|length > 0 %}
+                    <div class="d-flex align-items-center gap-2 small">
+                        <i class="fa-solid fa-circle-check text-primary"></i>
+                        <span style="color: var(--c-text);">{{ application.visites|length }} visite(s) planifiée(s)</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

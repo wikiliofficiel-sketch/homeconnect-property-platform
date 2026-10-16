@@ -1,0 +1,193 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Console d'Administration{% endblock %}
+
+{% block admin_body %}
+<div class="stats-grid">
+    <div class="stat-premium-card">
+        <div class="stat-premium-icon"><i class="fa-solid fa-users"></i></div>
+        <div>
+            <div class="stat-premium-value">{{ stats.total_users }}</div>
+            <div class="stat-premium-label">Utilisateurs</div>
+        </div>
+    </div>
+    <div class="stat-premium-card">
+        <div class="stat-premium-icon" style="color: var(--c-gold); background: rgba(255, 215, 0, 0.1);"><i class="fa-solid fa-house-circle-check"></i></div>
+        <div>
+            <div class="stat-premium-value">{{ stats.active_properties }}</div>
+            <div class="stat-premium-label">Biens Actifs</div>
+        </div>
+    </div>
+    <div class="stat-premium-card">
+        <div class="stat-premium-icon" style="color: var(--c-secondary); background: rgba(0, 210, 255, 0.1);"><i class="fa-solid fa-file-contract"></i></div>
+        <div>
+            <div class="stat-premium-value">{{ stats.total_rentals }}</div>
+            <div class="stat-premium-label">Locations</div>
+        </div>
+    </div>
+    <div class="stat-premium-card">
+        <div class="stat-premium-icon" style="color: #FF4B5C; background: rgba(255, 75, 92, 0.1);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div>
+            <div class="stat-premium-value">{{ stats.open_reports }}</div>
+            <div class="stat-premium-label">Signalements</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-lg-8">
+        <div class="premium-card">
+            <h4 class="fw-bold mb-4" style="font-family: var(--f-serif);">📈 Analyses de Performance</h4>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div style="height: 250px;">
+                        <canvas id="growthChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="height: 250px;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="premium-card mt-4">
+            <h4 class="fw-bold mb-4" style="font-family: var(--f-serif);">Actions Prioritaires</h4>
+            <div class="d-flex flex-wrap gap-3">
+                <a href="{{ path('admin_kyc_index') }}" class="btn-premium text-decoration-none">
+                    <i class="fa-solid fa-user-shield me-2"></i> Valider KYC
+                </a>
+                <a href="{{ path('admin_properties_index', {'status': 'pending'}) }}" class="btn-premium text-decoration-none" style="background: linear-gradient(45deg, #00D2FF, #00A8FF);">
+                    <i class="fa-solid fa-house-medical me-2"></i> Modérer Biens ({{ stats.pending_properties }})
+                </a>
+                <a href="{{ path('admin_reports_index') }}" class="btn-premium text-decoration-none" style="background: linear-gradient(45deg, #FF4B5C, #D4145A);">
+                    <i class="fa-solid fa-bug me-2"></i> Rapports Critiques
+                </a>
+            </div>
+        </div>
+
+        <div class="premium-card mt-4">
+            <h4 class="fw-bold mb-4" style="font-family: var(--f-serif);">Flux financier</h4>
+            <div class="stat-premium-card mb-3">
+                <div class="stat-premium-icon" style="color: #00E676; background: rgba(0, 230, 118, 0.1);"><i class="fa-solid fa-sack-dollar"></i></div>
+                <div>
+                    <div class="stat-premium-value">{{ (stats.total_commissions|number_format(0, '.', ' ')) }} <small>CFA</small></div>
+                    <div class="stat-premium-label">Total Commissions récoltées</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="premium-card">
+            <h4 class="fw-bold mb-3" style="font-family: var(--f-serif);">Répartition des rôles</h4>
+            <div style="height: 200px;">
+                <canvas id="rolesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="premium-card mt-4">
+            <h4 class="fw-bold mb-4" style="font-family: var(--f-serif);"><i class="fa-solid fa-bolt text-warning me-2"></i> Activité Récente</h4>
+            <div class="list-group list-group-flush" id="recentActivitiesList">
+                {% if recentLogs is defined and recentLogs|length > 0 %}
+                    {% for log in recentLogs %}
+                    <div class="list-group-item">
+                        <div class="fw-bold small dash-text">{{ log.action }}</div>
+                        {% if log.details %}
+                        <div class="tiny dash-text-muted">{{ log.details|nl2br }}</div>
+                        {% endif %}
+                        <div class="tiny">{{ log.createdAt|date('d/m H:i') }} • {{ log.user ? log.user.fullName : 'Système' }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="list-group-item">
+                        <div class="fw-bold small dash-text">Connexion admin</div>
+                        <div class="tiny">À l'instant • Système</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const labels = {{ chartData.labels|json_encode|raw }};
+    
+    // Graphique Croissance Inscriptions
+    new Chart(document.getElementById('growthChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Nouveaux Utilisateurs',
+                data: {{ chartData.users|json_encode|raw }},
+                borderColor: '#FF4B5C',
+                backgroundColor: 'rgba(255, 75, 92, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Graphique Revenus Commissions
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Commissions (CFA)',
+                data: {{ chartData.commissions|json_encode|raw }},
+                backgroundColor: '#00D2FF',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Graphique Répartition des Rôles
+    new Chart(document.getElementById('rolesChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Propriétaires', 'Locataires'],
+            datasets: [{
+                data: [{{ stats.proprietaires }}, {{ stats.locataires }}],
+                backgroundColor: ['#FF8C00', '#00D2FF'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: document.documentElement.dataset.theme === 'light' ? '#1e293b' : '#E2E8F0', boxWidth: 10 } }
+            },
+            cutout: '70%'
+        }
+    });
+});
+</script>
+
+<style>
+.list-group-item { background: transparent; border-color: var(--c-border); padding: 1rem 0; color: var(--c-text); }
+.tiny { font-size: 0.7rem; color: var(--c-text-muted); }
+</style>
+{% endblock %}

@@ -1,0 +1,466 @@
+{% extends 'tenant/base.html.twig' %}
+
+{% block tenant_content %}
+<div style="max-width: 960px; margin: 0 auto;">
+
+    {# ── Header ─────────────────────────────────────────────────── #}
+    <div class="d-flex align-items-center gap-4 mb-5">
+        <div class="prof-avatar">{{ user.prenom|slice(0,1)|upper }}</div>
+        <div>
+            <h1 style="font-size:1.8rem; font-weight:800; color:var(--c-text); margin:0 0 4px;">
+                {{ user.fullName }}
+            </h1>
+            <p style="color:var(--c-text-muted); font-size:13px; margin:0;">
+                {{ user.email }}
+                {% if user.verificationStatus == 'certifie' %}
+                <span style="background:rgba(0,230,118,0.15); color:#00e676; font-size:11px; font-weight:700; padding:2px 10px; border-radius:50px; margin-left:8px;">
+                    <i class="fa-solid fa-circle-check me-1"></i>Vérifié
+                </span>
+                {% endif %}
+            </p>
+            {% if averageRating > 0 %}
+            <div style="margin-top:6px; font-size:13px; color:var(--c-text-muted);">
+                {% for i in 1..5 %}
+                <i class="fa-{{ i <= averageRating|round ? 'solid' : 'regular' }} fa-star" style="color:#f39c12;"></i>
+                {% endfor %}
+                <span style="margin-left:6px;">{{ averageRating|number_format(1) }} · {{ totalReviews }} avis</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── Flash messages globaux ──────────────────────────────────── #}
+    {% for label, messages in app.flashes %}
+        {% for msg in messages %}
+        <div class="alert alert-{{ label == 'success' ? 'success' : 'danger' }} rounded-3 alert-dismissible fade show mb-4" role="alert">
+            <i class="fa-solid fa-{{ label == 'success' ? 'circle-check' : 'circle-exclamation' }} me-2"></i>{{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endfor %}
+
+    <div class="row g-4">
+        {# ══════════════════ COLONNE GAUCHE ══════════════════════ #}
+        <div class="col-lg-7">
+
+            {# ── Modifier infos personnelles ─────────────────────── #}
+            <div class="prof-card mb-4">
+                <div class="prof-card-title"><i class="fa-solid fa-user-pen"></i> Modifier mes informations</div>
+                <form method="POST" action="{{ path('app_tenant_profile') }}" id="profileForm">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="prof-label">Prénom *</label>
+                            <input type="text" name="prenom" value="{{ user.prenom }}" class="prof-input" required placeholder="ex: Kofi">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="prof-label">Nom *</label>
+                            <input type="text" name="nom" value="{{ user.nom }}" class="prof-input" required placeholder="ex: Mensah">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="prof-label">Email</label>
+                            <input type="email" value="{{ user.email }}" class="prof-input" disabled style="opacity:.6; cursor:not-allowed;" title="L'email ne peut pas être modifié">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="prof-label">Téléphone</label>
+                            <input type="tel" name="telephone" value="{{ user.telephone }}" class="prof-input" placeholder="+229 97 00 00 00">
+                        </div>
+                        <div class="col-12">
+                            <label class="prof-label">Ville</label>
+                            <select name="ville" class="prof-input">
+                                <option value="">Sélectionner…</option>
+                                {% for v in ['Cotonou','Porto-Novo','Parakou','Abomey-Calavi','Ouidah','Bohicon','Natitingou','Lokossa','Kandi','Autre'] %}
+                                <option value="{{ v }}" {{ user.ville == v ? 'selected' : '' }}>{{ v }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3 mt-4">
+                        <button type="submit" class="prof-btn-primary" onclick="return confirmAction('Enregistrer les modifications ?')">
+                            <i class="fa-solid fa-check me-2"></i> Enregistrer
+                        </button>
+                        <button type="reset" class="prof-btn-ghost">
+                            <i class="fa-solid fa-xmark me-2"></i> Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {# ── Changer le mot de passe ─────────────────────────── #}
+            <div class="prof-card mb-4">
+                <div class="prof-card-title"><i class="fa-solid fa-lock"></i> Changer le mot de passe</div>
+                <form method="POST" action="{{ path('app_tenant_change_password') }}" id="passwordForm" onsubmit="return validatePasswordForm()">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="prof-label">Mot de passe actuel *</label>
+                            <div class="prof-input-eye">
+                                <input type="password" name="current_password" id="currentPwd" class="prof-input" required placeholder="Votre mot de passe actuel">
+                                <button type="button" class="eye-btn" onclick="togglePwd('currentPwd',this)"><i class="fa-regular fa-eye"></i></button>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="prof-label">Nouveau mot de passe *</label>
+                            <div class="prof-input-eye">
+                                <input type="password" name="new_password" id="newPwd" class="prof-input" required minlength="8" placeholder="Min. 8 caractères">
+                                <button type="button" class="eye-btn" onclick="togglePwd('newPwd',this)"><i class="fa-regular fa-eye"></i></button>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="prof-label">Confirmer le nouveau mot de passe *</label>
+                            <div class="prof-input-eye">
+                                <input type="password" name="confirm_password" id="confirmPwd" class="prof-input" required placeholder="Répéter le nouveau mot de passe">
+                                <button type="button" class="eye-btn" onclick="togglePwd('confirmPwd',this)"><i class="fa-regular fa-eye"></i></button>
+                            </div>
+                        </div>
+                        <div class="col-12" id="pwdStrengthWrap" style="display:none;">
+                            <div class="pwd-strength-bar"><div id="pwdStrengthFill"></div></div>
+                            <small id="pwdStrengthLabel" style="color:var(--c-text-muted); font-size:11px;"></small>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3 mt-4">
+                        <button type="submit" class="prof-btn-primary">
+                            <i class="fa-solid fa-shield-halved me-2"></i> Modifier le mot de passe
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {# ── Évaluations reçues ──────────────────────────────── #}
+            {% if reviews|length > 0 %}
+            <div class="prof-card">
+                <div class="prof-card-title"><i class="fa-solid fa-star"></i> Évaluations reçues ({{ totalReviews }})</div>
+                {% for review in reviews %}
+                <div class="prof-review">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <div class="prof-review-av">{{ review.author.prenom|slice(0,1)|upper }}</div>
+                        <div>
+                            <strong style="color:var(--c-text); font-size:14px;">{{ review.author.fullName }}</strong>
+                            <div>
+                                {% for i in 1..5 %}
+                                <i class="fa-{{ i <= review.rating ? 'solid' : 'regular' }} fa-star" style="color:#f39c12; font-size:12px;"></i>
+                                {% endfor %}
+                                <span style="font-size:12px; color:var(--c-text-muted); margin-left:4px;">{{ review.rating }}/5</span>
+                            </div>
+                        </div>
+                        <span style="margin-left:auto; font-size:11px; color:var(--c-text-muted);">{{ review.createdAt|date('d/m/Y') }}</span>
+                    </div>
+                    <p style="color:var(--c-text-muted); font-size:13px; font-style:italic; margin:0;">"{{ review.comment }}"</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        {# ══════════════════ COLONNE DROITE ══════════════════════ #}
+        <div class="col-lg-5">
+
+            {# ── Statistiques d'activité ─────────────────────────── #}
+            <div class="prof-card mb-3">
+                <div class="prof-card-title"><i class="fa-solid fa-chart-pie"></i> Mon activité</div>
+                <div class="d-flex flex-column gap-2">
+                    <div class="prof-stat-row">
+                        <span><i class="fa-solid fa-folder-open me-2" style="color:var(--c-primary);"></i>Candidatures</span>
+                        <strong>{{ user.applications|length }}</strong>
+                    </div>
+                    <div class="prof-stat-row">
+                        <span><i class="fa-solid fa-heart me-2" style="color:#e74c3c;"></i>Favoris</span>
+                        <strong>{{ user.favorites|length }}</strong>
+                    </div>
+                    <div class="prof-stat-row">
+                        <span><i class="fa-solid fa-calendar-check me-2" style="color:#25D366;"></i>Visites planifiées</span>
+                        <strong>{{ visitesPlanifiees }}</strong>
+                    </div>
+                    <div class="prof-stat-row">
+                        <span><i class="fa-solid fa-flag me-2" style="color:#e67e22;"></i>Signalements</span>
+                        <strong>{{ signalementsCount }}</strong>
+                    </div>
+                    <div class="prof-stat-row">
+                        <span><i class="fa-solid fa-star me-2" style="color:#f39c12;"></i>Note moyenne</span>
+                        <strong>{{ averageRating > 0 ? averageRating|number_format(1) ~ '/5' : '—' }}</strong>
+                    </div>
+                    <div class="prof-stat-row">
+                        <span><i class="fa-solid fa-calendar me-2" style="color:#667eea;"></i>Membre depuis</span>
+                        <strong>{{ user.createdAt|date('M Y') }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            {# ── Sécurité ────────────────────────────────────────── #}
+            <div class="prof-card mb-3">
+                <div class="prof-card-title"><i class="fa-solid fa-shield-halved"></i> Sécurité</div>
+                <div class="d-flex flex-column gap-2">
+                    <div class="prof-stat-row">
+                        <span>Email vérifié</span>
+                        <span style="color:{% if user.isVerified %}#00e676{% else %}#ff4b5c{% endif %}; font-weight:700;">
+                            <i class="fa-solid fa-{{ user.isVerified ? 'circle-check' : 'circle-xmark' }}"></i>
+                            {{ user.isVerified ? 'Oui' : 'Non' }}
+                        </span>
+                    </div>
+                    <div class="prof-stat-row">
+                        <span>KYC</span>
+                        <span style="font-size:12px; font-weight:700; padding:2px 10px; border-radius:50px;
+                            {% if user.kycStatus == 'approved' %}background:rgba(0,230,118,0.15);color:#00e676;
+                            {% elseif user.kycStatus == 'pending' %}background:rgba(255,193,7,0.15);color:#ffc107;
+                            {% else %}background:rgba(148,163,184,0.15);color:#94a3b8;{% endif %}">
+                            {{ user.kycStatus == 'approved' ? 'Approuvé' : (user.kycStatus == 'pending' ? 'En attente' : 'Non soumis') }}
+                        </span>
+                    </div>
+                    {% if user.isSuspended %}
+                    <div class="prof-stat-row">
+                        <span>Statut</span>
+                        <span style="color:#ff4b5c; font-weight:700; font-size:12px;">
+                            <i class="fa-solid fa-ban me-1"></i>Suspendu
+                            {% if user.suspendedUntil %}jusqu'au {{ user.suspendedUntil|date('d/m/Y') }}{% endif %}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# ── Zone danger ─────────────────────────────────────── #}
+            <div class="prof-card" style="border-color:rgba(255,75,92,0.2);">
+                <div class="prof-card-title" style="color:#e74c3c;"><i class="fa-solid fa-triangle-exclamation"></i> Zone danger</div>
+
+                <p style="color:var(--c-text-muted); font-size:13px; margin-bottom:12px;">
+                    Mettre fin à votre session ou supprimer définitivement votre compte.
+                </p>
+
+                <a href="{{ path('app_logout') }}" class="prof-btn-ghost w-100 mb-3"
+                   style="justify-content:center;"
+                   onclick="return confirmAction('Vous déconnecter maintenant ?')">
+                    <i class="fa-solid fa-door-open me-2"></i> Se déconnecter
+                </a>
+
+                <button type="button" class="prof-btn-danger w-100" style="justify-content:center;"
+                        onclick="document.getElementById('deleteModal').classList.add('show')">
+                    <i class="fa-solid fa-trash-can me-2"></i> Supprimer mon compte
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ══════════════════ MODAL SUPPRESSION COMPTE ════════════════════ #}
+<div id="deleteModal" class="prof-modal-overlay" onclick="if(event.target===this)this.classList.remove('show')">
+    <div class="prof-modal">
+        <div class="prof-modal-header">
+            <i class="fa-solid fa-skull-crossbones" style="color:#ff4b5c; font-size:1.4rem;"></i>
+            <h5 style="margin:0; color:var(--c-text);">Supprimer mon compte</h5>
+            <button type="button" onclick="document.getElementById('deleteModal').classList.remove('show')"
+                    style="background:none;border:none;color:var(--c-text-muted);cursor:pointer;font-size:1.2rem;margin-left:auto;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div style="padding:0 1.5rem 0.5rem;">
+            <div class="prof-delete-warning">
+                <i class="fa-solid fa-circle-exclamation me-2"></i>
+                Cette action est <strong>irréversible</strong>. Toutes vos données seront supprimées :
+                candidatures, favoris, visites, messages, notifications et évaluations.
+            </div>
+            <form method="POST" action="{{ path('app_tenant_delete_account') }}" onsubmit="return confirmDeleteAccount()">
+                <div class="mb-3">
+                    <label class="prof-label">Confirmez avec votre mot de passe *</label>
+                    <input type="password" name="delete_password" id="deletePwd" class="prof-input" required
+                           placeholder="Votre mot de passe actuel">
+                </div>
+                <div class="d-flex gap-3 justify-content-end mt-4">
+                    <button type="button" class="prof-btn-ghost"
+                            onclick="document.getElementById('deleteModal').classList.remove('show')">
+                        Annuler
+                    </button>
+                    <button type="submit" class="prof-btn-danger" style="background:rgba(255,75,92,0.85); color:#fff;">
+                        <i class="fa-solid fa-trash-can me-2"></i> Confirmer la suppression
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.prof-avatar {
+    width: 80px; height: 80px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--c-primary), #FF4B5C);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; font-weight: 800; color: #fff;
+    box-shadow: 0 4px 16px rgba(255,140,0,0.4);
+}
+.prof-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 16px; padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+.prof-card-title {
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--c-primary);
+    margin-bottom: 1.2rem; display: flex; align-items: center; gap: 8px;
+}
+.prof-label {
+    display: block; font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: var(--c-text-muted); margin-bottom: 6px;
+}
+.prof-input {
+    width: 100%; background: rgba(255,255,255,0.06);
+    border: 1px solid var(--c-border); border-radius: 10px;
+    color: var(--c-text); padding: 10px 14px; font-size: 14px;
+    font-family: var(--f-sans); transition: border-color .2s;
+}
+.prof-input:focus { outline: none; border-color: var(--c-primary); box-shadow: 0 0 0 3px rgba(255,140,0,0.15); }
+.prof-input::placeholder { color: rgba(255,255,255,0.2); }
+.prof-input:disabled { background: rgba(255,255,255,0.02); }
+.prof-input-eye { position: relative; }
+.prof-input-eye .prof-input { padding-right: 42px; }
+.eye-btn {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--c-text-muted); cursor: pointer; font-size: 14px;
+}
+.eye-btn:hover { color: var(--c-text); }
+
+.prof-btn-primary {
+    background: linear-gradient(135deg, var(--c-primary), #e67e00);
+    color: #fff; border: none; border-radius: 50px;
+    padding: 11px 24px; font-size: 14px; font-weight: 700;
+    cursor: pointer; display: inline-flex; align-items: center;
+    box-shadow: 0 4px 14px rgba(255,140,0,0.35); transition: all .2s;
+    text-decoration: none;
+}
+.prof-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(255,140,0,.5); color: #fff; }
+.prof-btn-ghost {
+    background: rgba(255,255,255,0.06); color: var(--c-text-muted);
+    border: 1px solid var(--c-border); border-radius: 50px;
+    padding: 11px 24px; font-size: 14px; font-weight: 600;
+    cursor: pointer; display: inline-flex; align-items: center; transition: all .2s;
+    text-decoration: none;
+}
+.prof-btn-ghost:hover { background: rgba(255,255,255,0.1); color: var(--c-text); }
+.prof-btn-danger {
+    background: rgba(255,75,92,0.1); color: #ff4b5c;
+    border: 1px solid rgba(255,75,92,0.3); border-radius: 50px;
+    padding: 11px 24px; font-size: 14px; font-weight: 600;
+    cursor: pointer; display: inline-flex; align-items: center; transition: all .2s; text-decoration: none;
+}
+.prof-btn-danger:hover { background: rgba(255,75,92,0.2); color: #ff4b5c; }
+
+.prof-stat-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--c-border); font-size: 13px;
+}
+.prof-stat-row:last-child { border-bottom: none; }
+.prof-stat-row span { color: var(--c-text-muted); }
+.prof-stat-row strong { color: var(--c-text); }
+.prof-review {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--c-border);
+    border-radius: 12px; padding: 1rem; margin-bottom: 10px;
+}
+.prof-review:last-child { margin-bottom: 0; }
+.prof-review-av {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--c-primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; flex-shrink: 0;
+}
+
+/* Barre de force du mot de passe */
+.pwd-strength-bar {
+    height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 4px;
+}
+#pwdStrengthFill {
+    height: 100%; border-radius: 4px; width: 0; transition: width .3s, background .3s;
+}
+
+/* Modal suppression */
+.prof-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: none; align-items: center; justify-content: center;
+    z-index: 1060; padding: 1rem;
+}
+.prof-modal-overlay.show { display: flex; }
+.prof-modal {
+    background: var(--c-surface); border: 1px solid rgba(255,75,92,0.3);
+    border-radius: 20px; width: 100%; max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    animation: modalIn .25s ease;
+}
+@keyframes modalIn { from{transform:scale(.9);opacity:0;} to{transform:scale(1);opacity:1;} }
+.prof-modal-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--c-border);
+}
+.prof-delete-warning {
+    background: rgba(255,75,92,0.08); border: 1px solid rgba(255,75,92,0.25);
+    color: #ff8a94; border-radius: 10px; padding: .9rem 1rem;
+    font-size: 13px; margin-bottom: 1.2rem; line-height: 1.6;
+}
+</style>
+
+<script>
+// ── Afficher/masquer mot de passe ──────────────────────────────────
+function togglePwd(id, btn) {
+    const input = document.getElementById(id);
+    const icon  = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+    }
+}
+
+// ── Indicateur de force du mot de passe ───────────────────────────
+document.getElementById('newPwd')?.addEventListener('input', function () {
+    const val  = this.value;
+    const wrap = document.getElementById('pwdStrengthWrap');
+    const fill = document.getElementById('pwdStrengthFill');
+    const lbl  = document.getElementById('pwdStrengthLabel');
+    if (!val) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    let score = 0;
+    if (val.length >= 8)  score++;
+    if (val.length >= 12) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const levels = [
+        { pct:'20%', color:'#e74c3c', label:'Très faible' },
+        { pct:'40%', color:'#e67e22', label:'Faible' },
+        { pct:'60%', color:'#f39c12', label:'Moyen' },
+        { pct:'80%', color:'#2ecc71', label:'Fort' },
+        { pct:'100%',color:'#00e676', label:'Très fort' },
+    ];
+    const lvl = levels[Math.min(score - 1, 4)] || levels[0];
+    fill.style.width     = lvl.pct;
+    fill.style.background = lvl.color;
+    lbl.textContent      = lvl.label;
+    lbl.style.color      = lvl.color;
+});
+
+// ── Validation formulaire mot de passe ────────────────────────────
+function validatePasswordForm() {
+    const n = document.getElementById('newPwd').value;
+    const c = document.getElementById('confirmPwd').value;
+    if (n.length < 8) {
+        alert('Le nouveau mot de passe doit contenir au moins 8 caractères.');
+        return false;
+    }
+    if (n !== c) {
+        alert('Les nouveaux mots de passe ne correspondent pas.');
+        return false;
+    }
+    return true;
+}
+
+// ── Confirmation suppression compte ───────────────────────────────
+function confirmDeleteAccount() {
+    const pwd = document.getElementById('deletePwd').value;
+    if (!pwd) { alert('Veuillez saisir votre mot de passe.'); return false; }
+    return confirm('⚠️ Dernière confirmation : votre compte et toutes vos données seront définitivement supprimés. Continuer ?');
+}
+
+// ── Fermeture modal avec Escape ───────────────────────────────────
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') document.getElementById('deleteModal')?.classList.remove('show');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>QUITTANCE DE LOYER</title>
+    <style>
+        body { font-family: 'Helvetica', sans-serif; font-size: 11pt; line-height: 1.5; color: #333; margin: 40px; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { color: #00a884; text-transform: uppercase; margin: 0; font-size: 26px; border-bottom: 3px solid #00a884; display: inline-block; padding-bottom: 10px; }
+        .receipt-info { float: right; text-align: right; margin-top: 20px; }
+        .section { margin-top: 30px; clear: both; }
+        .box { border: 1px solid #ddd; padding: 20px; background: #fcfcfc; border-radius: 10px; margin-bottom: 20px; }
+        .main-text { font-size: 13pt; margin-bottom: 30px; }
+        .amount-box { text-align: center; font-size: 22px; font-weight: bold; color: #00a884; padding: 20px; border: 2px dashed #00a884; margin: 20px 0; }
+        .signature-area { margin-top: 50px; text-align: right; }
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 9px; color: #999; border-top: 1px solid #eee; padding-top: 10px; }
+        .label { font-weight: bold; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Quittance de Loyer</h1>
+    </div>
+
+    <div class="receipt-info">
+        <p><span class="label">Référence :</span> Q-{{ payment.id }}-{{ "now"|date("Y") }}<br>
+           <span class="label">Date :</span> {{ "now"|date("d/m/Y") }}</p>
+    </div>
+
+    <div class="section">
+        <div class="box">
+            <span class="label">PROPRIÉTAIRE (BAILLEUR) :</span><br>
+            {{ payment.rental.property.proprietaire.fullName }}<br>
+            {{ payment.rental.property.address }}, {{ payment.rental.property.city }}
+        </div>
+
+        <div class="box">
+            <span class="label">LOCATAIRE :</span><br>
+            {{ payment.user.fullName }}<br>
+            Concernant le bien : {{ payment.rental.property.title }}
+        </div>
+    </div>
+
+    <div class="section main-text">
+        <p>Je soussigné, <strong>{{ payment.rental.property.proprietaire.fullName }}</strong>, propriétaire du logement situé au {{ payment.rental.property.address }}, 
+        déclare avoir reçu de la part de <strong>{{ payment.user.fullName }}</strong>, la somme de :</p>
+        
+        <div class="amount-box">
+            {{ payment.amount|number_format(0, ',', ' ') }} FCFA
+        </div>
+
+        <p>Cette somme correspond au paiement du loyer et des charges pour la période du <br>
+        <strong>{{ "now"|date("01/m/Y") }}</strong> au <strong>{{ "now"|date("t/m/Y") }}</strong>.</p>
+        
+        <p>Sous réserve de tous mes droits, cette quittance annule tout reçu qui aurait pu être donné précédemment.</p>
+    </div>
+
+    <div class="signature-area">
+        <p>Fait à {{ payment.rental.property.city }}, le {{ "now"|date("d/m/Y") }}</p>
+        <p><strong>Le Propriétaire</strong></p>
+        <div style="height: 60px;"></div>
+        <p><i>(Signature numérique HomeConnect)</i></p>
+    </div>
+
+    <div class="footer">
+        Cette quittance est générée automatiquement après validation du paiement via FedaPay (Réf: {{ payment.fedaPayRef|default('N/A') }}).<br>
+        HomeConnect - Facilitateur Immobilier Digital au Bénin.
+    </div>
+</body>
+</html>

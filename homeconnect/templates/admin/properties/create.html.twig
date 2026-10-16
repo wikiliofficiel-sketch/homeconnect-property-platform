@@ -1,0 +1,189 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Ajouter un bien{% endblock %}
+
+{% block admin_body %}
+<div class="mb-4">
+    <a href="{{ path('admin_properties_index') }}" class="text-decoration-none small fw-bold" style="color: var(--c-text-muted);">
+        <i class="fa-solid fa-arrow-left me-1"></i> Retour aux biens
+    </a>
+</div>
+
+<h1 class="fw-bold mb-4" style="color: var(--c-text); font-family: var(--f-serif);">
+    <i class="fa-solid fa-plus-circle text-primary me-2"></i> Ajouter un bien
+</h1>
+
+{% for type, messages in app.flashes %}
+    {% for msg in messages %}
+        <div class="alert alert-{{ type == 'success' ? 'success' : 'danger' }} alert-dismissible fade show rounded-3 mb-3">
+            {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endfor %}
+
+<form method="POST" action="{{ path('admin_properties_new') }}">
+
+    <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+        <div class="card-header border-0 pt-4 px-4 pb-0" style="background: transparent;">
+            <h5 class="fw-bold" style="color: var(--c-text);">Propriétaire du bien</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-muted">Attribuer à un propriétaire existant (optionnel — sinon attribué à l'admin)</label>
+                <select name="proprietaire_id" class="form-select bg-dark text-white border-secondary rounded-3">
+                    <option value="">— Moi-même (admin) —</option>
+                    {% for p in proprietaires %}
+                        <option value="{{ p.id }}">{{ p.fullName }} ({{ p.email }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+        <div class="card-header border-0 pt-4 px-4 pb-0" style="background: transparent;">
+            <h5 class="fw-bold" style="color: var(--c-text);">Informations de base</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label small fw-bold text-muted">Titre *</label>
+                    <input type="text" name="title" class="form-control bg-dark text-white border-secondary rounded-3" required placeholder="ex: Appartement T3 meublé à Cotonou">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted">Type *</label>
+                    <select name="propertyType" class="form-select bg-dark text-white border-secondary rounded-3" required>
+                        <option value="">Sélectionner…</option>
+                        <option value="appartement">Appartement</option>
+                        <option value="maison">Maison</option>
+                        <option value="villa">Villa</option>
+                        <option value="studio">Studio</option>
+                        <option value="chambre">Chambre</option>
+                        <option value="bureau">Bureau / Local commercial</option>
+                        <option value="entrepot">Entrepôt</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-bold text-muted">Description *</label>
+                    <textarea name="description" class="form-control bg-dark text-white border-secondary rounded-3" rows="4" required placeholder="Description complète du bien…"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-muted">Adresse *</label>
+                    <input type="text" name="address" class="form-control bg-dark text-white border-secondary rounded-3" required placeholder="Rue, quartier…">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted">Ville *</label>
+                    <input type="text" name="city" class="form-control bg-dark text-white border-secondary rounded-3" required placeholder="Cotonou">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-muted">Code postal</label>
+                    <input type="text" name="zipCode" class="form-control bg-dark text-white border-secondary rounded-3" placeholder="BP…">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+        <div class="card-header border-0 pt-4 px-4 pb-0" style="background: transparent;">
+            <h5 class="fw-bold" style="color: var(--c-text);">Tarifs & Caractéristiques</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted">Loyer mensuel (FCFA) *</label>
+                    <input type="number" name="pricePerMonth" class="form-control bg-dark text-white border-secondary rounded-3" required min="0" placeholder="150000">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted">Dépôt de garantie (FCFA)</label>
+                    <input type="number" name="deposit" class="form-control bg-dark text-white border-secondary rounded-3" min="0" placeholder="300000">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-muted">Pièces *</label>
+                    <input type="number" name="rooms" class="form-control bg-dark text-white border-secondary rounded-3" required min="1" value="3">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-muted">Chambres</label>
+                    <input type="number" name="bedrooms" class="form-control bg-dark text-white border-secondary rounded-3" min="0" value="2">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">Surface (m²) *</label>
+                    <input type="number" name="surface" class="form-control bg-dark text-white border-secondary rounded-3" required min="1" step="0.1" placeholder="85">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+        <div class="card-header border-0 pt-4 px-4 pb-0" style="background: transparent;">
+            <h5 class="fw-bold" style="color: var(--c-text);">Équipements & Règles</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-2 mb-3">
+                {% for eq in ['wifi', 'climatisation', 'parking', 'gardien', 'groupe_electrogene', 'piscine'] %}
+                <div class="col-auto">
+                    <label class="badge bg-secondary rounded-pill p-2 d-flex align-items-center gap-1" style="cursor:pointer;">
+                        <input type="checkbox" name="equipments[]" value="{{ eq }}" class="form-check-input m-0">
+                        {{ eq|replace({'_': ' '})|capitalize }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="row g-2">
+                <div class="col-auto">
+                    <label class="badge bg-secondary rounded-pill p-2 d-flex align-items-center gap-1" style="cursor:pointer;">
+                        <input type="checkbox" name="rules[]" value="pets_allowed" class="form-check-input m-0"> Animaux acceptés
+                    </label>
+                </div>
+                <div class="col-auto">
+                    <label class="badge bg-secondary rounded-pill p-2 d-flex align-items-center gap-1" style="cursor:pointer;">
+                        <input type="checkbox" name="rules[]" value="smoking_allowed" class="form-check-input m-0"> Fumeurs acceptés
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 mb-4" style="background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08) !important;">
+        <div class="card-header border-0 pt-4 px-4 pb-0" style="background: transparent;">
+            <h5 class="fw-bold" style="color: var(--c-text);">Photos</h5>
+        </div>
+        <div class="card-body p-4">
+            <input type="file" id="adminPhotos" accept="image/*" multiple class="form-control bg-dark text-white border-secondary rounded-3 mb-2">
+            <input type="hidden" id="photos_base64" name="photos_base64">
+            <div id="adminPreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+            <small class="text-muted">Les photos sont converties en base64. Minimum 1 photo recommandée.</small>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-3">
+        <a href="{{ path('admin_properties_index') }}" class="btn btn-outline-secondary rounded-pill px-4">Annuler</a>
+        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold">
+            <i class="fa-solid fa-check me-2"></i> Publier directement
+        </button>
+    </div>
+</form>
+
+<script>
+document.getElementById('adminPhotos').addEventListener('change', function() {
+    const files = this.files;
+    const preview = document.getElementById('adminPreview');
+    const hidden = document.getElementById('photos_base64');
+    let photos = [];
+    preview.innerHTML = '';
+    let done = 0;
+    Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            photos.push(reader.result);
+            const img = document.createElement('img');
+            img.src = reader.result;
+            img.style = 'width:80px;height:60px;object-fit:cover;border-radius:8px;';
+            preview.appendChild(img);
+            done++;
+            if (done === files.length) hidden.value = JSON.stringify(photos);
+        };
+        reader.readAsDataURL(file);
+    });
+});
+</script>
+{% endblock %}

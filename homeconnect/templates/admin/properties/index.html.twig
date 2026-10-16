@@ -1,0 +1,333 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Modération des biens{% endblock %}
+
+{% block admin_body %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <h1 class="fw-bold mb-0" style="color: var(--c-text); font-family: var(--f-serif);">Modération des biens</h1>
+    <a href="{{ path('admin_properties_new') }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+        <i class="fa-solid fa-plus me-2"></i> Ajouter un bien
+    </a>
+</div>
+
+<div class="properties-header" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat p-3 rounded" style="background: rgba(255,255,255,0.02); border-left: 4px solid #6c757d;">
+                <span class="stat-number d-block text-white fs-3 fw-bold">{{ stats.draft }}</span>
+                <span class="stat-label text-muted">Brouillons</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat p-3 rounded" style="background: rgba(255,255,255,0.02); border-left: 4px solid #ffc107;">
+                <span class="stat-number d-block text-white fs-3 fw-bold">{{ stats.pending }}</span>
+                <span class="stat-label text-warning">En attente</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat p-3 rounded" style="background: rgba(255,255,255,0.02); border-left: 4px solid #198754;">
+                <span class="stat-number d-block text-white fs-3 fw-bold">{{ stats.active }}</span>
+                <span class="stat-label text-success">Actifs</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat p-3 rounded" style="background: rgba(255,255,255,0.02); border-left: 4px solid #dc3545;">
+                <span class="stat-number d-block text-white fs-3 fw-bold">{{ stats.suspended }}</span>
+                <span class="stat-label text-danger">Suspendus</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <select id="statusFilter" class="form-select bg-dark text-white border-secondary w-auto">
+            <option value="">Tous les statuts</option>
+            <option value="draft">Brouillons</option>
+            <option value="pending">En attente</option>
+            <option value="active">Actifs</option>
+            <option value="suspended">Suspendus</option>
+        </select>
+        
+        <div class="search-box" style="width: 300px;">
+            <input type="text" id="searchProperty" class="form-control bg-dark text-white border-secondary" placeholder="🔍 Rechercher (Titre, Ville)...">
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-dark table-hover align-middle properties-table">
+        <thead>
+            <tr>
+                <th>Bien & Localisation</th>
+                <th>Prix/mois</th>
+                <th>Statut</th>
+                <th>Propriétaire</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="propertiesTableBody">
+            {% for property in properties %}
+            <tr class="property-row" data-status="{{ property.statut }}" data-id="{{ property.id }}">
+                <td>
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width: 50px; height: 50px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: var(--c-surface);">
+                            {% if property.images and property.images|length > 0 %}
+                                {% set imgPath = property.images[0] %}
+                                {% if imgPath starts with 'data:' or imgPath starts with 'http' %}
+                                    <img src="{{ imgPath }}" class="w-100 h-100 object-fit-cover" alt="Image du bien">
+                                {% elseif imgPath starts with '/data/user/' %}
+                                    <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted" style="background:rgba(0,0,0,0.1);" title="Image mobile locale"><i class="fa-solid fa-mobile-screen"></i></div>
+                                {% elseif imgPath starts with '/' %}
+                                    <img src="{{ imgPath }}" class="w-100 h-100 object-fit-cover" alt="Image du bien">
+                                {% else %}
+                                    <img src="{{ asset('uploads/properties/' ~ imgPath) }}" class="w-100 h-100 object-fit-cover" alt="Image du bien">
+                                {% endif %}
+                            {% else %}
+                                <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted" style="background: rgba(0,0,0,0.1);"><i class="fa-solid fa-image"></i></div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div class="title-cell fw-bold" style="color: var(--c-text);">{{ property.title }}</div>
+                            <div class="loc-cell small text-muted"><i class="fa-solid fa-location-dot me-1"></i> {{ property.address }}, {{ property.city }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="fw-bold text-primary">{{ property.pricePerMonth|number_format(0, ',', ' ') }} F</td>
+                <td class="status-cell">
+                    <span class="badge bg-{{ property.statut == 'active' ? 'success' : (property.statut == 'suspended' ? 'danger' : (property.statut == 'pending' ? 'warning text-dark' : 'secondary')) }}">
+                        {{ property.statut|capitalize }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{{ path('admin_users_show', {'id': property.proprietaire.id}) }}" class="text-info text-decoration-none small fw-bold">
+                        <i class="fa-solid fa-user-circle"></i> {{ property.proprietaire.fullName }}
+                    </a>
+                </td>
+                <td class="text-end">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{{ path('admin_properties_show', {'id': property.id}) }}" class="btn btn-sm btn-primary text-white shadow-sm" title="Détails"><i class="fa-solid fa-eye"></i></a>
+                        
+                        <!-- Validation Button -->
+                        <button class="btn btn-sm btn-success action-validate text-white shadow-sm" style="{% if property.statut != 'pending' %}display:none;{% endif %}" onclick="moderateProperty(this, 'validate')" title="Valider le bien"><i class="fa-solid fa-check-double"></i> Valider</button>
+                        
+                        <!-- Toggle Suspension Button -->
+                        {% if property.statut == 'active' %}
+                            <button class="btn btn-sm btn-warning action-toggle text-dark shadow-sm" onclick="moderateProperty(this, 'suspend')" title="Suspendre"><i class="fa-solid fa-pause"></i> Suspendre</button>
+                        {% elseif property.statut == 'suspended' %}
+                            <button class="btn btn-sm btn-success action-toggle text-white shadow-sm" onclick="moderateProperty(this, 'reactivate')" title="Réactiver"><i class="fa-solid fa-play"></i> Activer</button>
+                        {% else %}
+                            <!-- Hidden toggle button for pending/draft states -->
+                            <button class="btn btn-sm btn-warning action-toggle text-dark shadow-sm" style="display:none;" onclick="moderateProperty(this, 'suspend')" title="Suspendre"><i class="fa-solid fa-pause"></i> Suspendre</button>
+                        {% endif %}
+                        
+                        <!-- Delete Button -->
+                        <button class="btn btn-sm btn-danger text-white shadow-sm" onclick="deleteProperty(this)" title="Supprimer (Cascade)"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">Aucun bien trouvé dans la base.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+// --- Fonction Debounce ---
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById('searchProperty');
+    const statusFilter = document.getElementById('statusFilter');
+    const rows = document.querySelectorAll('.property-row');
+
+    function applyFilters() {
+        const term = searchInput.value.toLowerCase();
+        const status = statusFilter.value.toLowerCase();
+        
+        rows.forEach(row => {
+            const title = row.querySelector('.title-cell').textContent.toLowerCase();
+            const loc = row.querySelector('.loc-cell').textContent.toLowerCase();
+            const rowStatus = row.getAttribute('data-status').toLowerCase();
+            
+            const matchSearch = title.includes(term) || loc.includes(term);
+            const matchStatus = status === "" || rowStatus === status;
+            
+            row.style.display = (matchSearch && matchStatus) ? '' : 'none';
+        });
+    }
+
+    // Utilisation du Debounce (300ms) pour la recherche texte
+    searchInput.addEventListener('input', debounce(applyFilters, 300));
+    statusFilter.addEventListener('change', applyFilters);
+});
+
+// Helper pour afficher un Toast
+function showToast(message, type = 'success') {
+    const toastContainer = document.querySelector('.toast-container');
+    if(toastContainer) {
+        toastContainer.insertAdjacentHTML('beforeend', `
+            <div class="toast align-items-center text-bg-${type} border-0 mb-2 show" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+        setTimeout(() => {
+            const toastNode = toastContainer.lastElementChild;
+            if(toastNode) toastNode.remove();
+        }, 5000);
+    }
+}
+
+// 1. Validation & Toggle (Suspension/Réactivation)
+function moderateProperty(btn, action) {
+    let confirmMsg = '';
+    let confirmColor = '#3085d6';
+    let icon = 'question';
+    
+    if (action === 'validate') {
+        confirmMsg = 'Valider ce bien et notifier le propriétaire ?';
+        confirmColor = '#28a745';
+        icon = 'info';
+    } else if (action === 'suspend') {
+        confirmMsg = 'Suspendre ce bien de la plateforme ?';
+        confirmColor = '#ffc107';
+        icon = 'warning';
+    } else if (action === 'reactivate') {
+        confirmMsg = 'Réactiver ce bien ?';
+        confirmColor = '#28a745';
+        icon = 'info';
+    }
+    
+    Swal.fire({
+        title: 'Confirmation',
+        text: confirmMsg,
+        icon: icon,
+        showCancelButton: true,
+        confirmButtonColor: confirmColor,
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Oui, continuer',
+        cancelButtonText: 'Annuler',
+        background: 'var(--c-surface)',
+        color: 'var(--c-body)',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            executeModerateAction(btn, action);
+        }
+    });
+}
+
+function executeModerateAction(btn, action) {
+    const row = btn.closest('.property-row');
+    const propertyId = row.getAttribute('data-id');
+    const badge = row.querySelector('.status-cell .badge');
+    const validateBtn = row.querySelector('.action-validate');
+    const toggleBtn = row.querySelector('.action-toggle');
+
+    let endpoint = '';
+    if (action === 'validate' || action === 'reactivate') {
+        endpoint = `/admin/properties/${propertyId}/approve`;
+    } else if (action === 'suspend') {
+        endpoint = `/admin/properties/${propertyId}/suspend`;
+    }
+
+    // Disable button while processing
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>...';
+    btn.disabled = true;
+
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    }).then(response => {
+        if(response.ok) {
+            if (action === 'validate') {
+                badge.className = 'badge bg-success';
+                badge.textContent = 'Active';
+                row.setAttribute('data-status', 'active');
+                validateBtn.style.display = 'none';
+                toggleBtn.style.display = 'inline-block';
+                toggleBtn.className = 'btn btn-sm btn-warning action-toggle text-dark';
+                toggleBtn.setAttribute('onclick', "moderateProperty(this, 'suspend')");
+                toggleBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Suspendre';
+                toggleBtn.title = 'Suspendre';
+                showToast('Bien validé ! Une notification a été envoyée au propriétaire.');
+            } 
+            else if (action === 'suspend') {
+                badge.className = 'badge bg-danger';
+                badge.textContent = 'Suspended';
+                row.setAttribute('data-status', 'suspended');
+                validateBtn.style.display = 'none';
+                toggleBtn.className = 'btn btn-sm btn-success action-toggle text-white';
+                toggleBtn.setAttribute('onclick', "moderateProperty(this, 'reactivate')");
+                toggleBtn.innerHTML = '<i class="fa-solid fa-play"></i> Activer';
+                toggleBtn.title = 'Réactiver';
+                showToast('Bien suspendu avec succès.', 'warning');
+            }
+            else if (action === 'reactivate') {
+                badge.className = 'badge bg-success';
+                badge.textContent = 'Active';
+                row.setAttribute('data-status', 'active');
+                validateBtn.style.display = 'none';
+                toggleBtn.className = 'btn btn-sm btn-warning action-toggle text-dark';
+                toggleBtn.setAttribute('onclick', "moderateProperty(this, 'suspend')");
+                toggleBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Suspendre';
+                toggleBtn.title = 'Suspendre';
+                showToast('Bien réactivé et en ligne !');
+            }
+        } else {
+            showToast('Erreur lors de la modification du statut.', 'danger');
+        }
+    }).catch(err => {
+        console.error(err);
+        showToast('Erreur de connexion au serveur.', 'danger');
+    }).finally(() => {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    });
+}
+
+// 2. Suppression en Cascade
+function deleteProperty(btn) {
+    Swal.fire({
+        title: '⚠️ ATTENTION !',
+        html: "Voulez-vous vraiment supprimer ce bien ?<br><br>Cette action entraînera une SUPPRESSION EN CASCADE de toutes les candidatures, photos et contrats liés. C'est irréversible.",
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Oui, supprimer définitivement',
+        cancelButtonText: 'Annuler',
+        background: 'var(--c-surface)',
+        color: 'var(--c-body)',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const row = btn.closest('.property-row');
+            const propertyId = row.getAttribute('data-id');
+            
+            // Post to backend
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/admin/properties/${propertyId}/delete`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
+{% endblock %}

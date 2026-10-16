@@ -1,0 +1,280 @@
+{% extends 'tenant/base.html.twig' %}
+
+{% block tenant_content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+
+    {# ── Header ─────────────────────────────────────────────────── #}
+    <div class="text-center mb-5">
+        <h1 style="font-size:1.9rem; font-weight:800; color:var(--c-text); margin:0 0 8px;">
+            <i class="fa-solid fa-handshake me-2" style="color:var(--c-primary);"></i>Nos Partenaires
+        </h1>
+        <p style="color:var(--c-text-muted); font-size:15px; margin:0;">
+            Des services de confiance sélectionnés pour faciliter votre emménagement au Bénin.
+        </p>
+    </div>
+
+    {# Flash messages #}
+    {% for label, msgs in app.flashes %}
+        {% for msg in msgs %}
+        <div class="alert alert-{{ label == 'success' ? 'success' : 'danger' }} alert-dismissible fade show rounded-3 mb-4">
+            {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endfor %}
+
+    {# ── Catégories (chips filtre) ───────────────────────────────── #}
+    {% if partners|length > 0 %}
+    {% set categories = [] %}
+    {% for p in partners %}
+        {% if p.categorie not in categories %}
+            {% set categories = categories|merge([p.categorie]) %}
+        {% endif %}
+    {% endfor %}
+    <div class="d-flex gap-2 mb-4 flex-wrap justify-content-center">
+        <button class="part-filter active" data-cat="all">Tous ({{ partners|length }})</button>
+        {% for cat in categories %}
+        <button class="part-filter" data-cat="{{ cat|lower|replace({' ': '-'}) }}">{{ cat }}</button>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {# ── Grille partenaires ──────────────────────────────────────── #}
+    {% if partners|length == 0 %}
+    <div style="text-align:center; padding:4rem 2rem; background:var(--c-surface); border-radius:16px; border:1px solid var(--c-border);">
+        <i class="fa-solid fa-handshake" style="font-size:3.5rem; color:var(--c-text-muted); opacity:.2; display:block; margin-bottom:1rem;"></i>
+        <h3 style="color:var(--c-text); font-weight:700; margin-bottom:6px;">Aucun partenaire disponible</h3>
+        <p style="color:var(--c-text-muted); font-size:14px;">Les partenaires seront bientôt disponibles.</p>
+    </div>
+    {% else %}
+    <div class="row g-4" id="partnersGrid">
+        {% set catIcons = {
+            'déménagement': 'fa-truck-moving',
+            'demenagement': 'fa-truck-moving',
+            'assurance': 'fa-shield-halved',
+            'nettoyage': 'fa-broom',
+            'juridique': 'fa-scale-balanced',
+            'transport': 'fa-van-shuttle',
+            'artisan': 'fa-hammer',
+            'paiement': 'fa-credit-card',
+            'finance': 'fa-piggy-bank',
+            'default': 'fa-briefcase'
+        } %}
+        {% for partner in partners %}
+        {% set catKey = partner.categorie|lower|replace({' ': '', '-': '', 'é': 'e', 'è': 'e'}) %}
+        {% set icon = catIcons[catKey] ?? catIcons['default'] %}
+        <div class="col-md-6 col-lg-4 partner-item"
+             data-cat="{{ partner.categorie|lower|replace({' ': '-'}) }}">
+            <div class="part-card">
+                {# Header coloré #}
+                <div class="part-card-header">
+                    <div class="part-icon-wrap">
+                        <i class="fa-solid {{ icon }}"></i>
+                    </div>
+                    <span class="part-cat-badge">{{ partner.categorie }}</span>
+                </div>
+
+                {# Corps #}
+                <div class="part-card-body">
+                    <h4 class="part-name">{{ partner.nom }}</h4>
+                    <p class="part-desc">{{ partner.description }}</p>
+
+                    {% if partner.adresse %}
+                    <div class="part-info-row">
+                        <i class="fa-solid fa-location-dot" style="color:var(--c-primary);"></i>
+                        <span>{{ partner.adresse }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if partner.telephone %}
+                    <div class="part-info-row">
+                        <i class="fa-solid fa-phone" style="color:var(--c-primary);"></i>
+                        <a href="tel:{{ partner.telephone }}" style="color:var(--c-text); text-decoration:none;">{{ partner.telephone }}</a>
+                    </div>
+                    {% endif %}
+
+                    {% if partner.email %}
+                    <div class="part-info-row">
+                        <i class="fa-solid fa-envelope" style="color:var(--c-primary);"></i>
+                        <a href="mailto:{{ partner.email }}" style="color:var(--c-text); text-decoration:none;">{{ partner.email }}</a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {# Footer actions #}
+                <div class="part-card-footer">
+                    {% if partner.telephone %}
+                    <a href="tel:{{ partner.telephone }}" class="part-btn-call">
+                        <i class="fa-solid fa-phone"></i> Appeler
+                    </a>
+                    {% endif %}
+
+                    <form method="POST" action="{{ path('app_tenant_partner_contact', {id: partner.id}) }}" style="flex:1;">
+                        <button type="submit" class="part-btn-contact w-100"
+                            onclick="return confirmAction('Contacter {{ partner.nom|escape('js') }} ?')">
+                            <i class="fa-solid fa-envelope me-1"></i> Contacter
+                        </button>
+                    </form>
+
+                    {% if partner.website %}
+                    <a href="{{ partner.website }}" target="_blank" rel="noopener" class="part-btn-icon" title="Site web">
+                        <i class="fa-solid fa-globe"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {# ── Devenir partenaire ──────────────────────────────────────── #}
+    <div class="part-join-banner mt-5">
+        <div>
+            <h4 style="color:var(--c-text); font-weight:700; margin:0 0 6px;">Vous proposez des services aux locataires ?</h4>
+            <p style="color:var(--c-text-muted); font-size:14px; margin:0;">
+                Rejoignez notre réseau et touchez des milliers de locataires chaque mois.
+            </p>
+        </div>
+        <a href="{{ path('app_tenant_support') }}" class="part-btn-join">
+            <i class="fa-solid fa-plus me-2"></i> Devenir partenaire
+        </a>
+    </div>
+
+</div>
+
+<style>
+/* ── Filtres ───────────────────────────────────────────────────── */
+.part-filter {
+    padding: 7px 18px; border-radius: 50px;
+    border: 1.5px solid var(--c-border);
+    background: rgba(255,255,255,0.04);
+    color: var(--c-text-muted); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+}
+.part-filter:hover { border-color: var(--c-primary); color: var(--c-primary); background: rgba(255,140,0,0.08); }
+.part-filter.active { background: linear-gradient(135deg,var(--c-primary),#e67e00); border-color: var(--c-primary); color: #fff; }
+
+/* ── Cards ─────────────────────────────────────────────────────── */
+.part-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 20px; overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    transition: transform .25s, border-color .25s, box-shadow .25s;
+    display: flex; flex-direction: column; height: 100%;
+}
+.part-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255,140,0,0.4);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+}
+.part-card-header {
+    padding: 1.5rem; text-align: center;
+    background: linear-gradient(135deg, rgba(255,140,0,0.12), rgba(255,75,92,0.08));
+    border-bottom: 1px solid var(--c-border);
+    position: relative;
+}
+.part-icon-wrap {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--c-primary), #e67e00);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; color: #fff; margin: 0 auto;
+    box-shadow: 0 6px 20px rgba(255,140,0,0.4);
+}
+.part-cat-badge {
+    position: absolute; top: 12px; right: 12px;
+    background: rgba(255,140,0,0.15); color: var(--c-primary);
+    font-size: 11px; font-weight: 700; padding: 3px 10px;
+    border-radius: 50px; border: 1px solid rgba(255,140,0,0.25);
+}
+.part-card-body { padding: 1.25rem; flex: 1; }
+.part-name {
+    font-size: 1.05rem; font-weight: 800; color: var(--c-text);
+    margin: 0 0 8px; line-height: 1.3;
+}
+.part-desc {
+    font-size: 13px; color: var(--c-text-muted); line-height: 1.6;
+    margin: 0 0 12px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.part-info-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--c-text-muted);
+    margin-bottom: 6px;
+}
+.part-info-row i { width: 16px; flex-shrink: 0; }
+
+/* Footer actions */
+.part-card-footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--c-border);
+    display: flex; gap: 8px; align-items: center;
+}
+.part-btn-call {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 50px;
+    background: rgba(39,174,96,0.1); color: #27ae60;
+    border: 1px solid rgba(39,174,96,0.3);
+    font-size: 13px; font-weight: 600; text-decoration: none;
+    transition: all .2s; flex-shrink: 0;
+}
+.part-btn-call:hover { background: rgba(39,174,96,0.2); color: #27ae60; }
+.part-btn-contact {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 8px 14px; border-radius: 50px;
+    background: linear-gradient(135deg, var(--c-primary), #e67e00);
+    color: #fff; border: none;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    box-shadow: 0 3px 10px rgba(255,140,0,0.3);
+    transition: all .2s;
+}
+.part-btn-contact:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(255,140,0,.4); color: #fff; }
+.part-btn-icon {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--c-border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--c-text-muted); text-decoration: none; transition: all .2s;
+}
+.part-btn-icon:hover { background: rgba(255,255,255,0.12); color: var(--c-text); }
+
+/* Bannière rejoindre */
+.part-join-banner {
+    background: linear-gradient(135deg, rgba(255,140,0,0.1), rgba(255,75,92,0.08));
+    border: 1px solid rgba(255,140,0,0.25);
+    border-radius: 20px; padding: 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1.5rem; flex-wrap: wrap;
+}
+.part-btn-join {
+    background: linear-gradient(135deg, var(--c-primary), #e67e00);
+    color: #fff; border: none; border-radius: 50px;
+    padding: 12px 28px; font-size: 14px; font-weight: 700;
+    text-decoration: none; display: inline-flex; align-items: center;
+    box-shadow: 0 4px 14px rgba(255,140,0,.4); transition: all .2s; flex-shrink: 0;
+}
+.part-btn-join:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(255,140,0,.5); color: #fff; }
+
+/* Light mode */
+[data-theme="light"] .part-card { background: #fff; border-color: #e2e8f0; }
+[data-theme="light"] .part-card-header { background: linear-gradient(135deg,#fff7ed,#fff5f5); border-color: #e2e8f0; }
+[data-theme="light"] .part-filter { background: #fff; border-color: #e2e8f0; color: #64748b; }
+[data-theme="light"] .part-card-footer { border-color: #e2e8f0; }
+[data-theme="light"] .part-btn-icon { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
+[data-theme="light"] .part-join-banner { background: linear-gradient(135deg,#fff7ed,#fff5f5); border-color: #fbd38d; }
+[data-theme="light"] .part-info-row { color: #64748b; }
+</style>
+
+<script>
+// Filtre catégories
+document.querySelectorAll('.part-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.part-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cat = btn.dataset.cat;
+        document.querySelectorAll('.partner-item').forEach(item => {
+            item.style.display = (cat === 'all' || item.dataset.cat === cat) ? '' : 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

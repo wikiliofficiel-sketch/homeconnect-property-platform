@@ -1,0 +1,248 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Commissions{% endblock %}
+
+{% block admin_body %}
+
+{# ── En-tête ──────────────────────────────────────────────────── #}
+<div class="d-flex justify-content-between align-items-start mb-5 flex-wrap gap-3">
+    <div>
+        <h1 style="font-family:var(--f-serif); font-size:2rem; color:var(--c-text); margin:0 0 4px;">
+            <i class="fa-solid fa-sack-dollar me-2" style="color:var(--c-primary);"></i>Commissions
+        </h1>
+        <p style="color:var(--c-text-muted); font-size:14px; margin:0;">
+            Revenus générés par la plateforme HomeConnect
+            <span style="color:var(--c-text-muted); font-size:12px; margin-left:8px;">
+                · 5% plan Gratuit · 3% plans Starter/Pro
+            </span>
+        </p>
+    </div>
+    <button onclick="exportCSV()" class="comm-export-btn">
+        <i class="fa-solid fa-file-csv me-2"></i>Exporter CSV
+    </button>
+</div>
+
+{# ── KPIs ──────────────────────────────────────────────────────── #}
+<div class="comm-kpi-grid mb-5">
+    <div class="comm-kpi-card comm-kpi-total">
+        <div class="comm-kpi-icon" style="background:rgba(212,175,55,0.15); color:var(--c-gold);">
+            <i class="fa-solid fa-coins"></i>
+        </div>
+        <div>
+            <div class="comm-kpi-label">Total cumulé</div>
+            <div class="comm-kpi-val" style="color:var(--c-gold);">
+                {{ stats.total|number_format(0, ',', ' ') }} <span style="font-size:14px; font-weight:500;">FCFA</span>
+            </div>
+        </div>
+    </div>
+    <div class="comm-kpi-card">
+        <div class="comm-kpi-icon" style="background:rgba(0,210,255,0.12); color:#00D2FF;">
+            <i class="fa-solid fa-calendar-day"></i>
+        </div>
+        <div>
+            <div class="comm-kpi-label">Ce mois</div>
+            <div class="comm-kpi-val">{{ stats.this_month|number_format(0, ',', ' ') }} <span style="font-size:13px; font-weight:500; color:var(--c-text-muted);">FCFA</span></div>
+        </div>
+    </div>
+    <div class="comm-kpi-card">
+        <div class="comm-kpi-icon" style="background:rgba(0,230,118,0.12); color:#00e676;">
+            <i class="fa-solid fa-calendar"></i>
+        </div>
+        <div>
+            <div class="comm-kpi-label">Cette année</div>
+            <div class="comm-kpi-val">{{ stats.this_year|number_format(0, ',', ' ') }} <span style="font-size:13px; font-weight:500; color:var(--c-text-muted);">FCFA</span></div>
+        </div>
+    </div>
+    <div class="comm-kpi-card">
+        <div class="comm-kpi-icon" style="background:rgba(255,140,0,0.12); color:var(--c-primary);">
+            <i class="fa-solid fa-receipt"></i>
+        </div>
+        <div>
+            <div class="comm-kpi-label">Transactions</div>
+            <div class="comm-kpi-val">{{ commissions|length }}</div>
+        </div>
+    </div>
+</div>
+
+{# ── Barre de recherche ────────────────────────────────────────── #}
+<div class="comm-search-bar mb-4">
+    <i class="fa-solid fa-magnifying-glass" style="color:var(--c-text-muted); font-size:13px;"></i>
+    <input type="text" id="searchComm" class="comm-search-input" placeholder="Rechercher par bien, propriétaire, locataire…">
+    <span id="filteredCount" style="font-size:12px; color:var(--c-text-muted); margin-left:auto;">{{ commissions|length }} résultat(s)</span>
+</div>
+
+{# ── Tableau ───────────────────────────────────────────────────── #}
+<div class="comm-table-wrap">
+    {% if commissions|length == 0 %}
+    <div style="text-align:center; padding:3rem 2rem; color:var(--c-text-muted);">
+        <i class="fa-solid fa-sack-xmark" style="font-size:3rem; opacity:.2; display:block; margin-bottom:12px;"></i>
+        <p style="margin:0; font-size:14px;">Aucune commission enregistrée. Les commissions sont générées automatiquement à chaque acceptation de candidature.</p>
+    </div>
+    {% else %}
+    <table class="comm-table" id="commTable">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Bien</th>
+                <th>Propriétaire</th>
+                <th>Locataire</th>
+                <th>Loyer de base</th>
+                <th>Taux</th>
+                <th class="text-end">Commission</th>
+            </tr>
+        </thead>
+        <tbody id="commTableBody">
+        {% for c in commissions %}
+        <tr class="comm-row" data-search="{{ (c.rental.property.title ~ ' ' ~ c.rental.property.proprietaire.fullName ~ ' ' ~ c.rental.locataire.fullName)|lower }}">
+            <td style="color:var(--c-text-muted); font-size:13px; white-space:nowrap;">
+                {{ c.createdAt|date('d/m/Y') }}<br>
+                <span style="font-size:11px;">{{ c.createdAt|date('H:i') }}</span>
+            </td>
+            <td>
+                <div style="font-weight:600; color:var(--c-text); font-size:14px;">
+                    {{ c.rental.property.title|slice(0,30) }}{% if c.rental.property.title|length > 30 %}…{% endif %}
+                </div>
+                <div style="font-size:12px; color:var(--c-text-muted);">
+                    <i class="fa-solid fa-location-dot me-1"></i>{{ c.rental.property.city }}
+                </div>
+            </td>
+            <td>
+                <div style="font-size:13px; color:var(--c-text);">{{ c.rental.property.proprietaire.fullName }}</div>
+                <div style="font-size:11px; color:var(--c-text-muted);">{{ c.rental.property.proprietaire.email }}</div>
+            </td>
+            <td>
+                <div style="font-size:13px; color:var(--c-text);">{{ c.rental.locataire.fullName }}</div>
+                <div style="font-size:11px; color:var(--c-text-muted);">{{ c.rental.locataire.email }}</div>
+            </td>
+            <td style="font-size:13px; color:var(--c-text-muted);">
+                {{ c.montantLocation|number_format(0, ',', ' ') }} FCFA
+            </td>
+            <td>
+                {% if c.pourcentageCommission >= 5 %}
+                    <span class="comm-rate-badge comm-rate-standard">{{ c.pourcentageCommission }}% <small>Gratuit</small></span>
+                {% else %}
+                    <span class="comm-rate-badge comm-rate-premium">{{ c.pourcentageCommission }}% <small>Premium</small></span>
+                {% endif %}
+            </td>
+            <td class="text-end comm-amount-cell">
+                <span style="font-size:1.05rem; font-weight:800; color:var(--c-gold);">
+                    {{ c.montantCommission|number_format(0, ',', ' ') }}
+                </span>
+                <span style="font-size:12px; color:var(--c-text-muted);"> FCFA</span>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="comm-total-row">
+                <td colspan="6" style="text-align:right; font-weight:700; color:var(--c-text-muted); font-size:13px; padding:14px 18px;">
+                    Sous-total (filtré) :
+                </td>
+                <td class="text-end" style="padding:14px 18px;">
+                    <span id="filteredTotal" style="font-size:1.1rem; font-weight:800; color:var(--c-gold);">
+                        {{ stats.total|number_format(0, ',', ' ') }}
+                    </span>
+                    <span style="font-size:12px; color:var(--c-text-muted);"> FCFA</span>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+    {% endif %}
+</div>
+
+<style>
+.comm-kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+.comm-kpi-card {
+    background:var(--c-surface); border:1px solid var(--c-border);
+    border-radius:16px; padding:20px; display:flex; align-items:center; gap:16px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.08); transition:transform .2s;
+}
+.comm-kpi-total { border-color: rgba(212,175,55,0.3); }
+.comm-kpi-card:hover { transform:translateY(-2px); }
+.comm-kpi-icon { width:50px; height:50px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+.comm-kpi-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--c-text-muted); margin-bottom:4px; }
+.comm-kpi-val { font-size:1.6rem; font-weight:800; color:var(--c-text); line-height:1.1; }
+
+.comm-search-bar {
+    display:flex; align-items:center; gap:10px;
+    background:var(--c-surface); border:1px solid var(--c-border);
+    border-radius:12px; padding:10px 16px;
+}
+.comm-search-input { background:transparent; border:none; outline:none; color:var(--c-text); font-size:13px; flex:1; font-family:inherit; }
+.comm-search-input::placeholder { color:var(--c-text-muted); opacity:.6; }
+
+.comm-export-btn {
+    background:linear-gradient(135deg,#16a34a,#15803d);
+    color:#fff; border:none; border-radius:50px;
+    padding:10px 20px; font-size:13px; font-weight:700; cursor:pointer;
+    display:inline-flex; align-items:center; box-shadow:0 4px 14px rgba(22,163,74,0.3);
+    transition:all .2s;
+}
+.comm-export-btn:hover { transform:translateY(-2px); filter:brightness(1.1); }
+
+.comm-table-wrap { background:var(--c-surface); border:1px solid var(--c-border); border-radius:18px; overflow:hidden; }
+.comm-table { width:100%; border-collapse:collapse; }
+.comm-table thead tr { border-bottom:1px solid var(--c-border); }
+.comm-table th { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--c-text-muted); padding:14px 18px; white-space:nowrap; }
+.comm-table td { padding:14px 18px; border-bottom:1px solid var(--c-border); vertical-align:middle; }
+.comm-row:last-child td { border-bottom:none; }
+.comm-row:hover td { background:rgba(255,255,255,0.02); }
+.comm-total-row { background:rgba(212,175,55,0.05); border-top:2px solid rgba(212,175,55,0.2); }
+
+.comm-rate-badge {
+    display:inline-flex; flex-direction:column; align-items:center;
+    font-size:13px; font-weight:800; padding:4px 10px; border-radius:10px;
+    line-height:1.2;
+}
+.comm-rate-badge small { font-size:9px; font-weight:600; opacity:.8; }
+.comm-rate-standard { background:rgba(59,130,246,0.12); color:#3B82F6; }
+.comm-rate-premium  { background:rgba(139,92,246,0.12);  color:#8B5CF6; }
+</style>
+
+<script>
+const rows = document.querySelectorAll('.comm-row');
+const totalEl = document.getElementById('filteredTotal');
+const countEl = document.getElementById('filteredCount');
+
+document.getElementById('searchComm')?.addEventListener('input', function() {
+    const q = this.value.toLowerCase().trim();
+    let total = 0, count = 0;
+
+    rows.forEach(row => {
+        const match = !q || (row.dataset.search || '').includes(q);
+        row.style.display = match ? '' : 'none';
+        if (match) {
+            count++;
+            const txt = row.querySelector('.comm-amount-cell span')?.textContent?.replace(/\s/g,'').replace(',','.') || '0';
+            total += parseFloat(txt) || 0;
+        }
+    });
+
+    if (totalEl) totalEl.textContent = new Intl.NumberFormat('fr-FR').format(total);
+    if (countEl) countEl.textContent = count + ' résultat(s)';
+});
+
+function exportCSV() {
+    let csv = 'Date;Bien;Ville;Propriétaire;Locataire;Loyer (FCFA);Taux (%);Commission (FCFA)\n';
+    document.querySelectorAll('.comm-row').forEach(row => {
+        if (row.style.display === 'none') return;
+        const cells = row.querySelectorAll('td');
+        const date = cells[0].innerText.replace(/\n/g,' ').trim();
+        const bien = cells[1].querySelector('div').innerText.trim();
+        const ville = cells[1].querySelectorAll('div')[1].innerText.replace(/[^\w\s]/g,'').trim();
+        const prop = cells[2].querySelector('div').innerText.trim();
+        const loc  = cells[3].querySelector('div').innerText.trim();
+        const loyer = cells[4].innerText.replace(/[^\d]/g,'').trim();
+        const taux  = cells[5].innerText.replace(/[^\d.]/g,'').trim();
+        const comm  = cells[6].querySelector('span').innerText.replace(/[^\d]/g,'').trim();
+        csv += `"${date}";"${bien}";"${ville}";"${prop}";"${loc}";${loyer};${taux};${comm}\n`;
+    });
+
+    const link = document.createElement('a');
+    link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    link.download = 'homeconnect_commissions_{{ 'now'|date('Y-m-d') }}.csv';
+    link.click();
+}
+</script>
+
+{% endblock %}

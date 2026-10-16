@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="{{ app.request.locale|default('fr') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'public.home.hero_title'|trans }} — HomeConnect Bénin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    {% include 'partials/_theme_scripts.html.twig' %}
+
+    <style>
+        :root {
+            --wine:        #6c5ce7;
+            --wine-dark:   #5b4bc4;
+            --wine-mid:    #8275e9;
+            --wine-light:  #a29bfe;
+            --black:       #ffffff;
+            --black-2:     #e0e0e0;
+            --gray-dark:   #d1d1d1;
+            --gray-mid:    #a0a0a0;
+            --gray-light:  #707070;
+            --gray-bg:     #12121F;
+            --gray-line:   rgba(255,255,255,0.1);
+            --white:       #0D0D1A;
+            --accent:      #ff7675;
+            --wine-pale:   rgba(108, 92, 231, 0.1);
+            --wine-mist:   rgba(108, 92, 231, 0.2);
+            /* Indigo Tokens for Navbar etc */
+            --c-surface:   #1C1C2E;
+            --c-white:     #ffffff;
+            --c-border:    rgba(255,255,255,0.07);
+            --c-indigo-pale: rgba(108, 92, 231, 0.1);
+        }
+
+        [data-theme="light"] {
+            --black:       #1a1a1a;
+            --black-2:     #2d3436;
+            --gray-dark:   #2d3436;
+            --gray-mid:    #636e72;
+            --gray-light:  #b2bec3;
+            --gray-bg:     #f8f9fa;
+            --gray-line:   rgba(0,0,0,0.1);
+            --white:       #ffffff;
+            --wine-pale:   rgba(108, 92, 231, 0.05);
+            --wine-mist:   rgba(108, 92, 231, 0.1);
+            --c-surface:   #FFFFFF;
+            --c-white:     #1a1a1a;
+            --c-border:    rgba(0,0,0,0.07);
+            --c-indigo-pale: rgba(108, 92, 231, 0.05);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--white);
+            color: var(--black);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 400;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+
+
+        /* ══════════════════════════════
+           HERO
+        ══════════════════════════════ */
+        .hero {
+            min-height: 100vh;
+            padding: 0 5%;
+            padding-top: 72px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            gap: 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle at 75% 20%, rgba(123,29,46,0.05) 0%, transparent 50%),
+                radial-gradient(circle at 10% 80%, rgba(192,75,95,0.04) 0%, transparent 45%);
+            pointer-events: none;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle, rgba(123,29,46,0.06) 1px, transparent 1px);
+            background-size: 32px 32px;
+            pointer-events: none;
+            mask-image: radial-gradient(ellipse 80% 80% at 60% 40%, black 30%, transparent 80%);
+        }
+
+        .hero-left {
+            position: relative;
+            z-index: 2;
+            animation: fadeUp 0.8s ease both;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--wine-pale);
+            border: 1px solid var(--wine-mist);
+            color: var(--wine);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.45rem 1rem;
+            border-radius: 100px;
+            margin-bottom: 1.8rem;
+            letter-spacing: 0.04em;
+        }
+
+        .badge-dot {
+            width: 7px; height: 7px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%,100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .hero-title {
+            font-size: clamp(2.6rem, 5vw, 4.4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            color: var(--black);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-title .highlight {
+            color: var(--wine);
+            position: relative;
+            display: inline-block;
+        }
+
+        .hero-title .highlight::after {
+            content: '';
+            position: absolute;
+            bottom: 4px; left: 0; right: 0;
+            height: 6px;
+            background: var(--wine-mist);
+            z-index: -1;
+            border-radius: 3px;
+        }
+
+        .hero-desc {
+            color: var(--gray-mid);
+            font-size: 1.05rem;
+            line-height: 1.8;
+            max-width: 480px;
+            margin-bottom: 2.5rem;
+            font-weight: 400;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: linear-gradient(135deg, var(--wine), var(--wine-mid));
+            color: #fff;
+            padding: 0.9rem 1.9rem;
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            box-shadow: 0 6px 24px rgba(123,29,46,0.28);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(123,29,46,0.38);
+        }
+
+        .btn-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--gray-dark);
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-decoration: none;
+            border: 1.5px solid var(--gray-line);
+            padding: 0.88rem 1.7rem;
+            border-radius: 10px;
+            transition: border-color 0.25s, color 0.25s;
+        }
+
+        .btn-ghost:hover { border-color: var(--wine); color: var(--wine); }
+
+        .hero-trust {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .trust-avatars {
+            display: flex;
+        }
+
+        .trust-avatars span {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            background: var(--wine-mist);
+            border: 2px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            margin-left: -10px;
+            color: var(--wine);
+        }
+
+        .trust-avatars span:first-child { margin-left: 0; }
+
+        .trust-text { font-size: 0.82rem; color: var(--gray-mid); }
+        .trust-text strong { color: var(--black); font-weight: 600; }
+
+        /* ─── Hero Right ─── */
+        .hero-right {
+            position: relative;
+            z-index: 2;
+            height: 560px;
+            animation: fadeRight 0.8s ease 0.2s both;
+        }
+
+        .prop-card-main {
+            position: absolute;
+            top: 40px; right: 0;
+            width: 82%;
+            background: var(--gray-bg);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 4px 16px rgba(123,29,46,0.06);
+            overflow: hidden;
+            border: 1px solid var(--gray-line);
+        }
+
+        .prop-img-area {
+            height: 220px;
+            background: linear-gradient(135deg, var(--wine-pale), var(--wine-mist));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .prop-img-tag {
+            position: absolute;
+            top: 14px; left: 14px;
+            background: var(--wine);
+            color: #fff;
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 0.3rem 0.75rem;
+            border-radius: 6px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            z-index: 2;
+        }
+
+        .prop-img-fav {
+            position: absolute;
+            top: 12px; right: 14px;
+            width: 34px; height: 34px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--wine);
+            font-size: 0.85rem;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .prop-body { padding: 1.3rem 1.5rem 1.5rem; }
+
+        .prop-location {
+            font-size: 0.75rem;
+            color: var(--gray-mid);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .prop-title { font-size: 1.05rem; font-weight: 700; color: var(--black); margin-bottom: 0.6rem; }
+
+        .prop-features {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.78rem;
+            color: var(--gray-mid);
+            margin-bottom: 1rem;
+        }
+
+        .prop-features span { display: flex; align-items: center; gap: 0.3rem; }
+        .prop-features i { color: var(--wine); font-size: 0.75rem; }
+
+        .prop-footer { display: flex; align-items: center; justify-content: space-between; }
+
+        .prop-price { font-size: 1.1rem; font-weight: 800; color: var(--wine); }
+        .prop-price span { font-size: 0.75rem; font-weight: 400; color: var(--gray-mid); }
+
+        .prop-verified {
+            background: #ECFDF5;
+            color: #059669;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .mini-card {
+            position: absolute;
+            background: var(--gray-bg);
+            border-radius: 14px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: 1px solid var(--gray-line);
+            padding: 1rem 1.2rem;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .mini-card-1 { bottom: 100px; left: -30px; animation-delay: 0s; min-width: 160px; }
+        .mini-card-2 { top: 20px; left: -10px; animation-delay: 2.5s; min-width: 145px; }
+
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+        .mini-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray-mid); font-weight: 500; margin-bottom: 0.35rem; }
+        .mini-value { font-size: 1.5rem; font-weight: 800; color: var(--black); line-height: 1; }
+        .mini-value em { font-style: normal; font-size: 0.8rem; color: var(--gray-mid); font-weight: 400; }
+        .mini-icon { width: 28px; height: 28px; background: var(--wine-pale); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--wine); font-size: 0.8rem; margin-bottom: 0.5rem; }
+
+        /* ══════════════════════════════
+           SEARCH BAR
+        ══════════════════════════════ */
+        .search-section {
+            padding: 0 5% 5rem;
+            margin-top: -1.5rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .search-bar {
+            background: var(--gray-bg);
+            border: 1.5px solid var(--gray-line);
+            border-radius: 16px;
+            padding: 1.4rem 1.8rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            align-items: center;
+            box-shadow: 0 12px 50px rgba(0,0,0,0.07), 0 2px 10px rgba(123,29,46,0.04);
+        }
+
+        .s-field { padding: 0 1.5rem; }
+        .s-field + .s-field { border-left: 1.5px solid var(--gray-line); }
+
+        .s-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--wine);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .s-field input, .s-field select {
+            border: none; outline: none;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.92rem;
+            color: var(--black);
+            background: transparent;
+            width: 100%;
+            font-weight: 500;
+        }
+
+        .s-field select option { background: var(--gray-bg); }
+
+        .search-btn {
+            background: linear-gradient(135deg, var(--wine), var(--wine-mid));
+            color: #fff;
+            border: none;
+            padding: 0.9rem 1.8rem;
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 16px rgba(123,29,46,0.28);
+            white-space: nowrap;
+        }
+
+        .search-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(123,29,46,0.38); }
+
+        /* ══════════════════════════════
+           STATS
+        ══════════════════════════════ */
+        .stats-strip {
+            background: var(--gray-bg);
+            border-top: 1px solid var(--gray-line);
+            border-bottom: 1px solid var(--gray-line);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .stat-item { padding: 2.5rem 2rem; text-align: center; position: relative; }
+        .stat-item + .stat-item::before { content: ''; position: absolute; left: 0; top: 25%; bottom: 25%; width: 1px; background: var(--gray-line); }
+
+        .stat-icon { font-size: 1.5rem; color: var(--wine); margin-bottom: 0.7rem; display: block; }
+        .stat-num { font-size: 2.4rem; font-weight: 800; color: var(--black); line-height: 1; margin-bottom: 0.4rem; letter-spacing: -0.03em; }
+        .stat-num span { color: var(--wine); }
+        .stat-label { font-size: 0.8rem; color: var(--gray-mid); font-weight: 400; }
+
+        /* ══════════════════════════════
+           SHARED SECTION STYLES
+        ══════════════════════════════ */
+        .section { padding: 6rem 5%; }
+        .section-alt { padding: 6rem 5%; background: var(--gray-bg); }
+
+        .sec-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--wine);
+            background: var(--wine-pale);
+            padding: 0.35rem 0.9rem;
+            border-radius: 100px;
+            margin-bottom: 1rem;
+            border: 1px solid var(--wine-mist);
+        }
+
+        .sec-title { font-size: clamp(1.9rem, 3.5vw, 3rem); font-weight: 800; color: var(--black); line-height: 1.15; letter-spacing: -0.025em; margin-bottom: 1rem; }
+        .sec-title span { color: var(--wine); }
+        .sec-desc { color: var(--gray-mid); font-size: 1rem; line-height: 1.75; max-width: 500px; }
+
+        .sec-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 4rem; flex-wrap: wrap; gap: 1.5rem; }
+
+        /* ══════════════════════════════
+           HOW IT WORKS
+        ══════════════════════════════ */
+        .steps-wrapper {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            position: relative;
+        }
+
+        .steps-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 52px; left: 12.5%; right: 12.5%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--wine-mist), var(--wine), var(--wine-mist));
+            z-index: 0;
+        }
+
+        .step-card {
+            background: var(--gray-bg);
+            border: 1.5px solid var(--gray-line);
+            border-radius: 16px;
+            padding: 2.2rem 1.8rem;
+            position: relative;
+            z-index: 1;
+            transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+        }
+
+        .step-card:hover { border-color: var(--wine-light); box-shadow: 0 12px 40px rgba(123,29,46,0.1); transform: translateY(-4px); }
+
+        .step-num-wrap {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: var(--wine);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 14px rgba(123,29,46,0.3);
+        }
+
+        .step-icon-box {
+            width: 48px; height: 48px;
+            background: var(--wine-pale);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: var(--wine);
+            margin-bottom: 1.2rem;
+        }
+
+        .step-title { font-size: 1rem; font-weight: 700; color: var(--black); margin-bottom: 0.6rem; }
+        .step-desc { font-size: 0.84rem; color: var(--gray-mid); line-height: 1.7; }
+
+        /* ══════════════════════════════
+           FEATURES
+        ══════════════════════════════ */
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+
+        .feat-card {
+            background: var(--gray-bg);
+            border: 1.5px solid var(--gray-line);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+        }
+
+        .feat-card:hover { border-color: var(--wine-light); box-shadow: 0 10px 36px rgba(123,29,46,0.08); transform: translateY(-3px); }
+
+        .feat-icon-box {
+            width: 52px; height: 52px;
+            background: var(--wine-pale);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.35rem; color: var(--wine);
+            margin-bottom: 1.2rem;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .feat-card:hover .feat-icon-box { background: var(--wine); color: #fff; }
+        .feat-title { font-size: 1rem; font-weight: 700; color: var(--black); margin-bottom: 0.5rem; }
+        .feat-desc { font-size: 0.84rem; color: var(--gray-mid); line-height: 1.7; }
+
+        /* ══════════════════════════════
+           ACTORS
+        ══════════════════════════════ */
+        .actors-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 3.5rem; }
+
+        .actor-card {
+            border-radius: 20px;
+            padding: 2.8rem;
+            position: relative;
+            overflow: hidden;
+            border: 1.5px solid transparent;
+            transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+
+        .actor-card:hover { transform: translateY(-4px); }
+        .actor-card::before { content: ''; position: absolute; top: -60px; right: -60px; width: 180px; height: 180px; border-radius: 50%; opacity: 0.07; }
+
+        .actor-card.proprio { background: linear-gradient(145deg, var(--wine-pale), var(--bg-card, #fff)); border-color: var(--wine-mist); }
+        .actor-card.proprio:hover { border-color: var(--wine-light); box-shadow: 0 16px 50px rgba(123,29,46,0.12); }
+        [data-theme="dark"] .actor-card { --bg-card: #1C1C2E; }
+        [data-theme="light"] .actor-card { --bg-card: #ffffff; }
+        .proprio::before { background: var(--wine); }
+
+        .actor-card.locataire { background: linear-gradient(145deg, var(--bg-blue-pale, #EFF6FF), var(--bg-card, #fff)); border-color: var(--border-blue, #DBEAFE); }
+        [data-theme="dark"] .actor-card.locataire { --bg-blue-pale: #1E293B; --border-blue: #334155; }
+        [data-theme="light"] .actor-card.locataire { --bg-blue-pale: #EFF6FF; --border-blue: #DBEAFE; }
+        .actor-card.locataire:hover { border-color: #93C5FD; box-shadow: 0 16px 50px rgba(59,130,246,0.1); }
+        .locataire::before { background: #3B82F6; }
+
+        .actor-pill {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            padding: 0.35rem 0.85rem;
+            border-radius: 100px; margin-bottom: 1.5rem;
+        }
+
+        .proprio .actor-pill { background: rgba(123,29,46,0.1); color: var(--wine); }
+        .locataire .actor-pill { background: rgba(59,130,246,0.1); color: #3B82F6; }
+
+        .actor-title { font-size: 1.6rem; font-weight: 800; color: var(--black); line-height: 1.2; margin-bottom: 0.9rem; letter-spacing: -0.02em; }
+        .actor-desc { color: var(--gray-mid); font-size: 0.9rem; line-height: 1.75; margin-bottom: 1.8rem; }
+
+        .actor-list { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 2rem; }
+        .actor-list li { display: flex; align-items: center; gap: 0.7rem; font-size: 0.87rem; color: var(--gray-dark); }
+        .actor-list li i { width: 20px; text-align: center; font-size: 0.75rem; }
+        .proprio .actor-list li i { color: var(--wine); }
+        .locataire .actor-list li i { color: #3B82F6; }
+
+        .actor-btn {
+            display: inline-flex; align-items: center; gap: 0.6rem;
+            padding: 0.8rem 1.7rem; border-radius: 10px;
+            font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.87rem;
+            text-decoration: none; transition: all 0.25s;
+        }
+
+        .proprio .actor-btn { background: var(--wine); color: #fff; box-shadow: 0 4px 16px rgba(123,29,46,0.28); }
+        .proprio .actor-btn:hover { background: var(--wine-dark); transform: translateY(-1px); }
+        .locataire .actor-btn { background: #3B82F6; color: #fff; box-shadow: 0 4px 16px rgba(59,130,246,0.28); }
+        .locataire .actor-btn:hover { background: #2563EB; transform: translateY(-1px); }
+
+        /* ══════════════════════════════
+           TRUST
+        ══════════════════════════════ */
+        .trust-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+
+        .trust-visual {
+            position: relative; height: 420px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .shield-bg {
+            width: 200px; height: 200px;
+            background: linear-gradient(135deg, var(--wine), var(--wine-light));
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 4rem; color: #fff;
+            box-shadow: 0 20px 60px rgba(123,29,46,0.3), 0 0 0 20px rgba(123,29,46,0.06), 0 0 0 40px rgba(123,29,46,0.03);
+            position: relative; z-index: 2;
+        }
+
+        .trust-orbit { position: absolute; border: 1.5px dashed rgba(123,29,46,0.15); border-radius: 50%; }
+        .trust-orbit-1 { width: 280px; height: 280px; animation: spinSlow 20s linear infinite; }
+        .trust-orbit-2 { width: 380px; height: 380px; animation: spinSlow 35s linear infinite reverse; }
+
+        @keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .orbit-badge {
+            position: absolute;
+            background: var(--gray-bg); border-radius: 12px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+            border: 1px solid var(--gray-line);
+            padding: 0.7rem 1rem;
+            font-size: 0.8rem; font-weight: 600;
+            white-space: nowrap;
+            display: flex; align-items: center; gap: 0.5rem;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .orbit-badge i { color: var(--wine); }
+        .orbit-badge:nth-child(2) { top: 30px; right: 20px; animation-delay: 0s; }
+        .orbit-badge:nth-child(3) { bottom: 50px; left: 10px; animation-delay: 2s; }
+        .orbit-badge:nth-child(4) { top: 50%; right: -10px; transform: translateY(-50%); animation-delay: 4s; }
+
+        .trust-points { display: flex; flex-direction: column; gap: 1.8rem; }
+
+        .trust-pt { display: flex; gap: 1.2rem; align-items: flex-start; }
+
+        .trust-pt-icon {
+            width: 46px; height: 46px;
+            background: var(--wine-pale); border: 1.5px solid var(--wine-mist);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; color: var(--wine); flex-shrink: 0;
+        }
+
+        .trust-pt-title { font-size: 0.98rem; font-weight: 700; color: var(--black); margin-bottom: 0.3rem; }
+        .trust-pt-desc { font-size: 0.84rem; color: var(--gray-mid); line-height: 1.65; }
+
+        /* ══════════════════════════════
+           TESTIMONIALS
+        ══════════════════════════════ */
+        .testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+
+        .testi-card {
+            background: var(--gray-bg); border: 1.5px solid var(--gray-line); border-radius: 16px; padding: 1.8rem;
+            transition: box-shadow 0.3s, transform 0.3s;
+        }
+
+        .testi-card:hover { box-shadow: 0 10px 36px rgba(123,29,46,0.08); transform: translateY(-3px); }
+
+        .testi-stars { color: #F59E0B; font-size: 0.85rem; margin-bottom: 1rem; }
+        .testi-text { font-size: 0.88rem; color: var(--gray-dark); line-height: 1.75; margin-bottom: 1.3rem; font-style: italic; }
+        .testi-author { display: flex; align-items: center; gap: 0.75rem; }
+
+        .testi-avatar {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--wine), var(--wine-light));
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 0.85rem; font-weight: 700; flex-shrink: 0;
+        }
+
+        .testi-name { font-size: 0.88rem; font-weight: 700; color: var(--black); }
+        .testi-role { font-size: 0.75rem; color: var(--gray-mid); }
+
+        /* ══════════════════════════════
+           CTA BANNER
+        ══════════════════════════════ */
+        .cta-banner {
+            margin: 0 5% 6rem;
+            background: linear-gradient(135deg, var(--wine-dark), var(--wine) 50%, var(--wine-mid));
+            border-radius: 24px;
+            padding: 5rem 5%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-banner::before { content: ''; position: absolute; top: -80px; left: -80px; width: 300px; height: 300px; border-radius: 50%; background: rgba(255,255,255,0.04); }
+        .cta-banner::after { content: ''; position: absolute; bottom: -100px; right: -60px; width: 350px; height: 350px; border-radius: 50%; background: rgba(255,255,255,0.03); }
+
+        .cta-banner h2 { font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800; color: #fff; line-height: 1.15; margin-bottom: 1rem; letter-spacing: -0.025em; position: relative; z-index: 1; }
+        .cta-banner p { color: rgba(255,255,255,0.75); max-width: 480px; margin: 0 auto 2.5rem; font-size: 1rem; line-height: 1.75; position: relative; z-index: 1; }
+
+        .cta-btns { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; position: relative; z-index: 1; }
+
+        .btn-white {
+            background: var(--gray-bg); color: var(--wine);
+            padding: 0.9rem 1.9rem; border-radius: 10px;
+            font-weight: 700; font-size: 0.9rem;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 0.6rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+
+        .btn-outline-white {
+            border: 2px solid rgba(255,255,255,0.4); color: #fff;
+            padding: 0.88rem 1.8rem; border-radius: 10px;
+            font-weight: 600; font-size: 0.9rem;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 0.6rem;
+            transition: background 0.25s, border-color 0.25s;
+        }
+
+        .btn-outline-white:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.7); }
+
+
+
+        /* ══════════════════════════════
+           ANIMATIONS
+        ══════════════════════════════ */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeRight { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
+
+        .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        /* ══════════════════════════════
+           RESPONSIVE
+        ══════════════════════════════ */
+        @media (max-width: 1024px) {
+            .hero { grid-template-columns: 1fr; padding-top: 9rem; }
+            .hero-right { display: none; }
+            .steps-wrapper { grid-template-columns: 1fr 1fr; }
+            .features-grid { grid-template-columns: 1fr 1fr; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+            .stats-strip { grid-template-columns: repeat(2, 1fr); }
+            .search-bar { grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1.2rem; }
+            .testi-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .nav-burger { display: block; }
+            .steps-wrapper { grid-template-columns: 1fr; }
+            .steps-wrapper::before { display: none; }
+            .features-grid { grid-template-columns: 1fr; }
+            .actors-grid { grid-template-columns: 1fr; }
+            .trust-grid { grid-template-columns: 1fr; }
+            .trust-visual { display: none; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+            .search-bar { grid-template-columns: 1fr; }
+            .search-btn { justify-content: center; }
+            .cta-banner { margin: 0 3% 4rem; padding: 3.5rem 1.5rem; }
+            .testi-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+{# ══════════════════════════════
+   NAVIGATION
+══════════════════════════════ #}
+{% include 'partials/_navbar.html.twig' %}
+
+
+{# ══════════════════════════════
+   HERO
+══════════════════════════════ #}
+<section class="hero">
+    <div class="hero-left">
+        <div class="hero-badge">
+            <div class="badge-dot"></div>
+            <i class="fa-solid fa-shield-halved fa-xs"></i>
+            {{ 'public.home.hero_badge'|trans }}
+        </div>
+
+        <div class="hero-content">
+            <h1>{{ 'public.home.hero_title'|trans }}</h1>
+            <p>{{ 'public.home.hero_sub'|trans }}</p>
+        </div>
+
+        <div class="hero-actions">
+            <a href="{{ path('app_home') }}" class="btn-primary">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                {{ 'public.home.hero_cta_find'|trans }}
+            </a>
+            <a href="{{ path('app_home') }}" class="btn-ghost">
+                <i class="fa-regular fa-circle-play"></i>
+                {{ 'public.home.hero_cta_how'|trans }}
+            </a>
+        </div>
+
+        <div class="hero-trust">
+            <div class="trust-avatars">
+                <span><i class="fa-solid fa-user fa-xs"></i></span>
+                <span><i class="fa-solid fa-user fa-xs"></i></span>
+                <span><i class="fa-solid fa-user fa-xs"></i></span>
+                <span style="background: var(--wine); color:#fff; font-size:0.65rem; font-weight:700;">+2k</span>
+            </div>
+            <p class="trust-text">
+                {{ 'public.home.trust_text'|trans({'%count%': '2 400'})|raw }}
+            </p>
+        </div>
+    </div>
+
+    <div class="hero-right">
+        <div class="prop-card-main">
+            <div class="prop-img-area">
+                <svg viewBox="0 0 420 220" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;position:absolute;top:0;left:0;">
+                    <rect width="420" height="220" fill="url(#sky2)"/>
+                    <rect y="162" width="420" height="58" fill="url(#ground2)"/>
+                    <rect x="120" y="88" width="180" height="82" fill="#C04B5F" rx="2"/>
+                    <polygon points="95,88 210,28 325,88" fill="#7B1D2E"/>
+                    <rect x="188" y="130" width="44" height="42" fill="#5A1020" rx="4"/>
+                    <rect x="132" y="105" width="40" height="28" fill="white" rx="4" opacity="0.92"/>
+                    <rect x="248" y="105" width="40" height="28" fill="white" rx="4" opacity="0.92"/>
+                    <rect x="132" y="105" width="18" height="28" fill="#F2D8DD" rx="2" opacity="0.6"/>
+                    <rect x="248" y="105" width="18" height="28" fill="#F2D8DD" rx="2" opacity="0.6"/>
+                    <rect x="238" y="38" width="16" height="34" fill="#5A1020"/>
+                    <rect x="55" y="142" width="9" height="20" fill="#9B2D3E" opacity="0.35"/>
+                    <ellipse cx="59" cy="132" rx="22" ry="18" fill="#C04B5F" opacity="0.2"/>
+                    <rect x="348" y="147" width="8" height="15" fill="#9B2D3E" opacity="0.35"/>
+                    <ellipse cx="352" cy="138" rx="18" ry="15" fill="#C04B5F" opacity="0.2"/>
+                    <defs>
+                        <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FEF2F4"/><stop offset="100%" stop-color="#F9EDF0"/></linearGradient>
+                        <linearGradient id="ground2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F2D8DD"/><stop offset="100%" stop-color="#EBC9CE"/></linearGradient>
+                    </defs>
+                </svg>
+                <span class="prop-img-tag"><i class="fa-solid fa-check fa-xs"></i> {{ 'public.home.verified'|trans }}</span>
+                <span class="prop-img-fav"><i class="fa-regular fa-heart"></i></span>
+            </div>
+            <div class="prop-body">
+                <div class="prop-location"><i class="fa-solid fa-location-dot" style="color:var(--wine)"></i> Cotonou, Cadjehoun</div>
+                <div class="prop-title">Villa F4 — Standing moderne</div>
+                <div class="prop-features">
+                    <span><i class="fa-solid fa-bed"></i> 4 {{ 'public.home.beds'|trans }}</span>
+                    <span><i class="fa-solid fa-bath"></i> 2 {{ 'public.home.baths'|trans }}</span>
+                    <span><i class="fa-solid fa-ruler-combined"></i> 180 {{ 'public.home.area'|trans }}</span>
+                </div>
+                <div class="prop-footer">
+                    <div class="prop-price">150 000 FCFA <span>{{ 'public.home.per_month'|trans }}</span></div>
+                    <div class="prop-verified"><i class="fa-solid fa-circle-check fa-xs"></i> {{ 'public.home.certified'|trans }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mini-card mini-card-1">
+            <div class="mini-icon"><i class="fa-solid fa-house fa-xs"></i></div>
+            <div class="mini-label">{{ 'public.home.stats_active'|trans }}</div>
+            <div class="mini-value">2 400 <em>biens</em></div>
+        </div>
+
+        <div class="mini-card mini-card-2">
+            <div class="mini-icon"><i class="fa-solid fa-shield-halved fa-xs"></i></div>
+            <div class="mini-label">{{ 'public.home.stats_verified'|trans }}</div>
+            <div class="mini-value" style="color:var(--wine)">98<em>%</em></div>
+        </div>
+    </div>
+</section>
+
+
+{# ══════════════════════════════
+   SEARCH BAR
+══════════════════════════════ #}
+<div class="search-section">
+    <form action="{{ path('app_home') }}" method="GET" class="search-bar">
+        <div class="s-field">
+            <div class="s-label"><i class="fa-solid fa-location-dot fa-xs"></i> {{ 'public.home.search_location'|trans }}</div>
+            <input type="text" name="ville" placeholder="Cotonou, Porto-Novo..." value="{{ app.request.query.get('ville') }}">
+        </div>
+        <div class="s-field">
+            <div class="s-label"><i class="fa-solid fa-building fa-xs"></i> {{ 'public.home.search_type'|trans }}</div>
+            <select name="type">
+                <option value="">{{ 'public.home.search_all_types'|trans }}</option>
+                <option value="appartement" {{ app.request.query.get('type') == 'appartement' ? 'selected' }}>Appartement</option>
+                <option value="villa" {{ app.request.query.get('type') == 'villa' ? 'selected' }}>Villa</option>
+                <option value="studio" {{ app.request.query.get('type') == 'studio' ? 'selected' }}>Studio</option>
+                <option value="chambre" {{ app.request.query.get('type') == 'chambre' ? 'selected' }}>Chambre</option>
+            </select>
+        </div>
+        <div class="s-field">
+            <div class="s-label"><i class="fa-solid fa-wallet fa-xs"></i> {{ 'public.home.search_budget'|trans }} (FCFA)</div>
+            <select name="budget">
+                <option value="">{{ 'public.home.search_no_limit'|trans }}</option>
+                <option value="50000">50 000</option>
+                <option value="100000">100 000</option>
+                <option value="200000">200 000</option>
+                <option value="500000">500 000</option>
+            </select>
+        </div>
+        <button type="submit" class="search-btn">
+            <i class="fa-solid fa-magnifying-glass"></i> {{ 'public.home.search_btn'|trans }}
+        </button>
+    </form>
+</div>
+
+
+{# ══════════════════════════════
+   STATS
+══════════════════════════════ #}
+<div class="stats-strip">
+    <div class="stat-item reveal">
+        <i class="fa-solid fa-house-chimney stat-icon"></i>
+        <div class="stat-num">2 400<span>+</span></div>
+        <div class="stat-label">{{ 'public.home.stats_active'|trans }}</div>
+    </div>
+    <div class="stat-item reveal">
+        <i class="fa-solid fa-shield-halved stat-icon"></i>
+        <div class="stat-num">98<span>%</span></div>
+        <div class="stat-label">{{ 'public.home.stats_verified'|trans }}</div>
+    </div>
+    <div class="stat-item reveal">
+        <i class="fa-solid fa-lock stat-icon"></i>
+        <div class="stat-num">0</div>
+        <div class="stat-label">{{ 'public.home.stats_fraud'|trans }}</div>
+    </div>
+    <div class="stat-item reveal">
+        <i class="fa-regular fa-clock stat-icon"></i>
+        <div class="stat-num">72<span>h</span></div>
+        <div class="stat-label">{{ 'public.home.stats_delay'|trans }}</div>
+    </div>
+</div>
+
+
+{# ══════════════════════════════
+   COMMENT ÇA MARCHE
+══════════════════════════════ #}
+<section class="section">
+    <div class="sec-header">
+        <div>
+            <span class="sec-eyebrow"><i class="fa-solid fa-route fa-xs"></i> {{ 'public.home.process_eyebrow'|trans }}</span>
+            <h2 class="sec-title">{{ 'public.home.process_title'|trans|raw }}</h2>
+        </div>
+        <p class="sec-desc">{{ 'public.home.process_sub'|trans }}</p>
+    </div>
+
+    <div class="steps-wrapper">
+        <div class="step-card reveal">
+            <div class="step-num-wrap">01</div>
+            <div class="step-icon-box"><i class="fa-solid fa-magnifying-glass"></i></div>
+            <div class="step-title">{{ 'public.home.step1_title'|trans }}</div>
+            <p class="step-desc">{{ 'public.home.step1_desc'|trans }}</p>
+        </div>
+        <div class="step-card reveal">
+            <div class="step-num-wrap">02</div>
+            <div class="step-icon-box"><i class="fa-solid fa-file-lines"></i></div>
+            <div class="step-title">{{ 'public.home.step2_title'|trans }}</div>
+            <p class="step-desc">{{ 'public.home.step2_desc'|trans }}</p>
+        </div>
+        <div class="step-card reveal">
+            <div class="step-num-wrap">03</div>
+            <div class="step-icon-box"><i class="fa-solid fa-calendar-check"></i></div>
+            <div class="step-title">{{ 'public.home.step3_title'|trans }}</div>
+            <p class="step-desc">{{ 'public.home.step3_desc'|trans }}</p>
+        </div>
+        <div class="step-card reveal">
+            <div class="step-num-wrap">04</div>
+            <div class="step-icon-box"><i class="fa-solid fa-signature"></i></div>
+            <div class="step-title">{{ 'public.home.step4_title'|trans }}</div>
+            <p class="step-desc">{{ 'public.home.step4_desc'|trans }}</p>
+        </div>
+    </div>
+</section>
+
+
+{# ══════════════════════════════
+   FONCTIONNALITÉS
+══════════════════════════════ #}
+<section class="section-alt">
+    <div class="sec-header">
+        <div>
+            <span class="sec-eyebrow"><i class="fa-solid fa-star fa-xs"></i> {{ 'public.home.features_eyebrow'|trans|default('Fonctionnalités') }}</span>
+            <h2 class="sec-title">{{ 'public.home.features_title'|trans|raw }}</h2>
+        </div>
+        <p class="sec-desc">{{ 'public.home.features_sub'|trans }}</p>
+    </div>
+
+    <div class="features-grid">
+        <div class="feat-card reveal">
+            <div class="feat-icon-box"><i class="fa-solid fa-id-card-clip"></i></div>
+            <div class="feat-title">{{ 'public.home.feat1_title'|trans }}</div>
+            <p class="feat-desc">{{ 'public.home.feat1_desc'|trans }}</p>
+        </div>
+        <div class="feat-card reveal">
+            <div class="feat-icon-box"><i class="fa-solid fa-comments"></i></div>
+            <div class="feat-title">{{ 'public.home.feat2_title'|trans }}</div>
+            <p class="feat-desc">{{ 'public.home.feat2_desc'|trans }}</p>
+        </div>
+        <div class="feat-card reveal">
+            <div class="feat-icon-box"><i class="fa-solid fa-mobile-screen-button"></i></div>
+            <div class="feat-title">{{ 'public.home.feat3_title'|trans }}</div>
+            <p class="feat-desc">{{ 'public.home.feat3_desc'|trans }}</p>
+        </div>
+        <div class="feat-card reveal">
+            <div class="feat-icon-box"><i class="fa-solid fa-credit-card"></i></div>
+            <div class="feat-title">{{ 'public.home.feat4_title'|trans }}</div>
+            <p class="feat-desc">{{ 'public.home.feat4_desc'|trans }}</p>
+        </div>
+        <div class="feat-card reveal">
+            <div class="feat-icon-box"><i class="fa-solid fa-file-contract"></i></div>
+            <div class="feat-title">{{ 'public.home.feat5_title'|trans }}</div>
+            <p class="feat-desc">{{ 'public.home.feat5_desc'|trans }}</p>
+        </div>
+        <div class="feat-card reveal">
+            <div class="feat-icon-box"><i class="fa-solid fa-scale-balanced"></i></div>
+            <div class="feat-title">{{ 'public.home.feat6_title'|trans }}</div>
+            <p class="feat-desc">{{ 'public.home.feat6_desc'|trans }}</p>
+        </div>
+    </div>
+</section>
+
+
+{# ══════════════════════════════
+   PROPRIÉTAIRES & LOCATAIRES
+══════════════════════════════ #}
+<section class="section">
+    <span class="sec-eyebrow"><i class="fa-solid fa-users fa-xs"></i> {{ 'public.home.actors_eyebrow'|trans }}</span>
+    <h2 class="sec-title">{{ 'public.home.actors_title'|trans|raw }}</h2>
+
+    <div class="actors-grid">
+        <div class="actor-card proprio reveal">
+            <span class="actor-pill"><i class="fa-solid fa-house-user fa-xs"></i> {{ 'public.home.actor_owner_pill'|trans }}</span>
+            <h3 class="actor-title">{{ 'public.home.actor_owner_title'|trans }}</h3>
+            <p class="actor-desc">{{ 'public.home.actor_owner_desc'|trans }}</p>
+            <ul class="actor-list">
+                <li><i class="fa-solid fa-circle-check"></i> Gestion centralisée de tous vos biens</li>
+                <li><i class="fa-solid fa-circle-check"></i> Sélection des candidatures avec score solvabilité</li>
+                <li><i class="fa-solid fa-circle-check"></i> Génération automatique des contrats & états des lieux</li>
+                <li><i class="fa-solid fa-circle-check"></i> Suivi des loyers et alertes d'impayés</li>
+                <li><i class="fa-solid fa-circle-check"></i> Mise en avant payante de vos annonces</li>
+            </ul>
+            <a href="{{ path('app_register') }}" class="actor-btn">
+                <i class="fa-solid fa-plus fa-xs"></i> {{ 'public.home.actor_owner_btn'|trans }}
+            </a>
+        </div>
+
+        <div class="actor-card locataire reveal">
+            <span class="actor-pill"><i class="fa-solid fa-person fa-xs"></i> {{ 'public.home.actor_tenant_pill'|trans }}</span>
+            <h3 class="actor-title">{{ 'public.home.actor_tenant_title'|trans }}</h3>
+            <p class="actor-desc">{{ 'public.home.actor_tenant_desc'|trans }}</p>
+            <ul class="actor-list">
+                <li><i class="fa-solid fa-circle-check"></i> Recherche multicritère avancée et géolocalisée</li>
+                <li><i class="fa-solid fa-circle-check"></i> Candidature avec dossier locatif numérique</li>
+                <li><i class="fa-solid fa-circle-check"></i> Prise de rendez-vous pour visites en ligne</li>
+                <li><i class="fa-solid fa-circle-check"></i> Contrat et état des lieux numériques signés</li>
+                <li><i class="fa-solid fa-circle-check"></i> Paiement sécurisé (MTN MoMo, Moov, Visa)</li>
+            </ul>
+            <a href="{{ path('app_home') }}" class="actor-btn">
+                <i class="fa-solid fa-magnifying-glass fa-xs"></i> {{ 'public.home.actor_tenant_btn'|trans }}
+            </a>
+        </div>
+    </div>
+</section>
+
+
+{# ══════════════════════════════
+   SÉCURITÉ
+══════════════════════════════ #}
+<section class="section-alt">
+    <div class="trust-grid">
+        <div class="trust-visual">
+            <div class="trust-orbit trust-orbit-2">
+                <div class="orbit-badge" style="top:20px;right:10px;animation-delay:0s"><i class="fa-solid fa-lock"></i> Données chiffrées</div>
+                <div class="orbit-badge" style="bottom:40px;left:0;animation-delay:2s"><i class="fa-solid fa-star"></i> Note 4.9 / 5</div>
+                <div class="orbit-badge" style="top:45%;right:-15px;transform:translateY(-50%);animation-delay:4s"><i class="fa-solid fa-shield-halved"></i> KYC vérifié</div>
+            </div>
+            <div class="trust-orbit trust-orbit-1"></div>
+            <div class="shield-bg"><i class="fa-solid fa-shield-halved"></i></div>
+        </div>
+
+        <div>
+            <span class="sec-eyebrow"><i class="fa-solid fa-lock fa-xs"></i> Sécurité</span>
+            <h2 class="sec-title" style="margin-bottom:2.5rem;">La confiance au cœur<br><span>de chaque transaction</span></h2>
+            <div class="trust-points">
+                <div class="trust-pt reveal">
+                    <div class="trust-pt-icon"><i class="fa-solid fa-id-badge"></i></div>
+                    <div>
+                        <div class="trust-pt-title">Vérification KYC rigoureuse</div>
+                        <p class="trust-pt-desc">Pièce d'identité, selfie, références employeur et historique locatif vérifiés avant tout contact.</p>
+                    </div>
+                </div>
+                <div class="trust-pt reveal">
+                    <div class="trust-pt-icon"><i class="fa-solid fa-database"></i></div>
+                    <div>
+                        <div class="trust-pt-title">Données chiffrées & conformes</div>
+                        <p class="trust-pt-desc">Données chiffrées en transit et au repos, conformes aux standards internationaux de protection.</p>
+                    </div>
+                </div>
+                <div class="trust-pt reveal">
+                    <div class="trust-pt-icon"><i class="fa-solid fa-vault"></i></div>
+                    <div>
+                        <div class="trust-pt-title">Paiements escrow sécurisés</div>
+                        <p class="trust-pt-desc">Dépôts de garantie consignés sur compte séquestre jusqu'à signature du contrat. Zéro risque de détournement.</p>
+                    </div>
+                </div>
+                <div class="trust-pt reveal">
+                    <div class="trust-pt-icon"><i class="fa-solid fa-star-half-stroke"></i></div>
+                    <div>
+                        <div class="trust-pt-title">Évaluations mutuelles</div>
+                        <p class="trust-pt-desc">Propriétaires et locataires s'évaluent mutuellement après chaque location pour un historique de confiance transparent.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+{# ══════════════════════════════
+   TÉMOIGNAGES
+══════════════════════════════ #}
+<section class="section">
+    <div class="sec-header">
+        <div>
+            <span class="sec-eyebrow"><i class="fa-solid fa-quote-left fa-xs"></i> Témoignages</span>
+            <h2 class="sec-title">Ils nous font <span>confiance</span></h2>
+        </div>
+    </div>
+
+    <div class="testi-grid">
+        <div class="testi-card reveal">
+            <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+            <p class="testi-text">"J'ai trouvé mon appartement à Cadjehoun en 3 jours. Le processus était simple, rapide et surtout sécurisé. Je recommande vivement !"</p>
+            <div class="testi-author">
+                <div class="testi-avatar">AM</div>
+                <div>
+                    <div class="testi-name">Adèle Montcho</div>
+                    <div class="testi-role">Locataire — Cotonou</div>
+                </div>
+            </div>
+        </div>
+        <div class="testi-card reveal">
+            <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+            <p class="testi-text">"En tant que propriétaire avec 4 biens, HomeConnect m'a permis de tout gérer depuis mon téléphone. Contrats, loyers, candidatures — tout est centralisé."</p>
+            <div class="testi-author">
+                <div class="testi-avatar">KH</div>
+                <div>
+                    <div class="testi-name">Kossi Hounkpatin</div>
+                    <div class="testi-role">Propriétaire — Porto-Novo</div>
+                </div>
+            </div>
+        </div>
+        <div class="testi-card reveal">
+            <div class="testi-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i></div>
+            <p class="testi-text">"La vérification des profils m'a vraiment rassuré. Plus de mauvaises surprises ! L'état des lieux numérique est une vraie innovation pour le Bénin."</p>
+            <div class="testi-author">
+                <div class="testi-avatar">FT</div>
+                <div>
+                    <div class="testi-name">Félicité Tossou</div>
+                    <div class="testi-role">Locataire — Parakou</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+{# ══════════════════════════════
+   CTA BANNER
+══════════════════════════════ #}
+<div class="cta-banner reveal">
+    <h2>Prêt à transformer votre<br>expérience locative ?</h2>
+    <p>Rejoignez des milliers de Béninois qui font confiance à HomeConnect. Inscription entièrement gratuite pour les locataires.</p>
+    <div class="cta-btns">
+        <a href="{{ path('app_home') }}" class="btn-white">
+            <i class="fa-solid fa-user-plus"></i> Créer un compte gratuit
+        </a>
+        <a href="{{ path('app_home') }}" class="btn-outline-white">
+            <i class="fa-solid fa-list"></i> Parcourir les annonces
+        </a>
+    </div>
+</div>
+
+
+{# ══════════════════════════════
+   FOOTER
+══════════════════════════════ #}
+{% include 'partials/_footer.html.twig' %}
+
+
+
+
+<script>
+    // Scroll reveal
+    const obs = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => entry.target.classList.add('visible'), i * 80);
+                obs.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+
+</body>
+</html>

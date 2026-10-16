@@ -1,0 +1,681 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription — HomeConnect Bénin{% endblock %}
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --wine: #6c5ce7;--wine-dark: #5b4bc4;--wine-mid: #8275e9;--wine-light: #a29bfe;
+    --wine-pale: rgba(108, 92, 231, 0.1);--wine-mist: rgba(108, 92, 231, 0.2);
+    --black: #ffffff;--gray-dark: #d1d1d1;
+    --gray-mid: #a0a0a0;--gray-light: #707070;--gray-bg: #0D0D1A;--gray-line: rgba(255,255,255,0.1);
+    --white: #12121F;--accent: #ff7675;--success: #00b894;
+    --c-surface: #1C1C2E; --c-white: #ffffff; --c-border: rgba(255,255,255,0.07); --c-indigo-pale: rgba(108, 92, 231, 0.1);
+  }
+  [data-theme="light"] {
+    --black: #1a1a1a;
+    --gray-dark: #2d3436;
+    --gray-mid: #636e72;
+    --gray-light: #b2bec3;
+    --gray-bg: #f8f9fa;
+    --gray-line: rgba(0,0,0,0.1);
+    --white: #ffffff;
+    --c-surface: #ffffff; --c-white: #1a1a1a; --c-border: rgba(0,0,0,0.07); --c-indigo-pale: rgba(108, 92, 231, 0.05);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Poppins',sans-serif;background:var(--gray-bg);color:var(--black);min-height:100vh;}
+  .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+  .logo-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--wine),var(--wine-light));display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800;}
+  .logo-name{font-size:18px;font-weight:700;color:var(--black);letter-spacing:-.3px;}
+  .logo-name span{color:var(--wine);}
+  .nav-links{display:flex;align-items:center;gap:32px;list-style:none;}
+  .nav-links a{text-decoration:none;font-size:14px;font-weight:500;color:var(--gray-dark);transition:color .2s;}
+  .nav-links a:hover{color:var(--wine);}
+  .nav-cta{padding:9px 22px;border-radius:8px;background:linear-gradient(135deg,var(--wine),var(--wine-light));color:#fff!important;font-weight:600;font-size:14px;transition:opacity .2s,transform .2s;}
+  .nav-cta:hover{opacity:.9;transform:translateY(-1px);}
+  .nav-burger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px;}
+  .nav-burger span{display:block;width:24px;height:2px;background:var(--black);border-radius:2px;}
+  .nav-dropdown:hover .nav-dropdown-menu{display:block;}
+  .nav-dropdown-menu{display:none;position:absolute;top:100%;right:0;background:var(--white);border:1px solid var(--gray-line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.3);list-style:none;padding:8px 0;z-index:1000;margin-top:10px;}
+  .dropdown-item{display:flex;align-items:center;gap:8px;padding:10px 20px;color:var(--black)!important;text-decoration:none!important;font-size:13px;transition:background .2s;white-space:nowrap;}
+  .dropdown-item:hover{background:var(--wine-pale)!important;}
+  .page-hero{margin-top:72px;background:linear-gradient(135deg,var(--wine-dark) 0%,var(--wine) 60%,var(--wine-light) 100%);padding:48px 5% 52px;position:relative;overflow:hidden;}
+  .page-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+  .hero-content{position:relative;z-index:1;}
+  .hero-breadcrumb{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+  .hero-breadcrumb a{color:rgba(255,255,255,.7);font-size:13px;text-decoration:none;}
+  .hero-breadcrumb a:hover{color:#fff;}
+  .hero-breadcrumb i{color:rgba(255,255,255,.4);font-size:10px;}
+  .hero-breadcrumb span{color:rgba(255,255,255,.95);font-size:13px;font-weight:500;}
+  .hero-title{font-size:clamp(24px,4vw,36px);font-weight:800;color:#fff;letter-spacing:-.5px;}
+  .hero-subtitle{margin-top:6px;color:rgba(255,255,255,.75);font-size:15px;}
+  .register-section{padding:60px 5% 80px;display:flex;justify-content:center;align-items:flex-start;gap:40px;}
+  .info-panel{flex:0 0 280px;background:linear-gradient(160deg,var(--wine-dark),var(--wine),var(--wine-mid));border-radius:20px;padding:32px 24px;color:#fff;position:relative;overflow:hidden;animation:fadeRight .7s ease both;}
+  .info-panel::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.06);}
+  .info-panel::after{content:'';position:absolute;bottom:-40px;left:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.04);}
+  .info-icon{font-size:34px;margin-bottom:16px;}
+  .info-panel h2{font-size:18px;font-weight:800;margin-bottom:8px;}
+  .info-panel>p{font-size:12px;color:rgba(255,255,255,.8);line-height:1.7;}
+  .info-features{list-style:none;margin-top:20px;display:flex;flex-direction:column;gap:10px;position:relative;z-index:1;}
+  .info-features li{display:flex;align-items:center;gap:9px;font-size:12px;color:rgba(255,255,255,.85);}
+  .info-features li i{color:var(--wine-mist);font-size:12px;width:14px;}
+  .info-badge{margin-top:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:14px;position:relative;z-index:1;}
+  .info-badge .badge-title{font-size:13px;font-weight:800;color:#fff;margin-bottom:4px;}
+  .info-badge p{font-size:11px;color:rgba(255,255,255,.75);line-height:1.6;}
+  .form-card{flex:0 0 520px;background:var(--white);border-radius:20px;padding:40px;box-shadow:0 4px 40px rgba(123,29,46,.1);animation:fadeUp .7s ease both .1s;}
+  .steps-bar{display:flex;align-items:center;margin-bottom:30px;}
+  .step-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .step-dot{width:30px;height:30px;border-radius:50%;background:var(--gray-bg);border:2px solid var(--gray-line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--gray-mid);transition:all .3s;flex-shrink:0;}
+  .step-dot.active{background:var(--wine);border-color:var(--wine);color:#fff;}
+  .step-dot.done{background:var(--success);border-color:var(--success);color:#fff;}
+  .step-lbl{font-size:10px;color:var(--gray-mid);font-weight:500;}
+  .step-line{flex:1;height:2px;background:var(--gray-line);transition:background .3s;margin-bottom:14px;}
+  .step-line.done{background:var(--success);}
+  .role-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+  .role-card{border:1.5px solid var(--gray-line);border-radius:14px;padding:16px 12px;cursor:pointer;text-align:center;position:relative;transition:all .25s;}
+  .role-card input[type="radio"]{position:absolute;opacity:0;width:0;height:0;}
+  .role-card:hover{border-color:var(--wine-light);background:var(--wine-pale);}
+  .role-card.selected{border-color:var(--wine);background:var(--wine-pale);box-shadow:0 0 0 3px rgba(123,29,46,.08);}
+  .role-check{display:none;position:absolute;top:8px;right:8px;width:18px;height:18px;background:var(--wine);border-radius:50%;align-items:center;justify-content:center;color:#fff;font-size:9px;}
+  .role-card.selected .role-check{display:flex;}
+  .role-ico{width:44px;height:44px;border-radius:12px;background:var(--wine-pale);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--wine);margin:0 auto 8px;transition:all .25s;}
+  .role-card.selected .role-ico{background:var(--wine);color:#fff;}
+  .role-name{font-size:13px;font-weight:700;color:var(--black);}
+  .role-sub{font-size:11px;color:var(--gray-mid);margin-top:2px;}
+  .social-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+  .social-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 8px;border-radius:9px;border:1.5px solid var(--gray-line);background:#12121F;font-size:13px;font-weight:500;color:var(--gray-dark);text-decoration:none;transition:border-color .2s,transform .15s;}
+  .social-btn:hover{border-color:var(--wine-light);transform:translateY(-1px);}
+  .or-divider{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+  .or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--gray-line);}
+  .or-divider span{font-size:12px;color:var(--gray-light);font-weight:500;}
+  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .field{margin-bottom:14px;}
+  .field>label,.field>div>label{display:block;font-size:12px;font-weight:600;color:var(--gray-dark);margin-bottom:5px;}
+  .req{color:var(--accent);margin-left:2px;}
+  .field input[type="text"],.field input[type="email"],.field input[type="password"],.field input[type="tel"],.field select,.input-wrap input,.input-wrap select{width:100%;padding:10px 12px 10px 38px;border:1.5px solid var(--gray-line);border-radius:10px;font-family:'Poppins',sans-serif;font-size:13px;color:var(--black);background:var(--gray-bg);outline:none;transition:border-color .2s,background .2s,box-shadow .2s;appearance:none;-webkit-appearance:none;}
+  .field input[type="text"]:focus,.field input[type="email"]:focus,.field input[type="password"]:focus,.field input[type="tel"]:focus,.field select:focus,.input-wrap input:focus,.input-wrap select:focus{border-color:var(--wine);background:#12121F;box-shadow:0 0 0 3px rgba(123,29,46,.08);}
+  .field input[type="checkbox"]{accent-color:var(--wine);width:16px;height:16px;cursor:pointer;flex-shrink:0;}
+  .input-wrap{position:relative;}
+  .input-wrap i.pfx{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-light);font-size:13px;pointer-events:none;transition:color .2s;z-index:1;}
+  .input-wrap:focus-within i.pfx{color:var(--wine);}
+  .toggle-pw{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-light);cursor:pointer;background:none;border:none;font-size:13px;transition:color .2s;}
+  .toggle-pw:hover{color:var(--wine);}
+  .field ul{list-style:none;margin-top:5px;}
+  .field ul li{font-size:12px;color:var(--accent);display:flex;align-items:center;gap:5px;}
+  .global-errors{background:#FFF0F2;border:1.5px solid #FCCDD5;border-radius:10px;padding:12px 16px;margin-bottom:20px;}
+  .global-errors ul{list-style:none;}
+  .global-errors li{font-size:13px;color:var(--accent);display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+  .check-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;}
+  .check-row label{font-size:12px;color:var(--gray-mid);line-height:1.55;cursor:pointer;}
+  .check-row label a{color:var(--wine);font-weight:600;text-decoration:none;}
+  .check-row label a:hover{text-decoration:underline;}
+  .pw-bars{display:flex;gap:4px;margin-top:6px;margin-bottom:3px;}
+  .pw-bar{flex:1;height:3px;border-radius:2px;background:var(--gray-line);transition:background .3s;}
+  .pw-bar.weak{background:#EF4444;}.pw-bar.medium{background:#F59E0B;}.pw-bar.strong{background:var(--success);}
+  .pw-label{font-size:11px;color:var(--gray-mid);}
+  .btn-row{display:flex;gap:10px;margin-top:8px;}
+  .btn-back{flex:1;padding:12px;border:1.5px solid var(--gray-line);border-radius:10px;background:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;color:var(--gray-dark);cursor:pointer;transition:all .2s;}
+  .btn-back:hover{border-color:var(--wine);color:var(--wine);}
+  .btn-next,.btn-submit{flex:2;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--wine-dark),var(--wine-light));color:#fff;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(123,29,46,.3);transition:transform .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn-next:hover,.btn-submit:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(123,29,46,.4);}
+  .reg-step{display:none;}.reg-step.active{display:block;}
+  .step-header{margin-bottom:22px;}
+  .step-header h3{font-size:21px;font-weight:800;color:var(--black);letter-spacing:-.3px;}
+  .step-header p{font-size:13px;color:var(--gray-mid);margin-top:4px;line-height:1.6;}
+  .otp-wrap{display:flex;gap:10px;justify-content:center;margin:22px 0;}
+  .otp-input{width:50px;height:58px;border:1.5px solid var(--gray-line);border-radius:12px;font-family:'Poppins',sans-serif;font-size:22px;font-weight:700;color:var(--wine);text-align:center;background:var(--white);outline:none;transition:border-color .25s,box-shadow .25s;}
+  .otp-input:focus{border-color:var(--wine);box-shadow:0 0 0 3px rgba(123,29,46,.1);}
+  .switch-auth{text-align:center;margin-top:18px;font-size:13px;color:var(--gray-mid);}
+  .switch-auth a{color:var(--wine);font-weight:600;text-decoration:none;}
+  .switch-auth a:hover{text-decoration:underline;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes fadeRight{from{opacity:0;transform:translateX(-30px);}to{opacity:1;transform:translateX(0);}}
+  footer{background:var(--black);padding:60px 5% 28px;color:rgba(255,255,255,.6);}
+  .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px;}
+  .footer-brand .logo-name{color:#fff;}
+  .footer-brand p{margin-top:14px;font-size:13px;line-height:1.7;color:rgba(255,255,255,.55);max-width:260px;}
+  .footer-socials{display:flex;gap:10px;margin-top:20px;}
+  .footer-socials a{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);font-size:14px;text-decoration:none;transition:background .2s,color .2s;}
+  .footer-socials a:hover{background:var(--wine);color:#fff;}
+  .footer-col h4{font-size:13px;font-weight:700;color:#fff;margin-bottom:16px;letter-spacing:.3px;text-transform:uppercase;}
+  .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
+  .footer-col ul li a{font-size:13px;color:rgba(255,255,255,.5);text-decoration:none;transition:color .2s;}
+  .footer-col ul li a:hover{color:var(--wine-light);}
+  .footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .footer-bottom p{font-size:12px;}
+  .footer-bottom-links{display:flex;gap:20px;}
+  .footer-bottom-links a{font-size:12px;color:rgba(255,255,255,.4);text-decoration:none;}
+  .footer-bottom-links a:hover{color:var(--wine-light);}
+  @media(max-width:960px){.info-panel{display:none;}.form-card{flex:0 0 100%;max-width:540px;}.register-section{padding:40px 5% 60px;}}
+  @media(max-width:600px){.nav-links{display:none;}.nav-burger{display:flex;}.form-row-2{grid-template-columns:1fr;}.form-card{padding:28px 18px;}.footer-grid{grid-template-columns:1fr 1fr;}}
+
+  /* ── KYC styles ── */
+  .kyc-section { background:var(--c-surface); border:1px solid var(--c-border); border-radius:12px; padding:16px; margin-bottom:14px; }
+  .kyc-section-title { font-weight:700; font-size:.9rem; color:var(--black); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .text-wine { color:var(--wine); }
+  .kyc-upload-zone { border:2px dashed var(--wine-mist); border-radius:10px; padding:20px; text-align:center; cursor:pointer; transition:.2s; background:var(--c-indigo-pale); }
+  .kyc-upload-zone:hover { border-color:var(--wine); background:rgba(108,92,231,.15); }
+  .kyc-upload-zone.small { padding:12px; }
+  .kyc-preview-empty { color:var(--gray-mid); font-size:.85rem; }
+  .kyc-preview-empty p { margin:6px 0 2px; }
+  .kyc-preview-done { color:var(--success); font-size:.85rem; font-weight:600; }
+  .kyc-select { width:100%; padding:10px 12px; border:1px solid var(--c-border); border-radius:8px; background:var(--c-surface); color:var(--black); font-size:.85rem; margin-bottom:10px; outline:none; }
+  .kyc-radio-label { display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px; border:1px solid var(--c-border); border-radius:8px; transition:.2s; font-size:.85rem; color:var(--black); }
+  .kyc-radio-label:has(input:checked) { border-color:var(--wine); background:var(--c-indigo-pale); }
+  .kyc-radio-label input { accent-color:var(--wine); }
+  .kyc-optional { margin-bottom:14px; }
+  .kyc-optional summary { cursor:pointer; padding:10px 0; font-size:.85rem; font-weight:600; color:var(--wine); list-style:none; }
+  .kyc-optional summary::-webkit-details-marker { display:none; }
+  .kyc-status-info { background:rgba(0,184,148,.1); border:1px solid rgba(0,184,148,.3); border-radius:10px; padding:12px 14px; font-size:.8rem; color:var(--success); margin:16px 0; }
+</style>
+{% endblock %}
+
+{% block body %}
+
+{% include 'partials/_navbar.html.twig' %}
+
+<section class="page-hero">
+  <div class="hero-content">
+    <div class="hero-breadcrumb">
+      <a href="{{ path('app_home') }}"><i class="fa-solid fa-house"></i> {{ 'public.nav.home'|trans|default('Accueil') }}</a>
+      <i class="fa-solid fa-chevron-right"></i>
+      <span>{{ 'public.nav.register'|trans }}</span>
+    </div>
+    <h1 class="hero-title">{{ 'public.register.title'|trans }}</h1>
+    <p class="hero-subtitle">{{ 'public.register.subtitle'|trans }}</p>
+  </div>
+</section>
+
+<section class="register-section">
+
+  <aside class="info-panel">
+    <div class="info-icon">🏠</div>
+    <h2>{{ 'public.register.info_panel_title'|trans }}</h2>
+    <p>{{ 'public.register.info_panel_desc'|trans }}</p>
+    <ul class="info-features">
+      <li><i class="fa-solid fa-shield-halved"></i> {{ 'public.login.feature_kyc'|trans }}</li>
+      <li><i class="fa-solid fa-file-signature"></i> {{ 'public.login.feature_contracts'|trans }}</li>
+      <li><i class="fa-solid fa-mobile-screen-button"></i> {{ 'public.login.feature_payment'|trans }}</li>
+      <li><i class="fa-solid fa-bell"></i> {{ 'public.register.badge_desc'|trans }}</li>
+      <li><i class="fa-solid fa-star"></i> {{ 'public.login.feature_rating'|trans }}</li>
+    </ul>
+    <div class="info-badge">
+      <div class="badge-title">{{ 'public.register.badge_no_card'|trans }}</div>
+      <p>{{ 'public.register.badge_desc'|trans }}</p>
+    </div>
+  </aside>
+
+  <div class="form-card">
+
+    <div class="steps-bar" id="stepsBar">
+      <div class="step-wrap"><div class="step-dot active" id="sdot-1">1</div><div class="step-lbl">{{ 'public.register.step_profile'|trans }}</div></div>
+      <div class="step-line" id="sline-1"></div>
+      <div class="step-wrap"><div class="step-dot" id="sdot-2">2</div><div class="step-lbl">{{ 'public.register.step_infos'|trans }}</div></div>
+      <div class="step-line step-kyc" id="sline-2" style="display:none;"></div>
+      <div class="step-wrap step-kyc" id="swrap-3" style="display:none;"><div class="step-dot" id="sdot-3">3</div><div class="step-lbl">KYC</div></div>
+    </div>
+
+    {% if registrationForm.vars.errors|length > 0 %}
+    <div class="global-errors">
+      <ul>{% for error in registrationForm.vars.errors %}<li>{{ error.message }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    {# ÉTAPE 1 — Profil #}
+    <div class="reg-step active" id="step-1">
+      <div class="step-header">
+        <h3>{{ 'public.register.choose_profile'|trans }}</h3>
+        <p>{{ 'public.register.choose_desc'|trans }}</p>
+      </div>
+      <div class="role-grid">
+        <label class="role-card selected" id="rc-prop">
+          <input type="radio" name="role_choice" value="proprietaire" checked onchange="selectRole('prop')">
+          <div class="role-check"><i class="fa-solid fa-check"></i></div>
+          <div class="role-ico"><i class="fa-solid fa-house-user"></i></div>
+          <div class="role-name">{{ 'public.register.role_owner'|trans }}</div>
+          <div class="role-sub">{{ 'public.register.role_owner_sub'|trans }}</div>
+        </label>
+        <label class="role-card" id="rc-loc">
+          <input type="radio" name="role_choice" value="locataire" onchange="selectRole('loc')">
+          <div class="role-check"><i class="fa-solid fa-check"></i></div>
+          <div class="role-ico"><i class="fa-solid fa-person"></i></div>
+          <div class="role-name">{{ 'public.register.role_tenant'|trans }}</div>
+          <div class="role-sub">{{ 'public.register.role_tenant_sub'|trans }}</div>
+        </label>
+      </div>
+      <div class="social-grid">
+        <a href="{{ path('app_home') }}" class="social-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          Google
+        </a>
+        <a href="{{ path('app_home') }}" class="social-btn">
+          <i class="fa-brands fa-facebook" style="color:#1877F2;font-size:16px;"></i> Facebook
+        </a>
+      </div>
+      <div class="or-divider"><span>{{ 'public.register.or_email'|trans }}</span></div>
+      <button type="button" class="btn-next" style="width:100%;" onclick="goStep(2)">
+        {{ 'public.register.continue'|trans }} <i class="fa-solid fa-arrow-right"></i>
+      </button>
+      <p class="switch-auth">{{ 'public.register.already_account'|trans }} <a href="{{ path('app_login') }}">{{ 'public.login.submit'|trans }}</a></p>
+    </div>
+
+    {# ÉTAPE 2 — Formulaire Symfony #}
+    <div class="reg-step" id="step-2">
+      <div class="step-header">
+        <h3>{{ 'public.register.your_infos'|trans }}</h3>
+        <p>{{ 'public.register.infos_desc'|trans }}</p>
+      </div>
+
+      {{ form_start(registrationForm, {'attr': {'id': 'regForm', 'novalidate': 'novalidate'}}) }}
+
+        {{ form_widget(registrationForm.role, {'attr': {'id': 'hidden_role'}}) }}
+
+        <div class="form-row-2">
+          <div class="field">
+            <label for="{{ registrationForm.prenom.vars.id }}">
+              <i class="fa-solid fa-user" style="color:var(--wine);font-size:11px;margin-right:3px;"></i>
+              Prénom <span class="req">*</span>
+            </label>
+            <div class="input-wrap">
+              <i class="fa-solid fa-user pfx"></i>
+              {{ form_widget(registrationForm.prenom, {'attr': {'placeholder': 'Marie'}}) }}
+            </div>
+            {{ form_errors(registrationForm.prenom) }}
+          </div>
+          <div class="field">
+            <label for="{{ registrationForm.nom.vars.id }}">
+              <i class="fa-solid fa-user" style="color:var(--wine);font-size:11px;margin-right:3px;"></i>
+              Nom <span class="req">*</span>
+            </label>
+            <div class="input-wrap">
+              <i class="fa-solid fa-user pfx"></i>
+              {{ form_widget(registrationForm.nom, {'attr': {'placeholder': 'Tossou'}}) }}
+            </div>
+            {{ form_errors(registrationForm.nom) }}
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="field">
+            <label for="{{ registrationForm.email.vars.id }}">
+              <i class="fa-regular fa-envelope" style="color:var(--wine);font-size:11px;margin-right:3px;"></i>
+              Adresse email <span class="req">*</span>
+            </label>
+            <div class="input-wrap">
+              <i class="fa-regular fa-envelope pfx"></i>
+              {{ form_widget(registrationForm.email, {'attr': {'placeholder': 'votre@email.com'}}) }}
+            </div>
+            {{ form_errors(registrationForm.email) }}
+          </div>
+          <div class="field">
+            <label for="{{ registrationForm.telephone.vars.id }}">
+              <i class="fa-solid fa-phone" style="color:var(--wine);font-size:11px;margin-right:3px;"></i>
+              Téléphone
+            </label>
+            <div class="input-wrap">
+              <i class="fa-solid fa-phone pfx"></i>
+              {{ form_widget(registrationForm.telephone, {'attr': {'placeholder': '+229 97 00 00 00'}}) }}
+            </div>
+            {{ form_errors(registrationForm.telephone) }}
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="{{ registrationForm.ville.vars.id }}">
+            <i class="fa-solid fa-location-dot" style="color:var(--wine);font-size:11px;margin-right:3px;"></i>
+            Ville
+          </label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-location-dot pfx"></i>
+            {{ form_widget(registrationForm.ville) }}
+          </div>
+          {{ form_errors(registrationForm.ville) }}
+        </div>
+
+        <div class="field">
+          <label for="reg_password">
+            <i class="fa-solid fa-lock" style="color:var(--wine);font-size:11px;margin-right:3px;"></i>
+            Mot de passe <span class="req">*</span>
+          </label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-lock pfx"></i>
+            {{ form_widget(registrationForm.plainPassword, {
+              'attr': {'placeholder': 'Min. 6 caractères', 'id': 'reg_password', 'oninput': 'checkStrength(this.value)'}
+            }) }}
+            <button type="button" class="toggle-pw" onclick="togglePw('reg_password',this)">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+          <div class="pw-bars">
+            <div class="pw-bar" id="pb1"></div><div class="pw-bar" id="pb2"></div>
+            <div class="pw-bar" id="pb3"></div><div class="pw-bar" id="pb4"></div>
+          </div>
+          <div class="pw-label" id="pw-label">{{ 'public.register.password_strength'|trans }}</div>
+          {{ form_errors(registrationForm.plainPassword) }}
+        </div>
+
+        <div class="check-row">
+          {{ form_widget(registrationForm.agreeTerms) }}
+          <label for="{{ registrationForm.agreeTerms.vars.id }}">
+            {{ 'public.register.agree'|trans }} <a href="{{ path('app_home') }}" target="_blank">{{ 'public.footer.cgu'|trans }}</a>
+            {{ 'public.register.and_the'|trans }} <a href="{{ path('app_home') }}" target="_blank">{{ 'public.footer.privacy'|trans }}</a> de HomeConnect
+          </label>
+        </div>
+        {{ form_errors(registrationForm.agreeTerms) }}
+
+        <div class="btn-row">
+          <button type="button" class="btn-back" onclick="goStep(1)">
+            <i class="fa-solid fa-arrow-left"></i> Retour
+          </button>
+          {# Locataire → soumettre directement ; Propriétaire → aller à l'étape KYC #}
+          <button type="button" class="btn-submit" id="btnStep2Submit" onclick="handleStep2Submit()">
+            Continuer <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+      {{ form_end(registrationForm) }}
+    </div>
+
+    {# ÉTAPE 3 — Documents KYC (propriétaire uniquement) #}
+    <div class="reg-step" id="step-3">
+      <div class="step-header">
+        <h3><i class="fa-solid fa-shield-halved" style="color:var(--wine);"></i> Vérification d'identité (KYC)</h3>
+        <p>Téléchargez vos documents pour activer votre compte propriétaire. L'administrateur les validera sous 24–48h.</p>
+      </div>
+
+      <form id="kycForm" action="{{ path('app_register') }}" method="POST" enctype="multipart/form-data">
+        {# Données du step 2 transmises en hidden #}
+        <input type="hidden" id="kyc_email"     name="email">
+        <input type="hidden" id="kyc_prenom"    name="prenom">
+        <input type="hidden" id="kyc_nom"       name="nom">
+        <input type="hidden" id="kyc_telephone" name="telephone">
+        <input type="hidden" id="kyc_ville"     name="ville">
+        <input type="hidden" id="kyc_password"  name="password">
+        <input type="hidden" name="role" value="proprietaire">
+
+        {# ── 1. Pièce d'identité ── #}
+        <div class="kyc-section">
+          <div class="kyc-section-title">
+            <i class="fa-solid fa-id-card text-wine"></i>
+            1. Pièce d'identité valide <span class="req">*</span>
+          </div>
+          <div class="form-row-2" style="margin-bottom:8px;">
+            <label class="kyc-radio-label">
+              <input type="radio" name="kyc_identite_type" value="cni" checked>
+              <span><i class="fa-solid fa-id-card me-1"></i> Carte Nationale d'Identité (CNI)</span>
+            </label>
+            <label class="kyc-radio-label">
+              <input type="radio" name="kyc_identite_type" value="passeport">
+              <span><i class="fa-solid fa-passport me-1"></i> Passeport</span>
+            </label>
+          </div>
+          <div class="kyc-upload-zone" onclick="document.getElementById('kyc_identite').click()">
+            <input type="file" id="kyc_identite" name="kyc_identite" accept=".jpg,.jpeg,.png,.pdf" required style="display:none" onchange="previewFile(this,'prev_identite')">
+            <div id="prev_identite" class="kyc-preview-empty">
+              <i class="fa-solid fa-cloud-arrow-up fa-2x" style="color:var(--wine);opacity:.7;"></i>
+              <p>Cliquez pour uploader ou glissez-déposez</p>
+              <small>JPG, PNG, PDF — max 5 Mo</small>
+            </div>
+          </div>
+        </div>
+
+        {# ── 2. Justificatif de domicile ── #}
+        <div class="kyc-section">
+          <div class="kyc-section-title">
+            <i class="fa-solid fa-house-chimney text-wine"></i>
+            2. Justificatif de domicile (- de 3 mois) <span class="req">*</span>
+          </div>
+          <select name="kyc_domicile_type" class="kyc-select">
+            <option value="electricite">Facture d'électricité</option>
+            <option value="eau">Facture d'eau</option>
+            <option value="telephone">Facture de téléphone</option>
+            <option value="taxe_fonciere">Avis de taxe foncière</option>
+            <option value="quittance">Quittance de loyer</option>
+          </select>
+          <div class="kyc-upload-zone" onclick="document.getElementById('kyc_domicile').click()">
+            <input type="file" id="kyc_domicile" name="kyc_domicile" accept=".jpg,.jpeg,.png,.pdf" required style="display:none" onchange="previewFile(this,'prev_domicile')">
+            <div id="prev_domicile" class="kyc-preview-empty">
+              <i class="fa-solid fa-cloud-arrow-up fa-2x" style="color:var(--wine);opacity:.7;"></i>
+              <p>Cliquez pour uploader</p>
+              <small>JPG, PNG, PDF — max 5 Mo</small>
+            </div>
+          </div>
+        </div>
+
+        {# ── 3. Justificatif de propriété ── #}
+        <div class="kyc-section">
+          <div class="kyc-section-title">
+            <i class="fa-solid fa-file-contract text-wine"></i>
+            3. Justificatif de propriété du bien <span class="req">*</span>
+          </div>
+          <select name="kyc_propriete_type" class="kyc-select">
+            <option value="titre_foncier">Titre foncier</option>
+            <option value="attestation_notaire">Attestation de propriété (notaire)</option>
+            <option value="acte_vente">Acte de vente authentique</option>
+            <option value="donation_succession">Acte de donation ou de succession</option>
+          </select>
+          <div class="kyc-upload-zone" onclick="document.getElementById('kyc_propriete').click()">
+            <input type="file" id="kyc_propriete" name="kyc_propriete" accept=".jpg,.jpeg,.png,.pdf" required style="display:none" onchange="previewFile(this,'prev_propriete')">
+            <div id="prev_propriete" class="kyc-preview-empty">
+              <i class="fa-solid fa-cloud-arrow-up fa-2x" style="color:var(--wine);opacity:.7;"></i>
+              <p>Cliquez pour uploader</p>
+              <small>JPG, PNG, PDF — max 5 Mo</small>
+            </div>
+          </div>
+        </div>
+
+        {# ── Optionnels ── #}
+        <details class="kyc-optional">
+          <summary><i class="fa-solid fa-circle-plus me-2" style="color:var(--wine);"></i>Documents complémentaires (recommandés, facultatifs)</summary>
+          <div style="margin-top:14px;">
+            <div class="kyc-section" style="border:1px dashed rgba(108,92,231,.3);">
+              <div class="kyc-section-title" style="font-size:.85rem;">
+                <i class="fa-solid fa-building-columns text-wine"></i> RIB (Relevé d'Identité Bancaire)
+              </div>
+              <div class="kyc-upload-zone small" onclick="document.getElementById('kyc_rib').click()">
+                <input type="file" id="kyc_rib" name="kyc_rib" accept=".jpg,.jpeg,.png,.pdf" style="display:none" onchange="previewFile(this,'prev_rib')">
+                <div id="prev_rib" class="kyc-preview-empty"><i class="fa-solid fa-cloud-arrow-up"></i> <small>Uploader le RIB</small></div>
+              </div>
+            </div>
+            <div class="kyc-section" style="border:1px dashed rgba(108,92,231,.3);">
+              <div class="kyc-section-title" style="font-size:.85rem;">
+                <i class="fa-solid fa-shield text-wine"></i> Attestation d'assurance PNO
+              </div>
+              <div class="kyc-upload-zone small" onclick="document.getElementById('kyc_assurance').click()">
+                <input type="file" id="kyc_assurance" name="kyc_assurance" accept=".jpg,.jpeg,.png,.pdf" style="display:none" onchange="previewFile(this,'prev_assurance')">
+                <div id="prev_assurance" class="kyc-preview-empty"><i class="fa-solid fa-cloud-arrow-up"></i> <small>Uploader l'attestation</small></div>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        {# ── Cas particuliers ── #}
+        <details class="kyc-optional">
+          <summary><i class="fa-solid fa-building me-2" style="color:var(--wine);"></i>Cas particuliers (Copropriété / SCI)</summary>
+          <div style="margin-top:14px;">
+            <div class="form-row-2" style="margin-bottom:12px;">
+              <label class="kyc-radio-label">
+                <input type="radio" name="kyc_cas_particulier_type" value="copropriete">
+                <span>Copropriété</span>
+              </label>
+              <label class="kyc-radio-label">
+                <input type="radio" name="kyc_cas_particulier_type" value="sci">
+                <span>SCI (Société Civile Immobilière)</span>
+              </label>
+            </div>
+            <div class="kyc-upload-zone small" onclick="document.getElementById('kyc_cas_particulier').click()">
+              <input type="file" id="kyc_cas_particulier" name="kyc_cas_particulier" accept=".jpg,.jpeg,.png,.pdf" style="display:none" onchange="previewFile(this,'prev_cas')">
+              <div id="prev_cas" class="kyc-preview-empty"><i class="fa-solid fa-cloud-arrow-up"></i> <small>Document copropriété / statuts SCI</small></div>
+            </div>
+          </div>
+        </details>
+
+        {# Statut info #}
+        <div class="kyc-status-info">
+          <i class="fa-solid fa-clock-rotate-left me-2"></i>
+          Après envoi, l'administrateur examine vos documents.
+          Statut : <strong>en_attente</strong> → <strong>certifié</strong> (ou <strong>rejeté</strong> avec motif).
+          Seul un compte certifié peut publier des biens et afficher le badge de confiance.
+        </div>
+
+        <div class="btn-row">
+          <button type="button" class="btn-back" onclick="goStep(2)">
+            <i class="fa-solid fa-arrow-left"></i> Retour
+          </button>
+          <button type="submit" class="btn-submit" id="kycSubmitBtn">
+            <i class="fa-solid fa-paper-plane"></i> Créer mon compte
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</section>
+
+{% include 'partials/_footer.html.twig' %}
+
+<script>
+
+  // ── Rôle courant (initialisé au chargement) ──────────────────────────────
+  let currentRole = 'proprietaire';
+
+  function selectRole(key) {
+    document.getElementById('rc-prop').classList.remove('selected');
+    document.getElementById('rc-loc').classList.remove('selected');
+    document.getElementById('rc-' + key).classList.add('selected');
+    currentRole = key === 'prop' ? 'proprietaire' : 'locataire';
+
+    const rf = document.getElementById('hidden_role');
+    if (rf) rf.value = currentRole;
+
+    // Afficher / masquer l'indicateur KYC dans la barre de progression
+    const kycEls = document.querySelectorAll('.step-kyc');
+    kycEls.forEach(el => el.style.display = (currentRole === 'proprietaire') ? '' : 'none');
+  }
+
+  function goStep(n) {
+    document.querySelectorAll('.reg-step').forEach((el, i) => el.classList.toggle('active', i + 1 === n));
+    for (let i = 1; i <= 3; i++) {
+      const dot = document.getElementById('sdot-' + i);
+      if (!dot) continue;
+      dot.className = 'step-dot';
+      if (i < n)      { dot.classList.add('done'); dot.innerHTML = '<i class="fa-solid fa-check" style="font-size:10px;"></i>'; }
+      else if (i === n) { dot.classList.add('active'); dot.textContent = i; }
+      else              { dot.textContent = i; }
+      const l = document.getElementById('sline-' + i);
+      if (l) l.classList.toggle('done', i < n);
+    }
+  }
+
+  // Interception centrale : Entrée dans un champ OU clic sur le bouton "Continuer"
+  function handleStep2Submit() {
+    if (currentRole === 'locataire') {
+      document.getElementById('regForm').submit();
+      return;
+    }
+    // Propriétaire → transférer les données vers le formulaire KYC
+    const f = document.getElementById('regForm');
+    document.getElementById('kyc_email').value     = f.querySelector('[name$="[email]"]')?.value || '';
+    document.getElementById('kyc_prenom').value    = f.querySelector('[name$="[prenom]"]')?.value || '';
+    document.getElementById('kyc_nom').value       = f.querySelector('[name$="[nom]"]')?.value || '';
+    document.getElementById('kyc_telephone').value = f.querySelector('[name$="[telephone]"]')?.value || '';
+    document.getElementById('kyc_ville').value     = f.querySelector('[name$="[ville]"]')?.value || '';
+    document.getElementById('kyc_password').value  = f.querySelector('#reg_password')?.value || '';
+    goStep(3);
+  }
+
+  function togglePw(id, btn) {
+    const input = document.getElementById(id);
+    const icon = btn.querySelector('i');
+    input.type = input.type === 'password' ? 'text' : 'password';
+    icon.classList.toggle('fa-eye', input.type === 'password');
+    icon.classList.toggle('fa-eye-slash', input.type === 'text');
+  }
+
+  function checkStrength(val) {
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    ['pb1','pb2','pb3','pb4'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      el.className = 'pw-bar';
+      if (i < score) el.classList.add(score <= 1 ? 'weak' : score <= 2 ? 'medium' : 'strong');
+    });
+    const lbl = document.getElementById('pw-label');
+    lbl.textContent = val.length ? (['','Faible','Moyen','Bon','Excellent'][score]||'Excellent') : 'Force du mot de passe';
+  }
+
+  function otpNext(input, idx) {
+    input.value = input.value.replace(/\D/g, '');
+    const all = document.querySelectorAll('.otp-input');
+    if (input.value && idx < all.length - 1) all[idx + 1].focus();
+  }
+  document.querySelectorAll('.otp-input').forEach((inp, idx) => {
+    inp.addEventListener('keydown', e => { if (e.key==='Backspace' && !inp.value && idx>0) document.querySelectorAll('.otp-input')[idx-1].focus(); });
+    inp.addEventListener('paste', e => {
+      const d = (e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').split('');
+      document.querySelectorAll('.otp-input').forEach((ci,i)=>{ if(d[i]) ci.value=d[i]; });
+      e.preventDefault();
+    });
+  });
+
+  // ── Aperçu fichier uploadé ────────────────────────────────────────────────
+  function previewFile(input, previewId) {
+    const preview = document.getElementById(previewId);
+    if (!preview) return;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const sizeMb = (file.size / 1024 / 1024).toFixed(1);
+      if (file.size > 5 * 1024 * 1024) {
+        preview.innerHTML = '<span style="color:var(--accent)"><i class="fa-solid fa-triangle-exclamation"></i> Fichier trop lourd (max 5 Mo)</span>';
+        input.value = '';
+        return;
+      }
+      const icon = file.type.includes('pdf') ? 'fa-file-pdf' : 'fa-file-image';
+      preview.className = 'kyc-preview-done';
+      preview.innerHTML = `<i class="fa-solid ${icon} me-2"></i>${file.name} <small style="color:var(--gray-mid)">(${sizeMb} Mo)</small>`;
+    }
+  }
+
+  // ── Validation KYC avant soumission ────────────────────────────────────────
+  document.getElementById('kycForm')?.addEventListener('submit', function(e) {
+    const required = ['kyc_identite', 'kyc_domicile', 'kyc_propriete'];
+    let ok = true;
+    required.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el?.files?.length) {
+        el.closest('.kyc-upload-zone').style.borderColor = 'var(--accent)';
+        ok = false;
+      }
+    });
+    if (!ok) {
+      e.preventDefault();
+      alert('Veuillez télécharger les 3 documents obligatoires (identité, domicile, propriété).');
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Initialiser le rôle selon le radio coché par défaut
+    const checked = document.querySelector('input[name="role_choice"]:checked');
+    selectRole(checked?.value === 'locataire' ? 'loc' : 'prop');
+
+    // Intercepter la soumission du formulaire via Entrée (bug principal)
+    document.getElementById('regForm')?.addEventListener('submit', function(e) {
+      if (currentRole !== 'locataire') {
+        e.preventDefault();
+        handleStep2Submit();
+      }
+    });
+
+    // Si erreurs Symfony → aller à l'étape 2 automatiquement
+    const hasErrors = document.querySelectorAll('.field ul li').length > 0
+      || document.querySelectorAll('.global-errors li').length > 0;
+    if (hasErrors) goStep(2);
+  });
+</script>
+
+{% endblock %}

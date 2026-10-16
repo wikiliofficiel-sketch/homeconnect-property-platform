@@ -1,0 +1,213 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Détail signalement #{{ report.id }}{% endblock %}
+
+{% block admin_body %}
+<div class="report-detail">
+    <div class="report-header">
+        <div>
+            <h2>Signalement #{{ report.id }}</h2>
+            <p class="priority-{{ report.priorite }}">
+                Priorité: 
+                {% if report.priorite == 'critical' %}🔴 Critique
+                {% elseif report.priorite == 'high' %}🟠 Élevée
+                {% elseif report.priorite == 'medium' %}🟡 Moyenne
+                {% else %}🟢 Basse
+                {% endif %}
+            </p>
+        </div>
+        <span class="badge badge-{{ report.statut == 'resolved' ? 'success' : 'warning' }}">
+            {{ report.statut|upper }}
+        </span>
+    </div>
+
+    <div class="report-sections">
+        <div class="section">
+            <h3>📋 Informations</h3>
+            <div class="info-grid">
+                <div><strong>Type:</strong> 
+                    {% if report.type == 'property' %}🏠 Bien
+                    {% elseif report.type == 'user' %}👤 Utilisateur
+                    {% else %}💬 Avis
+                    {% endif %}
+                </div>
+                <div><strong>Motif:</strong> {{ report.motif }}</div>
+                <div><strong>Signalé par:</strong> <a href="{{ path('admin_users_show', {'id': report.signataire.id}) }}">{{ report.signataire.fullName }}</a></div>
+                <div><strong>Date:</strong> {{ report.createdAt|date('d/m/Y H:i') }}</div>
+                {% if report.resolvedAt %}
+                <div><strong>Résolu:</strong> {{ report.resolvedAt|date('d/m/Y H:i') }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if report.property %}
+        <div class="section">
+            <h3>🏠 Bien signalé</h3>
+            <div class="info-grid">
+                <div><strong>Titre:</strong> <a href="{{ path('admin_properties_show', {'id': report.property.id}) }}">{{ report.property.title }}</a></div>
+                <div><strong>Propriétaire:</strong> <a href="{{ path('admin_users_show', {'id': report.property.proprietaire.id}) }}">{{ report.property.proprietaire.fullName }}</a></div>
+                <div><strong>Adresse:</strong> {{ report.property.address }}, {{ report.property.zipCode }} {{ report.property.city }}</div>
+            </div>
+        </div>
+        {% elseif report.utilisateur %}
+        <div class="section">
+            <h3>👤 Utilisateur signalé</h3>
+            <div class="info-grid">
+                <div><strong>Nom:</strong> <a href="{{ path('admin_users_show', {'id': report.utilisateur.id}) }}">{{ report.utilisateur.fullName }}</a></div>
+                <div><strong>Email:</strong> {{ report.utilisateur.email }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if report.statut != 'resolved' and report.statut != 'dismissed' %}
+        <div class="section">
+            <h3>⚙️ Traitement</h3>
+            <form method="post" action="{{ path('admin_reports_resolve', {'id': report.id}) }}" class="resolution-form">
+                <div class="form-group">
+                    <label>Sanction à appliquer:</label>
+                    <select name="sanction" required>
+                        <option value="">Sélectionner une sanction</option>
+                        <option value="warning">⚠️ Avertissement</option>
+                        <option value="suspension">🔒 Suspension temporaire</option>
+                        <option value="ban">🚫 Bannissement</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes administrateur:</label>
+                    <textarea name="note" placeholder="Détails de la décision..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">✅ Résoudre</button>
+                    <a href="{{ path('admin_reports_dismiss', {'id': report.id}) }}" class="btn btn-warning">👉 Rejeter le signalement</a>
+                </div>
+            </form>
+        </div>
+        {% else %}
+        <div class="section">
+            <h3>✅ Résolution</h3>
+            <div class="info-grid">
+                <div><strong>Sanction:</strong> {{ report.sanction or 'Aucune' }}</div>
+                {% if report.noteAdmin %}
+                <div><strong>Notes:</strong> {{ report.noteAdmin }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.report-detail {
+    max-width: 900px;
+}
+
+.report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    color: white;
+}
+
+.report-header h2 {
+    margin: 0 0 10px 0;
+    font-size: 2em;
+}
+
+.report-header p {
+    margin: 5px 0;
+}
+
+.priority-critical { color: #f56565; font-weight: bold; }
+.priority-high { color: #ed8936; }
+.priority-medium { color: #ed8936; }
+.priority-low { color: #48bb78; }
+
+.badge {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.badge-success { background-color: #c6f6d5; color: #22543d; }
+.badge-warning { background-color: #feebc8; color: #7c2d12; }
+
+.report-sections {
+    display: grid;
+    gap: 20px;
+}
+
+.section {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.section h3 {
+    margin: 0 0 15px 0;
+}
+
+.info-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.info-grid div {
+    padding: 10px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.info-grid a {
+    color: #4299e1;
+}
+
+.resolution-form {
+    display: grid;
+    gap: 15px;
+}
+
+.form-group {
+    display: grid;
+    gap: 5px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.form-group select,
+.form-group textarea {
+    padding: 10px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    font-family: inherit;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-success { background-color: #48bb78; color: white; }
+.btn-warning { background-color: #ed8936; color: white; }
+</style>
+{% endblock %}

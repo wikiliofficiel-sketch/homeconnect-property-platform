@@ -1,0 +1,170 @@
+{% extends 'owner/base.html.twig' %}
+
+{% block title %}Candidatures - Espace Propriétaire{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{{ path('app_owner_dashboard') }}">Accueil</a></li>
+    <li class="breadcrumb-item active">Candidatures</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Candidatures Reçues</h1>
+            <p class="text-white-50 small mb-0">Gérez les demandes de location pour vos biens.</p>
+        </div>
+        <div class="badge rounded-pill bg-primary px-3 py-2 shadow-sm">
+            {{ applications|length }} Demandes au total
+        </div>
+    </div>
+
+    {% if applications|length == 0 %}
+        <div class="card card-premium text-center py-5">
+            <div class="py-5">
+                <div class="bg-white-10 rounded-circle p-4 d-inline-block mb-4">
+                    <i class="fa-solid fa-clipboard-question fs-1 text-white-50 opacity-25"></i>
+                </div>
+                <h4 class="fw-bold">Aucune candidature</h4>
+                <p class="text-white-50 mx-auto" style="max-width: 400px;">
+                    Vous recevrez ici les dossiers des locataires intéressés par vos annonces.
+                </p>
+            </div>
+        </div>
+    {% else %}
+        <!-- Filtres -->
+        <div class="card card-premium p-3 mb-5">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-transparent border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                        <input type="text" id="appSearch" class="form-control border-start-0" placeholder="Rechercher par locataire ou bien...">
+                    </div>
+                </div>
+                <div class="col-md-8 d-flex justify-content-md-end gap-2">
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill filter-btn active" data-filter="all">Toutes</button>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill filter-btn" data-filter="pending">En attente</button>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill filter-btn" data-filter="accepted">Acceptées</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4" id="applicationsGrid">
+            {% for app in applications %}
+                <div class="col-12 application-item" data-status="{{ app.statut|lower }}" data-search="{{ app.locataire.fullName|lower }} {{ app.property.title|lower }}">
+                    <div class="card card-premium shadow-hover border-0">
+                        <div class="card-body p-4">
+                            <div class="row align-items-center g-4">
+                                <!-- Locataire -->
+                                <div class="col-md-3 border-end border-white-10">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-circle border border-2 border-primary d-flex align-items-center justify-content-center bg-dark text-white shadow-sm" style="width: 60px; height: 60px;">
+                                            <i class="fa-solid fa-user fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold text-white mb-0">{{ app.locataire.fullName }}</h6>
+                                            <div class="badge bg-success-subtle text-success x-small mt-1">Dossier Complet</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bien Concerné -->
+                                <div class="col-md-4 border-end border-white-10">
+                                    <div class="small text-white-50 text-uppercase x-small fw-bold mb-2">Bien Immobilier</div>
+                                    <h6 class="text-white mb-2"><i class="fa-solid fa-house-chimney text-primary me-2"></i>{{ app.property.title }}</h6>
+                                    <div class="small text-white-50"><i class="fa-solid fa-location-dot me-2"></i>{{ app.property.city }}</div>
+                                </div>
+
+                                <!-- Période & Statut -->
+                                <div class="col-md-3">
+                                    <div class="small text-white-50 text-uppercase x-small fw-bold mb-2">Période souhaitée</div>
+                                    <div class="text-white small mb-2">
+                                        {{ app.dateDebut|date('d/m/Y') }} — {{ app.dateFin|date('d/m/Y') }}
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-1 
+                                        {{ app.statut == 'accepted' ? 'bg-success' : (app.statut == 'refused' ? 'bg-danger' : 'bg-warning text-dark') }}">
+                                        {{ app.statut|capitalize }}
+                                    </span>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="col-md-2 text-md-end">
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ path('app_owner_application_show', {id: app.id}) }}" class="btn btn-sm btn-primary rounded-pill">
+                                            Voir le dossier
+                                        </a>
+                                        {% if app.statut == 'pending' %}
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-sm btn-success flex-grow-1 rounded-pill" onclick="handleAction('accept', {{ app.id }}, '{{ app.locataire.fullName|escape('js') }}')">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger flex-grow-1 rounded-pill" onclick="handleAction('refuse', {{ app.id }}, '{{ app.locataire.fullName|escape('js') }}')">
+                                                    <i class="fa-solid fa-xmark"></i>
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Forms de soumission cachés -->
+<form id="actionForm" method="POST" style="display:none;">
+    <input type="hidden" name="_token" id="actionToken">
+</form>
+
+<style>
+.shadow-hover { transition: all 0.3s ease; }
+.shadow-hover:hover { transform: translateX(10px); background: rgba(255,255,255,0.05); }
+.filter-btn.active { background-color: var(--owner-primary); border-color: var(--owner-primary); color: white; }
+.x-small { font-size: 0.65rem; }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById('appSearch');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const items = document.querySelectorAll('.application-item');
+
+    function filter() {
+        const term = searchInput.value.toLowerCase();
+        const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+
+        items.forEach(item => {
+            const search = item.dataset.search;
+            const status = item.dataset.status;
+            
+            const matchSearch = search.includes(term);
+            const matchStatus = activeFilter === 'all' || status === activeFilter;
+
+            item.style.display = (matchSearch && matchStatus) ? 'block' : 'none';
+        });
+    }
+
+    if(searchInput) searchInput.addEventListener('input', filter);
+    
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filter();
+        });
+    });
+
+    window.handleAction = function(action, id, name) {
+        const label = action === 'accept' ? 'ACCEPTER' : 'REFUSER';
+        if (confirm(`Voulez-vous vraiment ${label} la candidature de ${name} ?`)) {
+            const form = document.getElementById('actionForm');
+            form.action = `/proprietary/applications/${id}/${action}`;
+            form.submit();
+        }
+    }
+});
+</script>
+{% endblock %}

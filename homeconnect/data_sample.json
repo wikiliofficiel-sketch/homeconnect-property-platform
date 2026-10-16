@@ -1,0 +1,48 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "nom": "Admin",
+      "prenom": "Super",
+      "email": "admin@homeconnect.com",
+      "password": "admin123",
+      "telephone": "+229 90000000",
+      "role": "admin"
+    },
+    {
+      "id": 2,
+      "nom": "Doe",
+      "prenom": "John",
+      "email": "john.owner@example.com",
+      "password": "password123",
+      "telephone": "+229 97000002",
+      "role": "proprietaire"
+    }
+  ],
+  "properties": [
+    {
+      "id": 1,
+      "titre": "Villa Moderne Fidjrossè",
+      "description": "Belle villa avec piscine à deux pas de la plage.",
+      "lieu": "Fidjrossè, Cotonou",
+      "prix": 350000,
+      "pieces": 4,
+      "nbChambres": 3,
+      "superficie": 250,
+      "proprietaireEmail": "john.owner@example.com",
+      "additionalImages": ["https://images.unsplash.com/photo-1580587771525-78b9dba3b914"]
+    },
+    {
+      "id": 2,
+      "titre": "Appartement Centre-Ville",
+      "description": "Appartement cosy proche de toutes commodités.",
+      "lieu": "Ganhi, Cotonou",
+      "prix": 150000,
+      "pieces": 2,
+      "nbChambres": 1,
+      "superficie": 80,
+      "proprietaireEmail": "john.owner@example.com",
+      "additionalImages": ["https://images.unsplash.com/photo-1502672260266-1c1ef2d93688"]
+    }
+  ]
+}

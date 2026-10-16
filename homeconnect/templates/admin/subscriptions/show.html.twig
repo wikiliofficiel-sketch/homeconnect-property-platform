@@ -1,0 +1,143 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block admin_title %}Détail abonnement{% endblock %}
+
+{% block admin_body %}
+<div class="subscription-detail">
+    <div class="sub-header">
+        <div>
+            <h2>{{ subscription.proprietaire.fullName }}</h2>
+            <p>{{ subscription.proprietaire.email }}</p>
+        </div>
+        <span class="badge badge-{{ subscription.plan == 'premium_plus' ? 'premium' : 'free' }}">
+            {{ subscription.plan|upper }}
+        </span>
+    </div>
+
+    <div class="sub-sections">
+        <div class="section">
+            <h3>📅 Dates</h3>
+            <div class="info-grid">
+                <div><strong>Début:</strong> {{ subscription.dateDebut ? subscription.dateDebut|date('d/m/Y H:i') : '—' }}</div>
+                <div><strong>Expiration:</strong> {{ subscription.dateExpiration ? subscription.dateExpiration|date('d/m/Y H:i') : '—' }}</div>
+                <div><strong>Statut:</strong> 
+                    <span class="badge badge-{{ subscription.statut == 'active' ? 'success' : 'danger' }}">
+                        {{ subscription.statut }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🎯 Actions</h3>
+            <form method="post" action="{{ path('admin_subscriptions_renew', {'id': subscription.id}) }}" class="action-form">
+                <label>Prolonger de (mois):</label>
+                <input type="number" name="mois" min="1" max="12" value="1" required>
+                <button type="submit" class="btn btn-success">✅ Prolonger</button>
+            </form>
+
+            {% if subscription.plan == 'free' %}
+            <form method="post" action="{{ path('admin_subscriptions_upgrade', {'id': subscription.id}) }}" class="action-form">
+                <button type="submit" class="btn btn-primary">⬆️ Upgrader en Premium+</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.subscription-detail {
+    max-width: 600px;
+}
+
+.sub-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.sub-header h2 {
+    margin: 0 0 10px 0;
+    font-size: 2em;
+}
+
+.sub-header p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.badge {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.badge-premium { background-color: #c3dafe; color: #2c5282; }
+.badge-free { background-color: #e2e8f0; color: #2d3748; }
+.badge-success { background-color: #c6f6d5; color: #22543d; }
+.badge-danger { background-color: #fed7d7; color: #742a2a; }
+
+.sub-sections {
+    display: grid;
+    gap: 20px;
+}
+
+.section {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.section h3 {
+    margin: 0 0 15px 0;
+}
+
+.info-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.info-grid div {
+    padding: 10px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.action-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.action-form label {
+    font-weight: 600;
+}
+
+.action-form input {
+    padding: 8px 10px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    width: 80px;
+}
+
+.btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-success { background-color: #48bb78; color: white; }
+.btn-primary { background-color: #4299e1; color: white; }
+</style>
+{% endblock %}

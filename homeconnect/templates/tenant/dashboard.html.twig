@@ -1,0 +1,121 @@
+{% extends 'tenant/base.html.twig' %}
+
+{% block tenant_content %}
+<div class="stats-grid mb-5">
+    <div class="stat-premium-card">
+        <div class="stat-premium-icon" style="color:#00D2FF; background:rgba(0,210,255,0.12);"><i class="fa-solid fa-file-signature"></i></div>
+        <div>
+            <div class="stat-premium-value">{{ applicationsCount|default(0) }}</div>
+            <div class="stat-premium-label">Demandes</div>
+        </div>
+    </div>
+    <div class="stat-premium-card">
+        <div class="stat-premium-icon" style="color:#FF4B5C; background:rgba(255,75,92,0.12);"><i class="fa-solid fa-heart"></i></div>
+        <div>
+            <div class="stat-premium-value">{{ favoritesCount|default(0) }}</div>
+            <div class="stat-premium-label">Favoris</div>
+        </div>
+    </div>
+    <div class="stat-premium-card">
+        <div class="stat-premium-icon" style="color:#00E676; background:rgba(0,230,118,0.12);"><i class="fa-solid fa-calendar-check"></i></div>
+        <div>
+            <div class="stat-premium-value">{{ visitesCount|default(0) }}</div>
+            <div class="stat-premium-label">Visites</div>
+        </div>
+    </div>
+</div>
+
+{% if rentals|length > 0 %}
+<div class="premium-card mb-5">
+    <h4 class="fw-bold mb-4" style="font-family: var(--f-serif);">
+        <i class="fa-solid fa-wallet text-warning me-2"></i> Mes Locations & Paiements
+    </h4>
+    <div class="row g-4">
+        {% for rental in rentals %}
+        <div class="col-12">
+            <div class="premium-item p-4 rounded-4 d-flex align-items-center justify-content-between flex-wrap gap-4"
+                 style="background: var(--c-border); border: 1px solid var(--c-border);">
+                <div class="d-flex align-items-center gap-4">
+                    <div class="dash-icon-bg p-3 rounded-4">
+                        <i class="fa-solid fa-building fs-3" style="color: var(--c-primary);"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold dash-text mb-1">{{ rental.property.title }}</h5>
+                        <p class="dash-text-muted small mb-0">{{ rental.monthlyPrice|number_format(0, ',', ' ') }} CFA / mois</p>
+                    </div>
+                </div>
+                <div>
+                    {% if rental.isPaid %}
+                        <span class="badge bg-success-subtle text-success p-2 px-3 rounded-pill">Payé</span>
+                    {% else %}
+                        <a href="{{ path('app_tenant_payment_initiate', {id: rental.id}) }}" class="btn-premium py-2 px-4 text-decoration-none">Payer Loyer</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="premium-card">
+            <h4 class="fw-bold mb-4" style="font-family: var(--f-serif);">Biens Recommandés</h4>
+            <div class="row g-4">
+                {% for property in recommendedProperties|slice(0, 2) %}
+                <div class="col-md-6">
+                    <div class="premium-property-card">
+                        <div class="property-image">
+                            {% if property.images|first %}
+                                {% set imgSrc = property.images|first %}
+                                {% if imgSrc starts with 'http' or imgSrc starts with 'data:image' %}
+                                    <img src="{{ imgSrc }}" alt="{{ property.title }}" class="w-100 h-100 object-fit-cover shadow-sm">
+                                {% else %}
+                                    <img src="{{ asset('uploads/properties/' ~ imgSrc) }}" alt="{{ property.title }}" class="w-100 h-100 object-fit-cover shadow-sm">
+                                {% endif %}
+                            {% else %}
+                                <div class="w-100 h-100 d-flex align-items-center justify-content-center dash-icon-bg" style="min-height:150px;">
+                                    <i class="fa-solid fa-house fs-2 dash-text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="property-info">
+                            <h6 class="fw-bold dash-text text-truncate">{{ property.title }}</h6>
+                            <div class="text-primary fw-bold">{{ property.pricePerMonth|number_format(0, ',', ' ') }} CFA</div>
+                            <div class="d-flex align-items-center gap-2 mt-2 dash-text-muted" style="font-size:11px;">
+                                <span title="J'aime"><i class="fa-regular fa-thumbs-up me-1"></i>{{ property.likesCount }}</span>
+                                <span title="Je n'aime pas"><i class="fa-regular fa-thumbs-down me-1"></i>{{ property.dislikesCount }}</span>
+                                <span title="Commentaires"><i class="fa-regular fa-comment me-1"></i>{{ property.commentsCount }}</span>
+                            </div>
+                            <a href="{{ path('app_tenant_property_show', {id: property.id}) }}" class="btn-premium mt-2 w-100 py-2 text-decoration-none text-center" style="font-size:0.8rem;">Détails</a>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12 text-center py-5">
+                    <p class="dash-text-muted">Aucune recommandation pour le moment.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="premium-card h-100">
+            <h4 class="fw-bold mb-4" style="font-family: var(--f-serif);">Actions Rapides</h4>
+            <div class="d-grid gap-3">
+                <a href="{{ path('app_tenant_search') }}" class="btn-premium py-3 text-center text-decoration-none">
+                    <i class="fa-solid fa-magnifying-glass me-2"></i> Explorer
+                </a>
+                <a href="{{ path('app_tenant_messages') }}" class="btn-premium btn-premium-ghost py-3 text-center text-decoration-none">
+                    <i class="fa-solid fa-comments me-2"></i> Messagerie
+                </a>
+                <a href="{{ path('app_tenant_profile') }}" class="btn-premium btn-premium-ghost py-3 text-center text-decoration-none">
+                    <i class="fa-solid fa-user-gear me-2"></i> Profil
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
